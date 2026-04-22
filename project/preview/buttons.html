@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>body{margin:0;padding:20px;background:var(--bg);display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.btn{font-family:var(--font-body);font-weight:600;font-size:15px;padding:14px 22px;border-radius:999px;border:1px solid transparent;cursor:pointer;line-height:1;transition:all .24s var(--ease-out);display:inline-flex;align-items:center;gap:8px}
+.btn.primary{background:var(--terracotta-400);color:#fff}
+.btn.primary:hover{background:var(--terracotta-500);box-shadow:var(--shadow-md)}
+.btn.secondary{background:transparent;border-color:var(--ink-300);color:var(--ink-900)}
+.btn.secondary:hover{background:var(--bg-muted);border-color:var(--ink-900)}
+.btn.dark{background:var(--forest-500);color:var(--cream-100)}
+.btn.ghost{background:transparent;color:var(--ink-900);text-decoration:underline;text-underline-offset:4px;padding:14px 8px}
+.btn.sm{padding:9px 16px;font-size:14px}
+.lab{font-family:var(--font-mono);font-size:10px;color:var(--fg-subtle);letter-spacing:.06em;text-transform:uppercase}
+</style></head>
+<body>
+<div class="row">
+  <button class="btn primary">Join the Founders Cohort</button>
+  <button class="btn secondary">Learn more</button>
+  <button class="btn dark">See how it works</button>
+  <button class="btn ghost">Skip →</button>
+</div>
+<div class="row">
+  <button class="btn primary sm">Start free</button>
+  <button class="btn secondary sm">Details</button>
+  <span class="lab">Primary · Terracotta 400 · pill · 600</span>
+</div>
+</body></html>

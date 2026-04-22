@@ -1,0 +1,26 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>body{margin:0;padding:24px;background:var(--bg);display:flex;flex-direction:column;gap:16px}
+.row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600;font-family:var(--font-body);line-height:1}
+.b-accent{background:var(--terracotta-50);color:var(--terracotta-700)}
+.b-dark{background:var(--forest-500);color:var(--cream-100)}
+.b-soft{background:var(--cream-200);color:var(--ink-900)}
+.b-outline{background:transparent;border:1px solid var(--ink-300);color:var(--ink-700)}
+.b-live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--forest-300);box-shadow:0 0 0 0 rgba(111,148,119,.6);animation:p 1.6s infinite}
+@keyframes p{50%{box-shadow:0 0 0 6px rgba(111,148,119,0)}}
+.eyebrow-s{font-family:var(--font-body);font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--terracotta-700)}
+.lab{font-family:var(--font-mono);font-size:10px;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.06em}
+</style></head>
+<body>
+<div class="row">
+  <span class="badge b-accent">Founders Launch</span>
+  <span class="badge b-dark">Locked in for life</span>
+  <span class="badge b-soft">Limited · 100 spots</span>
+  <span class="badge b-outline b-live">AI active</span>
+</div>
+<div class="row">
+  <span class="eyebrow-s">Founders launch</span>
+  <span class="lab">· eyebrow label · used above h2</span>
+</div>
+</body></html>
