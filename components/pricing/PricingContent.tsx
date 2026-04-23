@@ -72,14 +72,14 @@ function PricingCard() {
           <Sparkles size={14} color="var(--terracotta-300)" />
           Founding member price · 50% off forever
         </div>
-        <div style={{ padding: '40px 40px 32px' }}>
+        <div style={{ padding: '40px 40px 32px', textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, color: 'var(--ink-900)', marginBottom: 8 }}>
             Guthub membership
           </div>
           <div style={{ fontSize: 15, color: 'var(--ink-600)', marginBottom: 28 }}>
             Your always-available AI gut-health guide.
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 4, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 14, marginBottom: 4, flexWrap: 'wrap' }}>
             <span style={{
               fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 400,
               color: 'var(--ink-500)', letterSpacing: '-0.02em', lineHeight: 1.1,
