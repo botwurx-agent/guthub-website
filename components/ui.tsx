@@ -117,9 +117,10 @@ interface RevealProps {
   once?: boolean;
   style?: CSSProperties;
   as?: ElementType;
+  className?: string;
 }
 
-export function Reveal({ children, delay = 0, y = 16, duration = 700, threshold = 0.15, once = true, style, as: Tag = 'div' }: RevealProps) {
+export function Reveal({ children, delay = 0, y = 16, duration = 700, threshold = 0.15, once = true, style, as: Tag = 'div', className }: RevealProps) {
   const ref = useRef<HTMLElement>(null);
   const [shown, setShown] = useState(false);
   const reduced = useRef(false);
@@ -154,7 +155,7 @@ export function Reveal({ children, delay = 0, y = 16, duration = 700, threshold 
   };
 
   return (
-    <Tag ref={ref as any} style={{ ...motionStyle, ...style }}>
+    <Tag ref={ref as any} className={className} style={{ ...motionStyle, ...style }}>
       {children}
     </Tag>
   );

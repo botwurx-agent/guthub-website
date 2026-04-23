@@ -4,10 +4,10 @@ import { Eyebrow, Reveal } from '../ui';
 
 export default function FeaturesHero() {
   return (
-    <section style={{ padding: '96px 32px 40px', background: 'var(--cream-50)', textAlign: 'center' }}>
+    <section className="section-pad" style={{ padding: '96px 32px 40px', background: 'var(--cream-50)', textAlign: 'center' }}>
       <Reveal style={{ maxWidth: 820, margin: '0 auto' }}>
         <Eyebrow>Features</Eyebrow>
-        <h1 style={{
+        <h1 className="h1-mobile" style={{
           fontFamily: 'var(--font-display)',
           fontSize: 'clamp(2.5rem, 5.2vw, 4.25rem)',
           lineHeight: 1.15, letterSpacing: '-0.025em', fontWeight: 400,

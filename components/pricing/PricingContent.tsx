@@ -18,7 +18,7 @@ export default function PricingContent() {
 
 function PricingHero() {
   return (
-    <section style={{ padding: '88px 32px 48px', background: 'var(--cream-50)', textAlign: 'center' }}>
+    <section className="section-pad" style={{ padding: '88px 32px 48px', background: 'var(--cream-50)', textAlign: 'center' }}>
       <Reveal style={{ maxWidth: 760, margin: '0 auto' }}>
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -30,7 +30,7 @@ function PricingHero() {
           Founding member launch · 50% off forever
         </div>
         <Eyebrow>Pricing</Eyebrow>
-        <h1 style={{
+        <h1 className="h1-mobile" style={{
           fontFamily: 'var(--font-display)',
           fontSize: 'clamp(2.5rem, 5vw, 4rem)',
           lineHeight: 1.18, letterSpacing: '-0.025em', fontWeight: 400,
@@ -48,7 +48,7 @@ function PricingHero() {
 
 function PricingCard() {
   return (
-    <section style={{ padding: '32px 32px 96px', background: 'var(--cream-50)', position: 'relative', overflow: 'hidden' }}>
+    <section className="section-pad" style={{ padding: '32px 32px 96px', background: 'var(--cream-50)', position: 'relative', overflow: 'hidden' }}>
       <div aria-hidden style={{
         position: 'absolute', top: -60, left: '50%', transform: 'translateX(-50%)',
         width: 720, height: 420,
@@ -124,17 +124,17 @@ const includedFeatures = [
 
 function WhatsIncluded() {
   return (
-    <section style={{ padding: '112px 32px', background: 'var(--forest-500)', color: 'var(--cream-100)', position: 'relative', overflow: 'hidden' }}>
+    <section className="section-pad section-pad-v" style={{ padding: '112px 32px', background: 'var(--forest-500)', color: 'var(--cream-100)', position: 'relative', overflow: 'hidden' }}>
       <div aria-hidden style={{ position: 'absolute', top: -160, right: -120, width: 520, height: 520, background: 'radial-gradient(circle, rgba(224,124,89,0.22) 0%, rgba(224,124,89,0) 70%)', pointerEvents: 'none' }} />
       <div aria-hidden style={{ position: 'absolute', bottom: -180, left: -140, width: 460, height: 460, background: 'radial-gradient(circle, rgba(244,208,162,0.16) 0%, rgba(244,208,162,0) 70%)', pointerEvents: 'none' }} />
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto', position: 'relative' }}>
         <Reveal style={{ textAlign: 'center', marginBottom: 64, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto' }}>
           <Eyebrow color="var(--terracotta-300)">Everything included</Eyebrow>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.4vw, 2.75rem)', lineHeight: 1.18, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 20, color: 'var(--cream-100)' }}>
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.4vw, 2.75rem)', lineHeight: 1.18, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 20, color: 'var(--cream-100)' }}>
             One price. <em style={{ fontStyle: 'italic', color: 'var(--terracotta-300)' }}>Every feature.</em> No tiers, no upsells.
           </h2>
         </Reveal>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+        <div className="cards-3-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
           {includedFeatures.map((f, i) => (
             <Reveal key={f.title} delay={i * 80} y={16}>
               <IncludedCard f={f} featured={i === 0} />
@@ -149,7 +149,7 @@ function WhatsIncluded() {
 function IncludedCard({ f, featured }: { f: typeof includedFeatures[0]; featured: boolean }) {
   const [hover, setHover] = useState(false);
   return (
-    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
+    <div className="included-card" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
       padding: 32, borderRadius: 'var(--radius-lg)',
       background: featured ? 'var(--terracotta-400)' : (hover ? 'rgba(250,245,238,.10)' : 'rgba(250,245,238,.06)'),
       border: featured ? 'none' : '1px solid rgba(250,245,238,.12)',
@@ -179,11 +179,11 @@ const faqItems = [
 function PricingFAQ() {
   const [open, setOpen] = useState(0);
   return (
-    <section style={{ padding: '96px 32px', background: 'var(--cream-100)' }}>
+    <section className="section-pad section-pad-v" style={{ padding: '96px 32px', background: 'var(--cream-100)' }}>
       <div style={{ maxWidth: 760, margin: '0 auto' }}>
         <Reveal style={{ textAlign: 'center', marginBottom: 56 }}>
           <Eyebrow>Pricing FAQ</Eyebrow>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem, 3vw, 2.5rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, color: 'var(--ink-900)' }}>
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem, 3vw, 2.5rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, color: 'var(--ink-900)' }}>
             Straightforward answers.
           </h2>
         </Reveal>
@@ -191,7 +191,7 @@ function PricingFAQ() {
           <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', overflow: 'hidden' }}>
             {faqItems.map((it, i) => (
               <div key={i} style={{ borderTop: i ? '1px solid var(--ink-100)' : 'none' }}>
-                <button onClick={() => setOpen(open === i ? -1 : i)} style={{
+                <button className="faq-button" onClick={() => setOpen(open === i ? -1 : i)} style={{
                   width: '100%', textAlign: 'left', padding: '22px 28px',
                   background: 'transparent', border: 'none', cursor: 'pointer',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16,
@@ -201,7 +201,7 @@ function PricingFAQ() {
                   {open === i ? <Minus size={20} color="var(--ink-500)" style={{ flexShrink: 0 }} /> : <Plus size={20} color="var(--ink-500)" style={{ flexShrink: 0 }} />}
                 </button>
                 {open === i && (
-                  <div style={{ padding: '0 28px 24px', fontSize: 16, lineHeight: 1.6, color: 'var(--ink-700)' }}>{it.a}</div>
+                  <div className="faq-answer" style={{ padding: '0 28px 24px', fontSize: 16, lineHeight: 1.6, color: 'var(--ink-700)' }}>{it.a}</div>
                 )}
               </div>
             ))}

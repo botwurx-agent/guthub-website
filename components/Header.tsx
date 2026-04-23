@@ -31,20 +31,20 @@ export default function Header() {
       borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
       transition: 'all 240ms var(--ease-out)',
     }}>
-      <div style={{
+      <div className="header-inner" style={{
         maxWidth: 'var(--maxw-wide)', margin: '0 auto',
         padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 32,
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <Image src="/logo-full.png" alt="GutHub" width={120} height={32} style={{ height: 32, width: 'auto' }} priority />
         </Link>
-        <nav style={{ display: 'flex', gap: 28, marginLeft: 16 }}>
+        <nav className="nav-links" style={{ display: 'flex', gap: 28, marginLeft: 16 }}>
           {navItems.map(item => (
             <NavLink key={item.label} href={item.href} label={item.label} />
           ))}
         </nav>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
-          <button onClick={() => openAuth('signin')} style={{
+          <button className="signin-btn" onClick={() => openAuth('signin')} style={{
             fontSize: 15, fontWeight: 500, color: 'var(--ink-800)',
             background: 'none', border: 'none', cursor: 'pointer',
             fontFamily: 'var(--font-body)', padding: 0,
@@ -52,10 +52,17 @@ export default function Header() {
             Sign in
           </button>
           <Button variant="primary" size="sm" onClick={() => openAuth('signup')}>
-            Start free — 2 days
+            <span className="header-cta-full">Start free — 2 days</span>
+            <span className="header-cta-short" style={{ display: 'none' }}>Start free</span>
           </Button>
         </div>
       </div>
+      <style>{`
+        @media (max-width: 767px) {
+          .header-cta-full { display: none !important; }
+          .header-cta-short { display: inline !important; }
+        }
+      `}</style>
     </header>
   );
 }

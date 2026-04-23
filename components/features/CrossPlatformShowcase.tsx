@@ -149,12 +149,12 @@ function PhoneMockup() {
 
 export default function CrossPlatformShowcase() {
   return (
-    <section style={{ padding: '112px 32px', background: 'var(--cream-100)', position: 'relative', overflow: 'hidden' }}>
+    <section className="section-pad section-pad-v" style={{ padding: '112px 32px', background: 'var(--cream-100)', position: 'relative', overflow: 'hidden' }}>
       <div aria-hidden style={{ position: 'absolute', top: -80, left: '50%', transform: 'translateX(-50%)', width: 600, height: 400, background: 'radial-gradient(ellipse, rgba(75,120,105,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto', position: 'relative' }}>
         <Reveal style={{ textAlign: 'center', marginBottom: 72, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto' }}>
           <Eyebrow>Works everywhere</Eyebrow>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.4vw, 2.75rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 18, marginBottom: 18, color: 'var(--ink-900)' }}>
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.4vw, 2.75rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 18, marginBottom: 18, color: 'var(--ink-900)' }}>
             On every device,{' '}
             <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>always in sync.</em>
           </h2>
@@ -165,14 +165,14 @@ export default function CrossPlatformShowcase() {
 
         {/* Device showcase */}
         <Reveal y={32} duration={900} style={{ position: 'relative', display: 'flex', justifyContent: 'center', marginBottom: 80 }}>
-          <div style={{ position: 'relative', display: 'inline-block' }}>
+          <div className="device-showcase" style={{ position: 'relative', display: 'inline-block' }}>
             <LaptopMockup />
             <PhoneMockup />
           </div>
         </Reveal>
 
         {/* Platform cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, maxWidth: 760, margin: '0 auto' }}>
+        <div className="cards-3-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, maxWidth: 760, margin: '0 auto' }}>
           {platforms.map((p, i) => (
             <Reveal key={p.label} delay={i * 80} y={16}>
               <div style={{ padding: '28px 24px', background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', textAlign: 'center' }}>

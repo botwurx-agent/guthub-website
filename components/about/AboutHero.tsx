@@ -4,10 +4,10 @@ import { Eyebrow, Reveal } from '../ui';
 
 export default function AboutHero() {
   return (
-    <section style={{ padding: '96px 32px 56px', background: 'var(--cream-50)', textAlign: 'center' }}>
+    <section className="section-pad" style={{ padding: '96px 32px 56px', background: 'var(--cream-50)', textAlign: 'center' }}>
       <Reveal style={{ maxWidth: 780, margin: '0 auto' }}>
         <Eyebrow>About us</Eyebrow>
-        <h1 style={{
+        <h1 className="h1-mobile" style={{
           fontFamily: 'var(--font-display)',
           fontSize: 'clamp(2.5rem, 5vw, 4rem)',
           lineHeight: 1.15, letterSpacing: '-0.025em', fontWeight: 400,

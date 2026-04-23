@@ -16,11 +16,11 @@ const items = [
 export default function FAQ() {
   const [open, setOpen] = useState(0);
   return (
-    <section id="faq" style={{ padding: '96px 32px', background: 'var(--cream-50)' }}>
+    <section id="faq" className="section-pad section-pad-v" style={{ padding: '96px 32px', background: 'var(--cream-50)' }}>
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
         <Reveal style={{ textAlign: 'center', marginBottom: 56 }}>
           <Eyebrow>FAQ</Eyebrow>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, color: 'var(--ink-900)' }}>
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, color: 'var(--ink-900)' }}>
             Questions, <em style={{ fontStyle: 'italic' }}>answered.</em>
           </h2>
         </Reveal>
@@ -28,7 +28,7 @@ export default function FAQ() {
           <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', overflow: 'hidden' }}>
             {items.map((it, i) => (
               <div key={i} style={{ borderTop: i ? '1px solid var(--ink-100)' : 'none' }}>
-                <button onClick={() => setOpen(open === i ? -1 : i)} style={{
+                <button className="faq-button" onClick={() => setOpen(open === i ? -1 : i)} style={{
                   width: '100%', padding: '22px 28px', background: 'transparent', border: 'none',
                   textAlign: 'left', cursor: 'pointer',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16,
@@ -38,7 +38,7 @@ export default function FAQ() {
                   {open === i ? <Minus size={20} color="var(--terracotta-500)" style={{ flexShrink: 0 }} /> : <Plus size={20} color="var(--terracotta-500)" style={{ flexShrink: 0 }} />}
                 </button>
                 {open === i && (
-                  <div style={{ padding: '0 28px 24px', fontSize: 16, lineHeight: 1.6, color: 'var(--ink-700)', maxWidth: '68ch' }}>{it.a}</div>
+                  <div className="faq-answer" style={{ padding: '0 28px 24px', fontSize: 16, lineHeight: 1.6, color: 'var(--ink-700)', maxWidth: '68ch' }}>{it.a}</div>
                 )}
               </div>
             ))}

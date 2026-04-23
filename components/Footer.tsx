@@ -11,13 +11,13 @@ const cols = [
 
 export default function Footer() {
   return (
-    <footer style={{ background: 'var(--forest-500)', color: 'var(--cream-100)', padding: '72px 32px 32px' }}>
+    <footer className="footer-root" style={{ background: 'var(--forest-500)', color: 'var(--cream-100)', padding: '72px 32px 32px' }}>
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto' }}>
-        <div style={{
+        <div className="footer-grid" style={{
           display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 40,
           paddingBottom: 48, borderBottom: '1px solid rgba(250,245,238,.16)',
         }}>
-          <div>
+          <div className="footer-brand">
             <Image src="/logo-full.png" alt="GutHub" width={140} height={38}
               style={{ height: 38, width: 'auto', filter: 'brightness(0) invert(1)', marginBottom: 20 }} />
             <p style={{ fontSize: 15, lineHeight: 1.55, color: 'rgba(250,245,238,.72)', maxWidth: 300 }}>

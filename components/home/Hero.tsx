@@ -7,8 +7,8 @@ import { CheckCircle, XCircle, Stethoscope } from 'lucide-react';
 
 export default function Hero() {
   return (
-    <section style={{ position: 'relative', padding: '40px 32px 96px', background: 'var(--cream-50)', overflow: 'hidden' }}>
-      <div style={{
+    <section className="hero-section" style={{ position: 'relative', padding: '40px 32px 96px', background: 'var(--cream-50)', overflow: 'hidden' }}>
+      <div className="hero-grid" style={{
         maxWidth: 'var(--maxw-wide)', margin: '0 auto',
         display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1fr)', gap: 80,
         alignItems: 'center',
@@ -18,7 +18,7 @@ export default function Hero() {
             <Eyebrow>Your AI gut-health guide</Eyebrow>
           </Reveal>
           <Reveal delay={120} y={16} duration={800}>
-            <h1 style={{
+            <h1 className="hero-h1" style={{
               marginTop: 20, marginBottom: 56, paddingBottom: 32,
               fontFamily: 'var(--font-display)',
               fontSize: 'clamp(2.75rem, 5.2vw, 4.25rem)',
@@ -54,8 +54,8 @@ export default function Hero() {
             </div>
           </Reveal>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center', position: 'relative', width: '100%' }}>
-          <div aria-hidden style={{
+        <div className="hero-mock-col" style={{ display: 'flex', justifyContent: 'center', position: 'relative', width: '100%' }}>
+          <div aria-hidden className="hero-glow" style={{
             position: 'absolute', width: 480, height: 480, borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(224,124,89,0.22) 0%, rgba(224,124,89,0) 65%)',
             animation: 'heroGlow 6s ease-in-out infinite', pointerEvents: 'none', zIndex: 0,
@@ -66,7 +66,7 @@ export default function Hero() {
         </div>
       </div>
       <style>{`
-        @media (max-width: 860px) {
+        @media (max-width: 900px) {
           .hero-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>

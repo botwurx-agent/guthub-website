@@ -471,14 +471,14 @@ function FeatureBlock({ block }: { block: typeof blocks[0] }) {
   );
 
   return (
-    <section style={{ padding: '96px 32px', background: block.bg, position: 'relative', overflow: 'hidden' }}>
+    <section className="section-pad section-pad-v" style={{ padding: '96px 32px', background: block.bg, position: 'relative', overflow: 'hidden' }}>
       {block.dark && (
         <>
           <div aria-hidden style={{ position: 'absolute', top: -100, right: -60, width: 400, height: 400, background: 'radial-gradient(circle, rgba(224,124,89,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
           <div aria-hidden style={{ position: 'absolute', bottom: -120, left: -80, width: 360, height: 360, background: 'radial-gradient(circle, rgba(244,208,162,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
         </>
       )}
-      <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center', position: 'relative' }}>
+      <div className="stack-to-one" style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center', position: 'relative' }}>
         {block.visualRight ? (
           <>
             {textCol}

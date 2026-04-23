@@ -4,7 +4,7 @@ import { Reveal } from '../ui';
 
 export default function WhyGuthub() {
   return (
-    <section style={{ padding: '112px 32px', background: 'var(--forest-500)', color: 'var(--cream-100)', position: 'relative', overflow: 'hidden' }}>
+    <section className="section-pad section-pad-v" style={{ padding: '112px 32px', background: 'var(--forest-500)', color: 'var(--cream-100)', position: 'relative', overflow: 'hidden' }}>
       <div aria-hidden style={{ position: 'absolute', top: -80, right: -60, width: 480, height: 480, background: 'radial-gradient(circle, rgba(224,124,89,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div aria-hidden style={{ position: 'absolute', bottom: -100, left: -80, width: 400, height: 400, background: 'radial-gradient(circle, rgba(244,208,162,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ maxWidth: 820, margin: '0 auto', textAlign: 'center', position: 'relative' }}>

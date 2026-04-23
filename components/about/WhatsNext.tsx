@@ -15,11 +15,11 @@ const milestones = [
 
 export default function WhatsNext() {
   return (
-    <section style={{ padding: '112px 32px', background: 'var(--cream-100)' }}>
+    <section className="section-pad section-pad-v" style={{ padding: '112px 32px', background: 'var(--cream-100)' }}>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
         <Reveal style={{ textAlign: 'center', marginBottom: 64 }}>
           <Eyebrow>What's next</Eyebrow>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.4vw, 2.75rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 18, marginBottom: 18, color: 'var(--ink-900)' }}>
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.4vw, 2.75rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 18, marginBottom: 18, color: 'var(--ink-900)' }}>
             The road ahead.
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--ink-700)' }}>

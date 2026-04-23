@@ -17,11 +17,11 @@ const features = [
 export default function Pricing() {
   const [hover, setHover] = useState(false);
   return (
-    <section id="pricing" style={{ padding: '96px 32px', background: 'var(--forest-500)', color: 'var(--cream-100)' }}>
+    <section id="pricing" className="section-pad section-pad-v" style={{ padding: '96px 32px', background: 'var(--forest-500)', color: 'var(--cream-100)' }}>
       <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
         <Reveal>
           <Eyebrow color="var(--terracotta-300)">Simple pricing</Eyebrow>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, marginBottom: 20, color: 'var(--cream-100)' }}>
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, marginBottom: 20, color: 'var(--cream-100)' }}>
             Start with <em style={{ fontStyle: 'italic' }}>2 days free.</em> Keep what works.
           </h2>
           <p style={{ fontSize: 18, lineHeight: 1.6, color: 'rgba(250,245,238,.72)', marginBottom: 48 }}>
@@ -30,7 +30,7 @@ export default function Pricing() {
         </Reveal>
 
         <Reveal delay={150} y={24}>
-          <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
+          <div className="home-pricing-card" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
             background: 'var(--cream-50)', color: 'var(--ink-900)',
             borderRadius: 'var(--radius-2xl)', padding: 40,
             boxShadow: hover ? '0 30px 60px -10px rgba(0,0,0,0.35)' : 'var(--shadow-xl)',

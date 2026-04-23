@@ -12,15 +12,15 @@ const items = [
 
 export default function Testimonials() {
   return (
-    <section style={{ padding: '112px 32px', background: '#FFFFFF' }}>
+    <section className="section-pad section-pad-v" style={{ padding: '112px 32px', background: '#FFFFFF' }}>
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto' }}>
         <Reveal style={{ textAlign: 'center', marginBottom: 56 }}>
           <Eyebrow>What members say</Eyebrow>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, color: 'var(--ink-900)' }}>
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, color: 'var(--ink-900)' }}>
             Real people, <em style={{ fontStyle: 'italic' }}>real relief.</em>
           </h2>
         </Reveal>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+        <div className="cards-3-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
           {items.map((t, i) => (
             <Reveal key={t.name} delay={i * 120} y={18}>
               <TestimonialCard t={t} />

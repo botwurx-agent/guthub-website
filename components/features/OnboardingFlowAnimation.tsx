@@ -47,11 +47,11 @@ export default function OnboardingFlowAnimation() {
   const filledCount = Math.min(phase, 6);
 
   return (
-    <section ref={ref} style={{ padding: '96px 32px 112px', background: 'var(--terracotta-50)', position: 'relative', overflow: 'hidden' }}>
+    <section ref={ref} className="section-pad section-pad-v" style={{ padding: '96px 32px 112px', background: 'var(--terracotta-50)', position: 'relative', overflow: 'hidden' }}>
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 56, maxWidth: 720, marginLeft: 'auto', marginRight: 'auto' }}>
           <Eyebrow>How it all connects</Eyebrow>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.6vw, 2.75rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 18, marginBottom: 18, color: 'var(--ink-900)' }}>
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.6vw, 2.75rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 18, marginBottom: 18, color: 'var(--ink-900)' }}>
             Your intake shapes <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>every tool.</em>
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--ink-700)' }}>
@@ -59,7 +59,7 @@ export default function OnboardingFlowAnimation() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: 0, alignItems: 'stretch', minHeight: 520, position: 'relative' }}>
+        <div className="onboarding-grid" style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: 0, alignItems: 'stretch', minHeight: 520, position: 'relative' }}>
           {/* Form */}
           <div style={{ background: '#fff', borderRadius: 'var(--radius-2xl)', border: '1px solid var(--border)', padding: 28, boxShadow: 'var(--shadow-md)', position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -90,7 +90,7 @@ export default function OnboardingFlowAnimation() {
           </div>
 
           {/* SVG connector lines */}
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', left: 370, top: 0, bottom: 0, width: 'calc(100% - 370px)', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
+          <svg className="onboarding-connectors" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', left: 370, top: 0, bottom: 0, width: 'calc(100% - 370px)', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
             <defs>
               <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
                 <path d="M0,0 L10,5 L0,10 z" fill="var(--terracotta-400)" />
@@ -113,7 +113,7 @@ export default function OnboardingFlowAnimation() {
           </svg>
 
           {/* Feature cards */}
-          <div style={{ position: 'relative', zIndex: 2, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, paddingLeft: 80 }}>
+          <div className="onboarding-cards-wrap" style={{ position: 'relative', zIndex: 2, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, paddingLeft: 80 }}>
             {featureCards.map((f, i) => {
               const activated = phase >= 8 + i;
               return (

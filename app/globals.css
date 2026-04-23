@@ -172,3 +172,104 @@ button { font-family: var(--font-body); }
   from { opacity: 0; transform: translateY(16px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Responsive breakpoints
+ *   Mobile:  ≤ 767px
+ *   Tablet:  768–1023px
+ *   Desktop: ≥ 1024px
+ * Inline styles win the cascade, so mobile overrides use !important.
+ * ────────────────────────────────────────────────────────────────────── */
+
+/* Tablet: relax section side padding */
+@media (max-width: 1023px) {
+  .section-pad { padding-left: 24px !important; padding-right: 24px !important; }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  /* Generic stacking helpers */
+  .stack-to-one { grid-template-columns: 1fr !important; gap: 48px !important; }
+  .cards-3-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+  .cards-2-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+
+  /* Home FeatureRow (uses direction:rtl trick on desktop) */
+  .feature-row-grid {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+    direction: ltr !important;
+    padding-bottom: 56px !important;
+    margin-bottom: 56px !important;
+  }
+  .feature-row-visual-wrap { order: 2; }
+
+  /* Hero */
+  .hero-section { padding: 24px 20px 56px !important; }
+  .hero-grid { grid-template-columns: 1fr !important; gap: 28px !important; }
+  .hero-h1 { margin-bottom: 28px !important; padding-bottom: 0 !important; font-size: clamp(2.25rem, 10vw, 3rem) !important; line-height: 1.15 !important; }
+  .hero-mock-col { max-width: 360px !important; margin: 0 auto !important; }
+  .hero-glow { width: 320px !important; height: 320px !important; }
+
+  /* Header */
+  .header-inner { padding: 12px 16px !important; gap: 12px !important; }
+  .nav-links { display: none !important; }
+  .signin-btn { display: none !important; }
+  .header-cta-compact { padding: 9px 14px !important; font-size: 13px !important; }
+
+  /* Generic section padding */
+  .section-pad-v { padding-top: 64px !important; padding-bottom: 64px !important; }
+  .section-pad { padding-left: 20px !important; padding-right: 20px !important; }
+
+  /* Compact heading scaling on mobile */
+  .h1-mobile { font-size: clamp(2.25rem, 9vw, 2.75rem) !important; line-height: 1.15 !important; }
+  .h2-mobile { font-size: clamp(1.75rem, 7vw, 2.25rem) !important; line-height: 1.2 !important; }
+  .h3-mobile { font-size: clamp(1.5rem, 6.5vw, 2rem) !important; line-height: 1.2 !important; }
+  .lead-mobile { font-size: 16px !important; }
+
+  /* Footer */
+  .footer-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 32px !important;
+    padding-bottom: 32px !important;
+  }
+  .footer-brand { grid-column: 1 / -1 !important; }
+  .footer-root { padding: 56px 20px 24px !important; }
+
+  /* Pricing "Everything included" */
+  .included-card { padding: 22px !important; }
+
+  /* OnboardingFlowAnimation */
+  .onboarding-grid {
+    grid-template-columns: 1fr !important;
+    min-height: 0 !important;
+    gap: 16px !important;
+  }
+  .onboarding-connectors { display: none !important; }
+  .onboarding-cards-wrap { padding-left: 0 !important; grid-template-columns: 1fr !important; }
+
+  /* CrossPlatformShowcase */
+  .device-showcase { transform: scale(0.6); transform-origin: center top; margin-bottom: -120px !important; }
+
+  /* Fixed-width mocks: cap their container */
+  .mock-constrain { max-width: 100% !important; }
+
+  /* Home Pricing card */
+  .home-pricing-card { padding: 28px !important; }
+
+  /* About FounderStory image caption */
+  .founder-caption { right: 0 !important; bottom: -28px !important; max-width: calc(100% - 16px) !important; }
+
+  /* LeadAdvisor photo */
+  .advisor-photo { width: 280px !important; height: 336px !important; max-width: 100% !important; }
+  .advisor-card { left: 8px !important; bottom: -28px !important; min-width: 0 !important; max-width: calc(100% - 16px) !important; }
+
+  /* FAQ buttons: tighter padding */
+  .faq-button { padding: 18px 20px !important; font-size: 17px !important; }
+  .faq-answer { padding: 0 20px 20px !important; font-size: 15px !important; }
+}
+
+/* Very small phones: collapse footer fully */
+@media (max-width: 480px) {
+  .footer-grid { grid-template-columns: 1fr !important; gap: 28px !important; }
+  .footer-brand { grid-column: auto !important; }
+}

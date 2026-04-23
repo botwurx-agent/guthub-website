@@ -50,12 +50,12 @@ const comingFeatures = [
 
 export default function ComingSoon() {
   return (
-    <section style={{ padding: '112px 32px', background: 'var(--cream-50)', position: 'relative', overflow: 'hidden' }}>
+    <section className="section-pad section-pad-v" style={{ padding: '112px 32px', background: 'var(--cream-50)', position: 'relative', overflow: 'hidden' }}>
       <div aria-hidden style={{ position: 'absolute', top: -60, right: -80, width: 440, height: 440, background: 'radial-gradient(circle, rgba(224,124,89,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto', position: 'relative' }}>
         <Reveal style={{ textAlign: 'center', marginBottom: 72, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto' }}>
           <Eyebrow>Coming soon</Eyebrow>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.4vw, 2.75rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 18, marginBottom: 18, color: 'var(--ink-900)' }}>
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.4vw, 2.75rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 18, marginBottom: 18, color: 'var(--ink-900)' }}>
             The roadmap ahead.
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--ink-700)' }}>
@@ -63,7 +63,7 @@ export default function ComingSoon() {
           </p>
         </Reveal>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+        <div className="cards-3-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
           {comingFeatures.map((f, i) => (
             <Reveal key={f.name} delay={i * 70} y={20}>
               <ComingSoonCard f={f} />

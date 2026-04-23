@@ -5,8 +5,8 @@ import { Reveal } from '../ui';
 
 export default function FounderStory() {
   return (
-    <section style={{ padding: '80px 32px 96px', background: 'var(--cream-50)' }}>
-      <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
+    <section className="section-pad section-pad-v" style={{ padding: '80px 32px 96px', background: 'var(--cream-50)' }}>
+      <div className="stack-to-one" style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
         {/* Photo */}
         <Reveal style={{ position: 'relative' }}>
           <div style={{ borderRadius: 'var(--radius-2xl)', overflow: 'hidden', boxShadow: 'var(--shadow-lg)', aspectRatio: '4/5', position: 'relative' }}>
@@ -19,7 +19,7 @@ export default function FounderStory() {
             />
           </div>
           {/* Floating caption */}
-          <div style={{ position: 'absolute', bottom: -16, right: -16, background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', padding: '14px 18px', boxShadow: 'var(--shadow-md)', maxWidth: 240 }}>
+          <div className="founder-caption" style={{ position: 'absolute', bottom: -16, right: -16, background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', padding: '14px 18px', boxShadow: 'var(--shadow-md)', maxWidth: 240 }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, color: 'var(--ink-900)', marginBottom: 2 }}>Steve Nazari</div>
             <div style={{ fontSize: 12, color: 'var(--ink-600)' }}>Founder · BJJ brown belt · gut-health convert</div>
           </div>
@@ -30,7 +30,7 @@ export default function FounderStory() {
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--terracotta-500)' }}>
             The story
           </div>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem, 2.8vw, 2.4rem)', lineHeight: 1.25, letterSpacing: '-0.02em', fontWeight: 400, color: 'var(--ink-900)', margin: 0 }}>
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem, 2.8vw, 2.4rem)', lineHeight: 1.25, letterSpacing: '-0.02em', fontWeight: 400, color: 'var(--ink-900)', margin: 0 }}>
             The gap I couldn't stop hearing.
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>

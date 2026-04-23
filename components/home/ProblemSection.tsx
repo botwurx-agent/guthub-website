@@ -13,11 +13,11 @@ const questions = [
 
 export default function ProblemSection() {
   return (
-    <section style={{ padding: '112px 32px', background: 'var(--forest-500)', color: 'var(--cream-100)', position: 'relative' }}>
+    <section className="section-pad section-pad-v" style={{ padding: '112px 32px', background: 'var(--forest-500)', color: 'var(--cream-100)', position: 'relative' }}>
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto' }}>
         <Reveal style={{ textAlign: 'center', marginBottom: 64, maxWidth: 720, margin: '0 auto 64px' }}>
           <Eyebrow color="var(--terracotta-300)">The Reality</Eyebrow>
-          <h2 style={{
+          <h2 className="h2-mobile" style={{
             fontFamily: 'var(--font-display)',
             fontSize: 'clamp(2rem, 3.5vw, 3rem)',
             lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400,

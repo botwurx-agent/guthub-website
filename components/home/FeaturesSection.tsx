@@ -6,11 +6,11 @@ import { Eyebrow, Reveal } from '../ui';
 
 export default function FeaturesSection() {
   return (
-    <section style={{ padding: '96px 32px', background: 'var(--cream-50)' }}>
+    <section className="section-pad section-pad-v" style={{ padding: '96px 32px', background: 'var(--cream-50)' }}>
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto' }}>
         <Reveal style={{ textAlign: 'center', marginBottom: 72, maxWidth: 720, margin: '0 auto 72px' }}>
           <Eyebrow>What you get</Eyebrow>
-          <h2 style={{
+          <h2 className="h2-mobile" style={{
             fontFamily: 'var(--font-display)',
             fontSize: 'clamp(2rem, 3.5vw, 3rem)',
             lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, color: 'var(--ink-900)',
@@ -43,7 +43,7 @@ function FeatureRow({ eyebrow, title, body, bullets, visual, reverse, last }: {
   visual: React.ReactNode; reverse?: boolean; last?: boolean;
 }) {
   return (
-    <div style={{
+    <div className="feature-row-grid" style={{
       display: 'grid', gap: 72, alignItems: 'center',
       gridTemplateColumns: '1fr 1fr',
       marginBottom: last ? 0 : 96, paddingBottom: last ? 0 : 96,
@@ -52,7 +52,7 @@ function FeatureRow({ eyebrow, title, body, bullets, visual, reverse, last }: {
     }}>
       <Reveal style={{ direction: 'ltr' }} y={20} delay={reverse ? 100 : 0}>
         <Eyebrow>{eyebrow}</Eyebrow>
-        <h3 style={{
+        <h3 className="h3-mobile" style={{
           fontFamily: 'var(--font-display)', fontSize: 36, lineHeight: 1.22,
           letterSpacing: '-0.012em', fontWeight: 400, marginTop: 16, marginBottom: 24,
           color: 'var(--ink-900)',
@@ -67,7 +67,7 @@ function FeatureRow({ eyebrow, title, body, bullets, visual, reverse, last }: {
           ))}
         </ul>
       </Reveal>
-      <Reveal style={{ direction: 'ltr', display: 'flex', justifyContent: 'center' }} y={20} delay={reverse ? 0 : 100}>
+      <Reveal className="feature-row-visual-wrap" style={{ direction: 'ltr', display: 'flex', justifyContent: 'center' }} y={20} delay={reverse ? 0 : 100}>
         {visual}
       </Reveal>
     </div>

@@ -11,15 +11,15 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section id="how" style={{ padding: '112px 32px', background: 'var(--terracotta-50)', position: 'relative' }}>
+    <section id="how" className="section-pad section-pad-v" style={{ padding: '112px 32px', background: 'var(--terracotta-50)', position: 'relative' }}>
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto' }}>
         <Reveal style={{ textAlign: 'center', marginBottom: 56 }}>
           <Eyebrow>How it works</Eyebrow>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, color: 'var(--ink-900)' }}>
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, color: 'var(--ink-900)' }}>
             Built to <em style={{ fontStyle: 'italic' }}>support you</em>, not overwhelm you.
           </h2>
         </Reveal>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+        <div className="cards-3-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
           {steps.map((s, i) => (
             <Reveal key={s.n} delay={i * 120} y={18}>
               <StepCard step={s} />

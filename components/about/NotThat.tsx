@@ -23,15 +23,15 @@ const isList = [
 
 export default function NotThat() {
   return (
-    <section style={{ padding: '96px 32px', background: 'var(--cream-100)' }}>
+    <section className="section-pad section-pad-v" style={{ padding: '96px 32px', background: 'var(--cream-100)' }}>
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto' }}>
         <Reveal style={{ textAlign: 'center', marginBottom: 64, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>
           <Eyebrow>What Guthub is — and isn't</Eyebrow>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.4vw, 2.75rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 18, color: 'var(--ink-900)' }}>
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.4vw, 2.75rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 18, color: 'var(--ink-900)' }}>
             We built something different on purpose.
           </h2>
         </Reveal>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 900, margin: '0 auto' }}>
+        <div className="cards-2-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 900, margin: '0 auto' }}>
           {/* Not that */}
           <Reveal y={20}>
             <div style={{ padding: '32px', background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
