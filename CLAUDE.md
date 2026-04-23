@@ -29,18 +29,32 @@ Marketing site for GuthubAi, a personalized AI gut-health platform. Built from a
 Cream / forest / terracotta palette: `--cream-50/100/200`, `--forest-300/400/500/600`, `--terracotta-300/400/500/600`, `--ink-100..900`. Section backgrounds typically alternate `--cream-50` ↔ `--cream-100` ↔ `--terracotta-50` ↔ `--forest-500` (dark).
 
 ## Common workflow
-1. **Start dev server first**: `cd /home/claude/repo && npm run dev` (background it, wait for "Ready"). It dies between sessions.
+1. **Start dev server first**: `npm run dev` from the repo root (background it, wait for "Ready"). It dies between sessions. The repo path varies per session — use whatever the CWD is (e.g. `/home/user/guthub-website` or `/home/claude/repo`).
 2. **Make edits** with Edit/Write tools.
 3. **Verify visually**: write a small playwright script to `/tmp/`, screenshot the page or a specific section, Read the PNG. The user can't preview localhost — screenshots are how they confirm.
-4. **Commit + push** when the user approves. Push needs a fresh PAT from the user (classic, `repo` scope) — they revoke it after the session.
+4. **Commit + push** when the user approves. Push needs a fresh PAT from the user (classic, `repo` scope) — they reuse it across sessions and rotate themselves.
 
-## Push command (needs user-supplied PAT each session)
-```
-cd /home/claude/repo && git -c "http.https://github.com/.extraheader=Authorization: Basic $(printf 'x-access-token:%s' <PAT> | base64 -w0)" push origin main
-```
-Always pipe through `sed 's/ghp_[A-Za-z0-9]*/ghp_***/g'` to keep the token out of logs. Vercel picks it up automatically; live URL refreshes in ~90s.
+## Push protocol (important — don't use `git push origin`)
 
-The owner reuses the same PAT across sessions and rotates it themselves — don't ask them to revoke after each session, just ask for it (or for a fresh one if the previous expired).
+The sandbox's `origin` remote is a local HTTP proxy (`http://local_proxy@127.0.0.1:40429/...`) that is **read-only** for this identity — `git push origin` 403s, and MCP GitHub write tools also 403. Fetches work fine. Always push directly to `github.com` with the inline-PAT pattern below, and sync tracking refs afterward.
+
+**1. Push directly to github.com with inline PAT:**
+```
+git -c "http.https://github.com/.extraheader=Authorization: Basic $(printf 'x-access-token:%s' <PAT> | base64 -w0)" push https://github.com/botwurx-agent/guthub-website.git <localBranch>:<remoteBranch> 2>&1 | sed 's/ghp_[A-Za-z0-9]*/ghp_***/g' | tail -5
+```
+Always pipe through `sed 's/ghp_[A-Za-z0-9]*/ghp_***/g'` to keep the token out of logs.
+
+**2. Sync local tracking refs so the stop hook clears:**
+```
+git fetch origin
+# For feature branches on first push, also: git branch --set-upstream-to=origin/<branch> <branch>
+```
+The proxy's fetch sees the new SHA on github.com and updates `origin/<branch>`. Without this, `git status` still says "unpushed" and the `~/.claude/stop-hook-git-check.sh` hook keeps firing.
+
+**Deploy flow:**
+- Vercel auto-deploys every push to `main` — live URL refreshes in ~90s.
+- Feature branches (e.g. `claude/start-dev-server-htVZW`) get no auto-preview from inside the sandbox (`vercel.app` is blocked). To show the user the live changes, fast-forward main onto the feature branch and push main: `git checkout main && git merge --ff-only <branch>` then push `main:main`.
+- Ask before pushing to main — it's public-facing. A user saying "push it live" or "show me on vercel.app" is explicit permission.
 
 ## Sandbox quirks
 - No outbound access to tunnels (cloudflared, ngrok), Vercel, Netlify, etc. — they 403 with "Host not in allowlist". GitHub, npm, and Google Fonts work.
