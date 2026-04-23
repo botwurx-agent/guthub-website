@@ -19,9 +19,9 @@ export default function FounderStory() {
             />
           </div>
           {/* Floating caption */}
-          <div style={{ position: 'absolute', bottom: -16, right: -16, background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', padding: '14px 18px', boxShadow: 'var(--shadow-md)', maxWidth: 220 }}>
+          <div style={{ position: 'absolute', bottom: -16, right: -16, background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', padding: '14px 18px', boxShadow: 'var(--shadow-md)', maxWidth: 240 }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, color: 'var(--ink-900)', marginBottom: 2 }}>Steve Nazari</div>
-            <div style={{ fontSize: 12, color: 'var(--ink-600)' }}>Founder · BJJ blue belt · gut-health convert</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-600)' }}>Founder · BJJ brown belt · gut-health convert</div>
           </div>
         </Reveal>
 
@@ -31,16 +31,19 @@ export default function FounderStory() {
             The story
           </div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem, 2.8vw, 2.4rem)', lineHeight: 1.25, letterSpacing: '-0.02em', fontWeight: 400, color: 'var(--ink-900)', margin: 0 }}>
-            Twelve years of stomach problems solved by paying attention.
+            The gap I couldn't stop hearing.
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
-            Steve Nazari spent over a decade struggling with bloating, unpredictable symptoms, and a medical system that told him everything was "normal." As a competitive Brazilian jiu-jitsu athlete and father of four, he needed to perform — and he needed answers.
+            Born and raised in Los Angeles. A husband to an amazing wife and a father of 2 incredible boys. Sports has always played a huge role in my life. Competitive swimming in high school, water polo, basketball, twelve years on the Jiu Jitsu mats. Brown belt. Health, nutrition, and athletics have been wound together my whole life trying to figure out the right things to eat, especially as I got older.
           </p>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
-            After running his own tests, working with nutritionists, and obsessively logging every meal, he started to see patterns. Certain foods — even "healthy" ones — were wrecking his gut. Others made him feel elite.
+            My wife is a gut-health nutritionist. For years I'd hear her on calls with clients in the next room, people desperate for answers. Sometimes the question was simple. Sometimes complicated. But mostly, people just needed someone to talk to. Someone to ask. Someone to point them in the right direction.
           </p>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
-            He built the first version of Guthub to organize his own data. Then his wife Alina — a certified gut health practitioner — joined in. When friends and family started asking for access, they knew they were onto something.
+            I could relate. There have been plenty of times I felt lost, following a specific diet, trying to fix a particular issue, not knowing what to eat. And the help you need doesn't come on your schedule. It comes at 11pm when you're standing in front of the fridge.
+          </p>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
+            GuthubAi is my answer to that gap. Someone — anyone — with a helping hand, any time of the day.
           </p>
           <blockquote style={{ margin: 0, padding: '16px 20px', borderLeft: '3px solid var(--terracotta-400)', background: 'var(--terracotta-50)', borderRadius: '0 10px 10px 0' }}>
             <p style={{ fontSize: 16, lineHeight: 1.65, color: 'var(--ink-800)', fontStyle: 'italic', margin: 0 }}>
