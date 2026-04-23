@@ -10,7 +10,7 @@ export default function Hero() {
     <section style={{ position: 'relative', padding: '40px 32px 96px', background: 'var(--cream-50)', overflow: 'hidden' }}>
       <div style={{
         maxWidth: 'var(--maxw-wide)', margin: '0 auto',
-        display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 80,
+        display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1fr)', gap: 80,
         alignItems: 'center',
       }}>
         <div>
@@ -54,13 +54,13 @@ export default function Hero() {
             </div>
           </Reveal>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', position: 'relative', width: '100%' }}>
           <div aria-hidden style={{
             position: 'absolute', width: 480, height: 480, borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(224,124,89,0.22) 0%, rgba(224,124,89,0) 65%)',
             animation: 'heroGlow 6s ease-in-out infinite', pointerEvents: 'none', zIndex: 0,
           }} />
-          <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440 }}>
             <ChatAnimation />
           </div>
         </div>

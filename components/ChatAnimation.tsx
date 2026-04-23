@@ -53,6 +53,7 @@ export default function ChatAnimation() {
       background: '#1a1a1c', border: '2px solid #2e2e30',
       boxShadow: '0 40px 80px -20px rgba(30,40,35,0.45), 0 18px 40px -12px rgba(30,40,35,0.25)',
       position: 'relative',
+      minHeight: 0, overflow: 'hidden',
     }}>
       {/* camera dot */}
       <div style={{
