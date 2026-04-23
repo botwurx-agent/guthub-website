@@ -47,7 +47,7 @@ export default function OnboardingFlowAnimation() {
   const filledCount = Math.min(phase, 6);
 
   return (
-    <section ref={ref} style={{ padding: '96px 32px 112px', background: 'var(--cream-100)', position: 'relative', overflow: 'hidden' }}>
+    <section ref={ref} style={{ padding: '96px 32px 112px', background: 'var(--terracotta-50)', position: 'relative', overflow: 'hidden' }}>
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 56, maxWidth: 720, marginLeft: 'auto', marginRight: 'auto' }}>
           <Eyebrow>How it all connects</Eyebrow>
