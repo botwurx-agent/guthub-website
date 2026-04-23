@@ -40,6 +40,8 @@ cd /home/claude/repo && git -c "http.https://github.com/.extraheader=Authorizati
 ```
 Always pipe through `sed 's/ghp_[A-Za-z0-9]*/ghp_***/g'` to keep the token out of logs. Vercel picks it up automatically; live URL refreshes in ~90s.
 
+The owner reuses the same PAT across sessions and rotates it themselves — don't ask them to revoke after each session, just ask for it (or for a fresh one if the previous expired).
+
 ## Sandbox quirks
 - No outbound access to tunnels (cloudflared, ngrok), Vercel, Netlify, etc. — they 403 with "Host not in allowlist". GitHub, npm, and Google Fonts work.
 - `vercel.app` is also blocked, so I can't screenshot the live deploy from inside the sandbox — only the local dev server.
