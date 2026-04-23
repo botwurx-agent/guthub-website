@@ -11,9 +11,9 @@ const platforms = [
 
 function LaptopMockup() {
   return (
-    <div style={{ position: 'relative', perspective: 1200 }}>
+    <div style={{ position: 'relative' }}>
       {/* Laptop body */}
-      <div style={{ position: 'relative', transform: 'rotateX(4deg) rotateY(-6deg)', transformOrigin: 'center bottom', transition: 'transform 600ms var(--ease-out)' }}>
+      <div style={{ position: 'relative' }}>
         {/* Screen */}
         <div style={{ width: 420, background: '#1a1a1c', borderRadius: '12px 12px 0 0', border: '6px solid #2a2a2c', padding: 0, overflow: 'hidden', boxShadow: '0 0 0 1px rgba(255,255,255,0.06), 0 40px 80px -20px rgba(0,0,0,0.6)' }}>
           {/* Menu bar */}
