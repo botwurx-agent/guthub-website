@@ -30,9 +30,9 @@ export default function ProblemSection() {
             Gut health isn't linear. Symptoms shift. Context matters. Questions come up daily — usually at 11pm, when no doctor is available.
           </p>
         </Reveal>
-        <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+        <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', alignItems: 'stretch' }}>
           {questions.map((it, i) => (
-            <Reveal key={i} delay={i * 80} y={14}>
+            <Reveal key={i} delay={i * 80} y={14} style={{ height: '100%' }}>
               <QuestionCard Icon={it.icon} q={it.q} />
             </Reveal>
           ))}
@@ -50,7 +50,7 @@ function QuestionCard({ Icon, q }: { Icon: React.ComponentType<{ size?: number; 
       style={{
         background: hover ? 'rgba(250,245,238,.10)' : 'rgba(250,245,238,.06)',
         borderRadius: 'var(--radius-lg)', border: '1px solid rgba(250,245,238,.14)',
-        padding: 24, backdropFilter: 'blur(6px)',
+        padding: 24, backdropFilter: 'blur(6px)', height: '100%', boxSizing: 'border-box',
         transform: hover ? 'translateY(-2px)' : 'translateY(0)',
         transition: 'all 240ms var(--ease-out)',
       }}>
