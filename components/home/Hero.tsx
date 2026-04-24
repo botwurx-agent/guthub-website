@@ -7,7 +7,7 @@ import { CheckCircle, XCircle, Stethoscope } from 'lucide-react';
 
 export default function Hero() {
   return (
-    <section className="hero-section" style={{ position: 'relative', padding: '40px 32px 96px', background: 'var(--cream-50)', overflow: 'hidden' }}>
+    <section className="hero-section" style={{ position: 'relative', padding: '40px 32px 96px', background: 'var(--cream-50)' }}>
       <div className="hero-grid" style={{
         maxWidth: 'var(--maxw-wide)', margin: '0 auto',
         display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1fr)', gap: 80,
