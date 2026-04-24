@@ -102,8 +102,8 @@ export default function ChatAnimation() {
           </div>
           {/* messages */}
           <div style={{
-            padding: '20px 18px', flex: 1,
-            display: 'flex', flexDirection: 'column', gap: 10,
+            padding: '20px 18px', flex: 1, minHeight: 0,
+            display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 10,
             background: 'var(--cream-50)', overflow: 'hidden',
           }}>
             {script.slice(0, visible).map((m, i) => <Bubble key={i} from={m.from as 'user' | 'ai'} text={m.text} />)}
