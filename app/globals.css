@@ -209,7 +209,7 @@ button { font-family: var(--font-body); }
   .hero-h1 { margin-bottom: 28px !important; padding-bottom: 0 !important; font-size: clamp(2.25rem, 10vw, 3rem) !important; line-height: 1.15 !important; }
   .hero-mock-col { max-width: 360px !important; margin: 0 auto !important; }
   .hero-glow { width: 320px !important; height: 320px !important; }
-  .chat-phone { aspect-ratio: 3/4.05 !important; padding: 14px 14px 40px !important; }
+  .chat-phone { aspect-ratio: 3/4.05 !important; padding: 14px !important; }
 
   /* Header */
   .header-inner { padding: 12px 16px !important; gap: 12px !important; }

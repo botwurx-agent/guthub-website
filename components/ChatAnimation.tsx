@@ -49,7 +49,7 @@ export default function ChatAnimation() {
   return (
     <div className="chat-phone" style={{
       width: '100%', maxWidth: 440, aspectRatio: '3/4.3',
-      borderRadius: 44, padding: '16px 16px 28px',
+      borderRadius: 44, padding: 16,
       background: '#1a1a1c', border: '2px solid #2e2e30',
       boxShadow: '0 40px 80px -20px rgba(30,40,35,0.45), 0 18px 40px -12px rgba(30,40,35,0.25)',
       position: 'relative',
