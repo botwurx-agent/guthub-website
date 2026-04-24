@@ -54,6 +54,7 @@ export default function ChatAnimation() {
       boxShadow: '0 40px 80px -20px rgba(30,40,35,0.45), 0 18px 40px -12px rgba(30,40,35,0.25)',
       position: 'relative',
       minHeight: 0, overflow: 'hidden',
+      display: 'flex', flexDirection: 'column',
     }}>
       {/* camera dot */}
       <div style={{
@@ -63,7 +64,7 @@ export default function ChatAnimation() {
       }} />
       {/* screen */}
       <div style={{
-        width: '100%', height: '100%', borderRadius: 28,
+        flex: 1, minHeight: 0, width: '100%', borderRadius: 28,
         overflow: 'hidden', background: '#fff', border: '1px solid #000',
         display: 'flex', flexDirection: 'column',
       }}>
