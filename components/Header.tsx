@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Menu, X } from 'lucide-react';
 import { Button } from './ui';
 import { openAuth } from './AuthModal';
 
@@ -15,12 +16,18 @@ const navItems = [
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen]);
 
   return (
     <header style={{
@@ -55,12 +62,99 @@ export default function Header() {
             <span className="header-cta-full">Start free — 2 days</span>
             <span className="header-cta-short" style={{ display: 'none' }}>Start free</span>
           </Button>
+          <button
+            className="menu-toggle"
+            aria-label="Open menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(true)}
+            style={{
+              display: 'none',
+              background: 'none', border: 'none', padding: 6, marginLeft: 4,
+              cursor: 'pointer', color: 'var(--ink-800)',
+            }}
+          >
+            <Menu size={24} />
+          </button>
         </div>
       </div>
+
+      {menuOpen && (
+        <div
+          className="mobile-nav-overlay"
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed', inset: 0, zIndex: 60,
+            background: 'var(--cream-50)',
+            display: 'flex', flexDirection: 'column',
+            animation: 'authFadeIn 200ms var(--ease-out)',
+          }}
+        >
+          <div style={{
+            display: 'flex', alignItems: 'center',
+            padding: '14px 20px', borderBottom: '1px solid var(--border)',
+          }}>
+            <Link href="/" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+              <Image src="/logo-full.png" alt="GutHub" width={120} height={32} style={{ height: 32, width: 'auto' }} />
+            </Link>
+            <button
+              aria-label="Close menu"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                marginLeft: 'auto', background: 'none', border: 'none', padding: 6,
+                cursor: 'pointer', color: 'var(--ink-800)',
+              }}
+            >
+              <X size={24} />
+            </button>
+          </div>
+          <nav style={{
+            display: 'flex', flexDirection: 'column',
+            padding: '16px 20px', gap: 4,
+          }}>
+            {navItems.map(item => (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  fontSize: 22, fontWeight: 500, color: 'var(--ink-900)',
+                  textDecoration: 'none', padding: '14px 4px',
+                  borderBottom: '1px solid var(--border)',
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div style={{
+            marginTop: 'auto', padding: '20px',
+            display: 'flex', flexDirection: 'column', gap: 12,
+            borderTop: '1px solid var(--border)',
+          }}>
+            <Button variant="primary" size="lg" onClick={() => { setMenuOpen(false); openAuth('signup'); }}>
+              Start your 2-day free trial
+            </Button>
+            <button
+              onClick={() => { setMenuOpen(false); openAuth('signin'); }}
+              style={{
+                fontSize: 16, fontWeight: 500, color: 'var(--ink-700)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontFamily: 'var(--font-body)', padding: '8px',
+              }}
+            >
+              Sign in
+            </button>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @media (max-width: 767px) {
           .header-cta-full { display: none !important; }
           .header-cta-short { display: inline !important; }
+          .menu-toggle { display: inline-flex !important; }
         }
       `}</style>
     </header>
