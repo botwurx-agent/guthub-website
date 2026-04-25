@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auth preview — GutHub</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--cream-100); font-family: var(--font-body); }
+  .page {
+    min-height: 100vh;
+    padding: 48px 32px 64px;
+  }
+  .header {
+    max-width: 1100px; margin: 0 auto 40px;
+    text-align: center;
+  }
+  .header-eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--terracotta-500);
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-family: var(--font-display); font-weight: 400;
+    font-size: clamp(2rem, 3.4vw, 2.75rem);
+    letter-spacing: -0.02em; line-height: 1.2;
+    color: var(--ink-900); margin: 0 0 12px;
+  }
+  .header p {
+    font-size: 16px; line-height: 1.55; color: var(--ink-700);
+    max-width: 560px; margin: 0 auto;
+  }
+  .grid {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+  }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--cream-50);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: 24px;
+    box-shadow: 0 8px 24px -8px rgba(42,61,58,0.12);
+  }
+  .card-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-600);
+    margin-bottom: 14px;
+  }
+  .state-wrap {
+    /* mimic the fixed modal visually inside a static card */
+    position: relative;
+    background: linear-gradient(180deg, rgba(31,45,42,0.08) 0%, rgba(31,45,42,0.18) 100%);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    display: flex; justify-content: center; align-items: flex-start;
+  }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="header-eyebrow">Sign-in / sign-up preview</div>
+    <h1>The auth modal — both states.</h1>
+    <p>This is what lives behind every "Sign up", "Sign in", and "Start your 2-day trial" button on the site. Normally it floats over a dim backdrop; shown here inline so you can review the design.</p>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-label">Sign up · default state</div>
+      <div class="state-wrap"><div id="signup-mount"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Sign in · returning user</div>
+      <div class="state-wrap"><div id="signin-mount"></div></div>
+    </div>
+  </div>
+</div>
+
+<script type="text/babel">
+function Field({ label, type, placeholder, autoComplete, extra, defaultValue }) {
+  const [focus, setFocus] = React.useState(false);
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', letterSpacing: '0.02em' }}>
+          {label}
+        </span>
+        {extra}
+      </div>
+      <input
+        type={type}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        defaultValue={defaultValue}
+        onFocus={() => setFocus(true)}
+        onBlur={() => setFocus(false)}
+        style={{
+          padding: '12px 14px',
+          background: '#fff',
+          border: `1px solid ${focus ? 'var(--terracotta-400)' : 'var(--border)'}`,
+          borderRadius: 10,
+          fontSize: 15, fontFamily: 'var(--font-body)',
+          color: 'var(--ink-900)',
+          outline: 'none',
+          transition: 'border-color 160ms, box-shadow 160ms',
+          boxShadow: focus ? '0 0 0 3px rgba(224,124,89,0.15)' : 'none',
+        }}
+      />
+    </label>
+  );
+}
+
+function GoogleButton({ label }) {
+  return (
+    <button
+      style={{
+        width: '100%', padding: '12px 18px',
+        background: '#fff', border: '1px solid var(--border)',
+        borderRadius: 999, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600,
+        color: 'var(--ink-900)',
+        transition: 'background 160ms, border-color 160ms, box-shadow 160ms',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'var(--cream-100)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.boxShadow = 'none'; }}
+    >
+      <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+        <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+        <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+        <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+      </svg>
+      {label}
+    </button>
+  );
+}
+
+function AuthCard({ mode }) {
+  const isSignup = mode === 'signup';
+  return (
+    <div style={{
+      background: 'var(--cream-50)', width: '100%', maxWidth: 440,
+      borderRadius: 'var(--radius-2xl)',
+      boxShadow: '0 40px 80px -20px rgba(31, 45, 42, 0.35)',
+      overflow: 'hidden', position: 'relative',
+    }}>
+      <button aria-label="Close" style={{
+        position: 'absolute', top: 16, right: 16,
+        width: 34, height: 34, borderRadius: '50%',
+        border: 'none', background: 'transparent', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: 'var(--ink-600)', zIndex: 2,
+      }}>
+        <i data-lucide="x" style={{ width: 18, height: 18 }}></i>
+      </button>
+
+      <div style={{ padding: '36px 36px 28px' }}>
+        <img src="../../assets/logo-full.png" alt="GutHub" style={{ height: 26, marginBottom: 20 }} />
+
+        <h2 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 26, fontWeight: 400, lineHeight: 1.22,
+          letterSpacing: '-0.02em', color: 'var(--ink-900)',
+          margin: '0 0 8px',
+        }}>
+          {isSignup
+            ? <>Start your <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>2-day free trial</em></>
+            : <>Welcome back.</>}
+        </h2>
+        <p style={{ fontSize: 14.5, color: 'var(--ink-600)', margin: '0 0 24px', lineHeight: 1.5 }}>
+          {isSignup
+            ? 'Full access to every feature. Cancel anytime.'
+            : 'Sign in to continue your journey.'}
+        </p>
+
+        <GoogleButton label={isSignup ? 'Continue with Google' : 'Sign in with Google'} />
+
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          margin: '20px 0', fontSize: 12, color: 'var(--ink-500)',
+          textTransform: 'uppercase', letterSpacing: '0.1em',
+        }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          <span>{isSignup ? 'or sign up with email' : 'or with email'}</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        </div>
+
+        <form onSubmit={e => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {isSignup && (
+            <Field label="Name" type="text" placeholder="Alex Morgan" autoComplete="name" />
+          )}
+          <Field
+            label="Email" type="email"
+            placeholder="you@example.com" autoComplete="email"
+            defaultValue={isSignup ? '' : 'alex@example.com'}
+          />
+          <Field
+            label="Password" type="password"
+            placeholder={isSignup ? 'At least 8 characters' : 'Your password'}
+            autoComplete={isSignup ? 'new-password' : 'current-password'}
+            extra={!isSignup && (
+              <a href="#" onClick={e => e.preventDefault()} style={{
+                fontSize: 12, color: 'var(--terracotta-500)', textDecoration: 'none', fontWeight: 500,
+              }}>Forgot?</a>
+            )}
+          />
+
+          <button type="submit" style={{
+            marginTop: 8, padding: '14px 20px',
+            background: 'var(--terracotta-400)', color: '#fff',
+            border: 'none', borderRadius: 999, cursor: 'pointer',
+            fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600,
+            transition: 'background 200ms, box-shadow 200ms',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--terracotta-500)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--terracotta-400)'; e.currentTarget.style.boxShadow = 'none'; }}
+          >
+            {isSignup ? 'Create account · Start 2-day trial' : 'Sign in'}
+          </button>
+        </form>
+
+        <div style={{
+          textAlign: 'center', marginTop: 20, fontSize: 14, color: 'var(--ink-600)',
+        }}>
+          {isSignup ? 'Already have an account? ' : 'New to Guthub? '}
+          <a href="#" onClick={e => e.preventDefault()}
+            style={{ color: 'var(--terracotta-500)', textDecoration: 'none', fontWeight: 600 }}>
+            {isSignup ? 'Sign in' : 'Create an account'}
+          </a>
+        </div>
+      </div>
+
+      {isSignup && (
+        <div style={{
+          padding: '14px 36px', background: 'var(--cream-100)',
+          borderTop: '1px solid var(--border)',
+          fontSize: 12, color: 'var(--ink-600)', lineHeight: 1.5, textAlign: 'center',
+        }}>
+          By continuing you agree to our <a href="#" style={{ color: 'var(--ink-800)', fontWeight: 500 }}>Terms</a> and <a href="#" style={{ color: 'var(--ink-800)', fontWeight: 500 }}>Privacy Policy</a>.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Mount({ mode }) {
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      if (!window.lucide) return;
+      if (document.querySelectorAll('[data-lucide]').length) window.lucide.createIcons();
+    }, 300);
+    return () => clearInterval(id);
+  }, []);
+  return <AuthCard mode={mode} />;
+}
+
+// Rewrite logo path (the page is at ui_kits/website/, not ui_kits/website/preview/)
+const root1 = ReactDOM.createRoot(document.getElementById('signup-mount'));
+root1.render(<Mount mode="signup" />);
+const root2 = ReactDOM.createRoot(document.getElementById('signin-mount'));
+root2.render(<Mount mode="signin" />);
+</script>
+</body>
+</html>

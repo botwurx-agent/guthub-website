@@ -1,0 +1,281 @@
+/* ==========================================================================
+   GutHub Design System — Colors & Typography
+   Warm + premium direction: terracotta, cream, deep forest green.
+   High-contrast serif display (magazine/wellness) + clean humanist sans body.
+   ========================================================================== */
+
+/* ---------- Fonts ---------- */
+/* Primary display: Source Serif 4 (high-contrast serif, magazine feel).
+   Primary body: Inter (humanist sans, excellent readability for 40-75 audience).
+   Accent/editorial: "Source Serif 4" italic for pull quotes.
+   Loaded via Google Fonts in index.html — see /fonts for local fallbacks. */
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..900;1,8..60,300..900&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* ==========================================================================
+     COLOR TOKENS
+     Sampled from the GutHub quartet logo, shifted toward "warm + premium":
+     the coral becomes a refined terracotta, the green deepens to forest,
+     cream replaces pure white, charcoal replaces pure black.
+     ========================================================================== */
+
+  /* --- Brand: quartet (from logo) --- */
+  --brand-coral:     #E87A6B;   /* eye petal */
+  --brand-yellow:    #F2C94C;   /* left petal */
+  --brand-green:     #7FB77E;   /* right petal */
+  --brand-teal:      #6FB8A8;   /* bottom petal */
+
+  /* --- Primary palette (warm + premium) --- */
+  --terracotta-50:   #FBEEE9;
+  --terracotta-100:  #F5D5C9;
+  --terracotta-200:  #EEB3A0;
+  --terracotta-300:  #E5917A;
+  --terracotta-400:  #DB6F56;   /* primary CTA */
+  --terracotta-500:  #C85A44;   /* primary CTA hover */
+  --terracotta-600:  #A64732;
+  --terracotta-700:  #7F3424;
+
+  --forest-50:       #EEF3EF;
+  --forest-100:      #D5E0D8;
+  --forest-200:      #A9C1AE;
+  --forest-300:      #6F9477;
+  --forest-400:      #3F6A4A;
+  --forest-500:      #22432E;   /* deep forest — section bgs */
+  --forest-600:      #1A3524;
+  --forest-700:      #13271B;
+
+  --cream-50:        #FDFAF3;   /* page bg */
+  --cream-100:       #FAF5EE;
+  --cream-200:       #F4ECDF;
+  --cream-300:       #EADFCB;
+  --cream-400:       #D9CAB0;
+
+  --sand-100:        #F0E4D1;
+  --sand-200:        #E3D1B4;
+
+  --ink-900:         #1B1A17;   /* body text */
+  --ink-800:         #2B2A26;
+  --ink-700:         #3C3A34;
+  --ink-600:         #5A564D;
+  --ink-500:         #7A7468;
+  --ink-400:         #9D978A;
+  --ink-300:         #C2BDB1;
+  --ink-200:         #E0DCD2;
+  --ink-100:         #EFEBE2;
+
+  /* --- Semantic surface & text --- */
+  --bg:              var(--cream-50);
+  --bg-elev:         #FFFFFF;
+  --bg-muted:        var(--cream-100);
+  --bg-sunken:       var(--cream-200);
+  --bg-inverse:      var(--forest-500);
+
+  --fg:              var(--ink-900);
+  --fg-muted:        var(--ink-600);
+  --fg-subtle:       var(--ink-500);
+  --fg-inverse:      var(--cream-100);
+  --fg-inverse-muted:rgba(250, 245, 238, 0.72);
+
+  --border:          var(--ink-200);
+  --border-strong:   var(--ink-300);
+  --border-inverse:  rgba(250, 245, 238, 0.16);
+
+  --accent:          var(--terracotta-400);
+  --accent-hover:    var(--terracotta-500);
+  --accent-soft:     var(--terracotta-50);
+  --accent-ink:      var(--terracotta-700);
+
+  --success:         var(--forest-400);
+  --warning:         #C98A1E;
+  --error:           #B4422C;
+
+  /* ==========================================================================
+     TYPOGRAPHY
+     ========================================================================== */
+  --font-display:    "Source Serif 4", "Tiempos Headline", Georgia, serif;
+  --font-body:       "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:       "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Type scale — readable but modern.
+     Balanced accessibility: body floor is 17px, not the 14-15px of a typical SaaS. */
+  --fs-eyebrow:      0.8125rem;   /* 13px — all-caps label */
+  --fs-body-sm:      0.9375rem;   /* 15px */
+  --fs-body:         1.0625rem;   /* 17px — minimum body */
+  --fs-body-lg:      1.1875rem;   /* 19px — intro/lede */
+  --fs-h6:           1.125rem;    /* 18px */
+  --fs-h5:           1.375rem;    /* 22px */
+  --fs-h4:           1.75rem;     /* 28px */
+  --fs-h3:           2.25rem;     /* 36px */
+  --fs-h2:           3rem;        /* 48px */
+  --fs-h1:           4rem;        /* 64px */
+  --fs-display:      5.5rem;      /* 88px — hero */
+
+  --lh-tight:        1.08;
+  --lh-snug:         1.18;
+  --lh-body:         1.55;
+  --lh-loose:        1.7;
+
+  --ls-tight:        -0.022em;
+  --ls-snug:         -0.012em;
+  --ls-normal:       0;
+  --ls-eyebrow:      0.14em;
+
+  /* ==========================================================================
+     SPACING & RADII
+     ========================================================================== */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-7:  48px;
+  --space-8:  64px;
+  --space-9:  96px;
+  --space-10: 128px;
+
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  16px;
+  --radius-xl:  24px;
+  --radius-2xl: 32px;
+  --radius-pill: 999px;
+
+  /* ==========================================================================
+     SHADOWS — soft, warm, never bluish. Layered for realism.
+     ========================================================================== */
+  --shadow-xs: 0 1px 2px rgba(40, 30, 20, 0.06);
+  --shadow-sm: 0 2px 6px rgba(40, 30, 20, 0.06), 0 1px 2px rgba(40, 30, 20, 0.04);
+  --shadow-md: 0 10px 24px -8px rgba(40, 30, 20, 0.12), 0 2px 6px rgba(40, 30, 20, 0.05);
+  --shadow-lg: 0 24px 48px -16px rgba(40, 30, 20, 0.18), 0 4px 12px rgba(40, 30, 20, 0.06);
+  --shadow-xl: 0 40px 80px -24px rgba(40, 30, 20, 0.22), 0 8px 20px rgba(40, 30, 20, 0.06);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+  /* ==========================================================================
+     MOTION
+     ========================================================================== */
+  --ease-out:  cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.6, 0, 0.2, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+  --dur-fast: 120ms;
+  --dur-med:  240ms;
+  --dur-slow: 480ms;
+
+  /* Content widths */
+  --maxw-prose: 68ch;
+  --maxw-page:  1200px;
+  --maxw-wide:  1360px;
+}
+
+/* ==========================================================================
+   SEMANTIC TYPOGRAPHY — apply these classes or use the vars directly.
+   ========================================================================== */
+
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg);
+  background: var(--bg);
+  font-feature-settings: "ss01", "cv11";
+}
+
+.display, h1.display {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 6vw + 1rem, var(--fs-display));
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  font-weight: 400;
+  color: var(--fg);
+  text-wrap: balance;
+}
+
+h1, .h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 4.5vw + 0.5rem, var(--fs-h1));
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  font-weight: 400;
+  text-wrap: balance;
+}
+
+h2, .h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3vw + 0.5rem, var(--fs-h2));
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-snug);
+  font-weight: 400;
+  text-wrap: balance;
+}
+
+h3, .h3 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-snug);
+  font-weight: 500;
+}
+
+h4, .h4 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h4);
+  line-height: 1.25;
+  font-weight: 500;
+}
+
+h5, .h5 {
+  font-family: var(--font-body);
+  font-size: var(--fs-h5);
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+h6, .h6 {
+  font-family: var(--font-body);
+  font-size: var(--fs-h6);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+p { font-size: var(--fs-body); line-height: var(--lh-body); color: var(--fg); }
+p.lede { font-size: var(--fs-body-lg); line-height: 1.5; color: var(--fg-muted); }
+p.small { font-size: var(--fs-body-sm); color: var(--fg-muted); }
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: var(--fs-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  font-weight: 600;
+  color: var(--accent-ink);
+}
+
+em, .editorial-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.quote {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: 1.3;
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: var(--ls-snug);
+  text-wrap: balance;
+}
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+a { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { color: var(--accent-hover); }
+
+::selection { background: var(--terracotta-100); color: var(--terracotta-700); }
