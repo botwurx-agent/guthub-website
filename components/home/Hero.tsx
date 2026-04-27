@@ -50,7 +50,7 @@ export default function Hero() {
             <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', alignItems: 'center', fontSize: 14, color: 'var(--ink-600)' }}>
               <TrustBullet Icon={CheckCircle}>Full access for 2 days</TrustBullet>
               <TrustBullet Icon={XCircle}>Cancel anytime</TrustBullet>
-              <TrustBullet Icon={Stethoscope}>Complements professional care</TrustBullet>
+              <TrustBullet Icon={Stethoscope}>Shaped by a certified gut health practitioner</TrustBullet>
             </div>
           </Reveal>
         </div>
