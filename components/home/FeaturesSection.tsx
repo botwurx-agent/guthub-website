@@ -186,14 +186,48 @@ function MacroPill({ n, label, tone }: { n: string; label: string; tone: 'terrac
   );
 }
 
+const coachScript: { from: 'user' | 'ai'; text: string; delay: number }[] = [
+  { from: 'user', text: "Coffee's been hitting me weird lately. Is it just me?", delay: 100 },
+  { from: 'ai', text: "Not just you. Looking at the last 14 days — you've logged bloating or discomfort 6 times after coffee, mostly on days you had it before breakfast.", delay: 1400 },
+  { from: 'ai', text: "On the 4 days you had coffee with food, no symptoms reported. That's a pretty clear pattern.", delay: 1600 },
+  { from: 'user', text: "Huh. So it's not the coffee itself?", delay: 1200 },
+  { from: 'ai', text: "Looks more like timing than the coffee. Want to test it for a few days — coffee only after breakfast — and we'll see if it holds?", delay: 1400 },
+];
+
 function CoachChatVisual() {
-  const messages: { from: 'user' | 'ai'; text: string }[] = [
-    { from: 'user', text: "Coffee's been hitting me weird lately. Is it just me?" },
-    { from: 'ai', text: "Not just you. Looking at the last 14 days — you've logged bloating or discomfort 6 times after coffee, mostly on days you had it before breakfast." },
-    { from: 'ai', text: "On the 4 days you had coffee with food, no symptoms reported. That's a pretty clear pattern." },
-    { from: 'user', text: "Huh. So it's not the coffee itself?" },
-    { from: 'ai', text: "Looks more like timing than the coffee. Want to test it for a few days — coffee only after breakfast — and we'll see if it holds?" },
-  ];
+  const [visible, setVisible] = useState(1);
+  const [typing, setTyping] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const wait = (ms: number) => new Promise<void>(r => {
+      const t = setTimeout(r, ms);
+      timers.push(t);
+    });
+    async function run() {
+      while (!cancelled) {
+        setVisible(1);
+        setTyping(false);
+        for (let i = 1; i < coachScript.length; i++) {
+          if (cancelled) return;
+          await wait(coachScript[i].delay);
+          if (cancelled) return;
+          if (coachScript[i].from === 'ai') {
+            setTyping(true);
+            await wait(900);
+            if (cancelled) return;
+            setTyping(false);
+          }
+          setVisible(i + 1);
+        }
+        await wait(5000);
+      }
+    }
+    run();
+    return () => { cancelled = true; timers.forEach(clearTimeout); };
+  }, []);
+
   return (
     <div style={{
       width: 300, height: 600, borderRadius: 44,
@@ -219,9 +253,10 @@ function CoachChatVisual() {
           </div>
         </div>
         <div style={{ flex: 1, minHeight: 0, padding: '14px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 8, background: 'var(--cream-50)', overflow: 'hidden' }}>
-          {messages.map((m, i) => (
+          {coachScript.slice(0, visible).map((m, i) => (
             <CoachBubble key={i} from={m.from}>{m.text}</CoachBubble>
           ))}
+          {typing && <CoachTypingBubble />}
         </div>
         <div style={{ padding: '10px 12px', borderTop: '1px solid var(--ink-100)', display: 'flex', gap: 8, alignItems: 'center', background: '#fff', flexShrink: 0 }}>
           <div style={{ flex: 1, padding: '8px 12px', borderRadius: 999, background: 'var(--cream-100)', fontSize: 12, color: 'var(--ink-500)' }}>Ask Guthub anything…</div>
@@ -248,7 +283,27 @@ function CoachBubble({ from, children }: { from: 'user' | 'ai'; children: React.
       fontSize: 12, lineHeight: 1.4,
       border: isAi ? '1px solid var(--ink-100)' : 'none',
       boxShadow: isAi ? 'var(--shadow-xs)' : 'none',
+      animation: 'bubbleIn 320ms var(--ease-out)',
     }}>{children}</div>
+  );
+}
+
+function CoachTypingBubble() {
+  return (
+    <div style={{
+      alignSelf: 'flex-start', padding: '10px 14px',
+      borderRadius: '14px 14px 14px 4px', background: '#fff',
+      border: '1px solid var(--ink-100)', display: 'flex', gap: 4,
+      animation: 'bubbleIn 200ms var(--ease-out)',
+    }}>
+      {[0, 1, 2].map(i => (
+        <span key={i} style={{
+          width: 5, height: 5, borderRadius: '50%', background: 'var(--ink-400)',
+          animation: `typing 1.2s ${i * 0.15}s infinite`,
+          display: 'block',
+        }} />
+      ))}
+    </div>
   );
 }
 
