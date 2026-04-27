@@ -33,7 +33,7 @@ export default function Hero() {
           </Reveal>
           <Reveal delay={260} y={12}>
             <p style={{ fontSize: 19, lineHeight: 1.55, color: 'var(--ink-700)', maxWidth: 520, marginBottom: 36 }}>
-              Your personalized AI gut health assistant — ongoing support, clarity, and real-time feedback. So you're never stuck guessing, googling, or feeling alone.
+              A personalized coach that knows your gut. So you can stop guessing, googling, or feeling alone.
             </p>
           </Reveal>
           <Reveal delay={380} y={12}>
