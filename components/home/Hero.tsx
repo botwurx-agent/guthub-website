@@ -27,7 +27,7 @@ export default function Hero() {
             }}>
               Nutrition guidance{' '}
               <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>
-                you can actually talk to.
+                you can actually talk to. Anytime.
               </em>
             </h1>
           </Reveal>
