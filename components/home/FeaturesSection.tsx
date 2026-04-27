@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, CSSProperties } from 'react';
+import Image from 'next/image';
 import { Check, ShoppingBasket, TrendingUp, RefreshCw, Sparkles, ShieldCheck } from 'lucide-react';
 import { Eyebrow, Reveal } from '../ui';
 
@@ -18,6 +19,11 @@ export default function FeaturesSection() {
             Everything you need, <em style={{ fontStyle: 'italic' }}>all in one place.</em>
           </h2>
         </Reveal>
+
+        <FeatureRow reverse eyebrow="Your AI coach" title="A nutritionist that remembers everything you've told it."
+          body="Most AI chatbots forget you the moment the conversation ends. Guthub doesn't. It builds on your intake, your meal logs, your symptoms, and every conversation you've had — so the advice gets sharper the more you use it."
+          bullets={['Pulls context from your intake form, meal logs, and past conversations', "Spots patterns across days and weeks you'd never catch on your own", 'Suggests small changes to test, not dramatic eliminations']}
+          visual={<CoachChatVisual />} />
 
         <FeatureRow eyebrow="Snap & know" title="Take a photo of your meal. Get macros in seconds."
           body="No more guessing portions or hunting through food databases. Guthub identifies ingredients, estimates calories, protein, carbs, and fat — and flags anything that could trigger your symptoms."
@@ -177,6 +183,72 @@ function MacroPill({ n, label, tone }: { n: string; label: string; tone: 'terrac
       <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 500, lineHeight: 1 }}>{n}</div>
       <div style={{ fontSize: 10, marginTop: 2, letterSpacing: '0.04em', textTransform: 'uppercase', fontWeight: 600 }}>{label}</div>
     </div>
+  );
+}
+
+function CoachChatVisual() {
+  const messages: { from: 'user' | 'ai'; text: string }[] = [
+    { from: 'user', text: "Coffee's been hitting me weird lately. Is it just me?" },
+    { from: 'ai', text: "Not just you. Looking at the last 14 days — you've logged bloating or discomfort 6 times after coffee, mostly on days you had it before breakfast." },
+    { from: 'ai', text: "On the 4 days you had coffee with food, no symptoms reported. That's a pretty clear pattern." },
+    { from: 'user', text: "Huh. So it's not the coffee itself?" },
+    { from: 'ai', text: "Looks more like timing than the coffee. Want to test it for a few days — coffee only after breakfast — and we'll see if it holds?" },
+  ];
+  return (
+    <div style={{
+      width: 300, height: 600, borderRadius: 44,
+      background: 'var(--ink-900)', padding: 10, boxShadow: 'var(--shadow-xl)', position: 'relative',
+    }}>
+      <div style={{
+        position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
+        width: 100, height: 26, borderRadius: 14, background: '#000', zIndex: 3,
+      }} />
+      <div style={{ width: '100%', height: '100%', borderRadius: 36, background: 'var(--cream-50)', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ height: 42, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 22px 6px', fontSize: 13, fontWeight: 600, color: 'var(--ink-900)', flexShrink: 0 }}>
+          <span>9:41</span>
+        </div>
+        <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--ink-100)', flexShrink: 0, background: 'var(--cream-50)' }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--forest-500)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Image src="/logo.png" alt="" width={20} height={20} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>GutHub</div>
+            <div style={{ fontSize: 11, color: 'var(--forest-400)', display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--forest-300)' }} /> Online
+            </div>
+          </div>
+        </div>
+        <div style={{ flex: 1, minHeight: 0, padding: '14px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 8, background: 'var(--cream-50)', overflow: 'hidden' }}>
+          {messages.map((m, i) => (
+            <CoachBubble key={i} from={m.from}>{m.text}</CoachBubble>
+          ))}
+        </div>
+        <div style={{ padding: '10px 12px', borderTop: '1px solid var(--ink-100)', display: 'flex', gap: 8, alignItems: 'center', background: '#fff', flexShrink: 0 }}>
+          <div style={{ flex: 1, padding: '8px 12px', borderRadius: 999, background: 'var(--cream-100)', fontSize: 12, color: 'var(--ink-500)' }}>Ask Guthub anything…</div>
+          <button style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--terracotta-400)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CoachBubble({ from, children }: { from: 'user' | 'ai'; children: React.ReactNode }) {
+  const isAi = from === 'ai';
+  return (
+    <div style={{
+      alignSelf: isAi ? 'flex-start' : 'flex-end', maxWidth: '85%',
+      padding: '8px 11px',
+      borderRadius: isAi ? '14px 14px 14px 4px' : '14px 14px 4px 14px',
+      background: isAi ? '#fff' : 'var(--terracotta-400)',
+      color: isAi ? 'var(--ink-900)' : '#fff',
+      fontSize: 12, lineHeight: 1.4,
+      border: isAi ? '1px solid var(--ink-100)' : 'none',
+      boxShadow: isAi ? 'var(--shadow-xs)' : 'none',
+    }}>{children}</div>
   );
 }
 
