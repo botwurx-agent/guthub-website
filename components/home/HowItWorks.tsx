@@ -2,23 +2,32 @@
 
 import { useState } from 'react';
 import { Eyebrow, Reveal } from '../ui';
+import IntakeFlowGraphic from '../IntakeFlowGraphic';
 
 const steps = [
-  { n: '01', t: 'Share your intake', b: 'Tell us about your diet, symptoms, lifestyle, and goals. Takes about 4 minutes.' },
-  { n: '02', t: 'Start the conversation', b: 'Ask questions, explore patterns, and get guidance that evolves with you.' },
-  { n: '03', t: 'Build clarity over time', b: 'The more you use Guthub, the more personalized — and more useful — it becomes.' },
+  { n: '01', t: 'Tell Guthub about you', b: 'A 6-minute intake captures your symptoms, sensitivities, diet, and goals. Nothing fancy — just the kind of context a real practitioner would gather on day one.' },
+  { n: '02', t: 'Use any tool. It already knows you.', b: 'Snap a meal, chat with your coach, or open a meal plan. Every feature pulls from your intake automatically. No re-explaining yourself.' },
+  { n: '03', t: 'It learns as you go.', b: 'Every meal logged, every symptom flagged, every conversation makes the picture sharper. The longer you use Guthub, the more personalized it becomes.' },
 ];
 
 export default function HowItWorks() {
   return (
-    <section id="how" className="section-pad section-pad-v" style={{ padding: '112px 32px', background: 'var(--terracotta-50)', position: 'relative' }}>
+    <section id="how" className="section-pad section-pad-v" style={{ padding: '112px 32px', background: 'var(--terracotta-50)', position: 'relative', overflow: 'hidden' }}>
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto' }}>
-        <Reveal style={{ textAlign: 'center', marginBottom: 56 }}>
+        <Reveal style={{ textAlign: 'center', marginBottom: 56, maxWidth: 720, marginLeft: 'auto', marginRight: 'auto' }}>
           <Eyebrow>How it works</Eyebrow>
-          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, color: 'var(--ink-900)' }}>
-            Built to <em style={{ fontStyle: 'italic' }}>support you</em>, not overwhelm you.
+          <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, marginBottom: 18, color: 'var(--ink-900)' }}>
+            One intake. <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>Every tool tuned to you.</em>
           </h2>
+          <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--ink-700)' }}>
+            No generic advice. No starting from scratch every conversation. Every feature in Guthub reads from the same profile — so the moment you finish your intake, the whole system already knows you.
+          </p>
         </Reveal>
+
+        <div style={{ marginBottom: 80 }}>
+          <IntakeFlowGraphic />
+        </div>
+
         <div className="cards-3-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
           {steps.map((s, i) => (
             <Reveal key={s.n} delay={i * 120} y={18}>
