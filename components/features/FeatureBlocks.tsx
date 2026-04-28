@@ -353,9 +353,14 @@ const blocks = [
   {
     id: 'planner',
     eyebrow: 'Meal planner',
-    headline: 'A full week planned around you.',
-    body: 'Tell Guthub your diet style and it builds a 7-day meal plan that fits your sensitivities, your macros, and your taste. Grocery list included.',
-    bullets: ['Weekly plan built to your diet style', 'Avoids your personal triggers', 'Grocery list generated automatically'],
+    headline: 'A full week, planned around you.',
+    body: "Tell Guthub your diet style, whether that's low-FODMAP, gluten-free, vegetarian, Mediterranean, or whatever fits your body, and it builds a 7-day plan that respects your sensitivities, hits your macro targets, and gives you something you'll actually want to cook. Don't like a meal? Swap it with one tap. Guthub rebalances the rest of the week to keep your macros and your goals on track.",
+    bullets: [
+      'Generates a 7-day plan tailored to your diet style and triggers',
+      'Hits your daily macro targets and aligns with your active goals',
+      'Swap any meal with one tap, and the plan rebalances around it',
+      'Exports a grocery list, grouped by aisle, ready for the store',
+    ],
     icon: CalendarDays,
     visual: <MockPlanner />,
     bg: 'var(--cream-100)',
