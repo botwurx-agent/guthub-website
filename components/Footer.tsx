@@ -1,12 +1,28 @@
 'use client';
 
 import Image from 'next/image';
-import { X, Globe, Link, Share2 } from 'lucide-react';
+import Link from 'next/link';
+import { openAuth } from './AuthModal';
 
-const cols = [
-  { h: 'Product', links: ['How it works', 'Pricing', 'FAQ', 'Access App'] },
-  { h: 'Company', links: ['About', 'Press', 'Careers', 'Contact'] },
-  { h: 'Legal', links: ['Terms', 'Privacy', 'Cookie Policy', 'Data & security'] },
+type Item = { label: string; href?: string; onClick?: () => void };
+
+const productCol: Item[] = [
+  { label: 'How it works', href: '/#how' },
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'FAQ', href: '/#faq' },
+  { label: 'Sign in', onClick: () => openAuth('signin') },
+];
+
+const companyCol: Item[] = [
+  { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' },
+];
+
+const legalCol: Item[] = [
+  { label: 'Terms of Service', href: '/terms' },
+  { label: 'Privacy Policy', href: '/privacy' },
+  { label: 'Cookie Policy', href: '/cookies' },
+  { label: 'Medical Disclaimer', href: '/medical-disclaimer' },
 ];
 
 export default function Footer() {
@@ -24,34 +40,49 @@ export default function Footer() {
               Personalized AI gut-health guidance for your family's wellbeing.
             </p>
           </div>
-          {cols.map(c => (
-            <div key={c.h}>
-              <div style={{ fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--terracotta-300)', marginBottom: 16 }}>
-                {c.h}
-              </div>
-              {c.links.map(l => (
-                <a key={l} href="#" style={{ display: 'block', padding: '6px 0', fontSize: 15, color: 'rgba(250,245,238,.88)', textDecoration: 'none' }}>
-                  {l}
-                </a>
-              ))}
-            </div>
-          ))}
+          <FooterCol heading="Product" items={productCol} />
+          <FooterCol heading="Company" items={companyCol} />
+          <FooterCol heading="Legal" items={legalCol} />
         </div>
         <div style={{
-          paddingTop: 28, display: 'flex', justifyContent: 'space-between',
-          flexWrap: 'wrap', gap: 16, alignItems: 'center',
-          fontSize: 13, color: 'rgba(250,245,238,.55)',
+          paddingTop: 28, fontSize: 13, color: 'rgba(250,245,238,.55)',
         }}>
-          <div>© 2026 Guthub. Designed to complement professional care.</div>
-          <div style={{ display: 'flex', gap: 18 }}>
-            {[X, Globe, Link, Share2].map((Icon, i) => (
-              <a key={i} href="#" style={{ color: 'rgba(250,245,238,.72)' }}>
-                <Icon size={18} />
-              </a>
-            ))}
-          </div>
+          © 2026 Guthub. Designed to complement professional care.
         </div>
       </div>
     </footer>
   );
+}
+
+function FooterCol({ heading, items }: { heading: string; items: Item[] }) {
+  return (
+    <div>
+      <div style={{ fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, color: 'var(--terracotta-300)', marginBottom: 16 }}>
+        {heading}
+      </div>
+      {items.map(it => (
+        <FooterLink key={it.label} item={it} />
+      ))}
+    </div>
+  );
+}
+
+function FooterLink({ item }: { item: Item }) {
+  const sharedStyle = {
+    display: 'block', padding: '6px 0', fontSize: 15,
+    color: 'rgba(250,245,238,.88)', textDecoration: 'none',
+    background: 'none', border: 'none', cursor: 'pointer',
+    fontFamily: 'var(--font-body)', textAlign: 'left' as const,
+  };
+  if (item.onClick) {
+    return (
+      <button onClick={item.onClick} style={sharedStyle}>
+        {item.label}
+      </button>
+    );
+  }
+  if (item.href!.startsWith('/#')) {
+    return <a href={item.href} style={sharedStyle}>{item.label}</a>;
+  }
+  return <Link href={item.href!} style={sharedStyle}>{item.label}</Link>;
 }
