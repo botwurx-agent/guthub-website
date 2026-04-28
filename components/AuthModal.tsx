@@ -72,7 +72,7 @@ export default function AuthModal() {
             lineHeight: 1.22, letterSpacing: '-0.02em', color: 'var(--ink-900)',
             margin: '0 0 8px',
           }}>
-            {isSignup ? <>Start your <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>2-day free trial</em></> : 'Welcome back.'}
+            {isSignup ? <>Start your <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>7-day free trial</em></> : 'Welcome back.'}
           </h2>
           <p style={{ fontSize: 14.5, color: 'var(--ink-600)', margin: '0 0 24px', lineHeight: 1.5 }}>
             {isSignup ? 'Full access to every feature. Cancel anytime.' : 'Sign in to continue your journey.'}
@@ -101,7 +101,7 @@ export default function AuthModal() {
                 </a>
               )}
             />
-            <SubmitButton label={isSignup ? 'Create account · Start 2-day trial' : 'Sign in'} />
+            <SubmitButton label={isSignup ? 'Create account · Start 7-day trial' : 'Sign in'} />
           </form>
 
           <div style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: 'var(--ink-600)' }}>

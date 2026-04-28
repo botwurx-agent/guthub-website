@@ -11,7 +11,7 @@ const items = [
   { q: 'Is my data secure?', a: "Yes. Your intake, meal logs, and conversations are encrypted and stored privately. We never sell your data, and we don't share it with third parties for advertising. You can request a full export or deletion of your account at any time. For full details, see our Privacy Policy." },
   { q: 'Who is Guthub for?', a: "Guthub is built for people navigating gut-related issues like IBS, SIBO, food sensitivities, elimination diets, or persistent bloating and discomfort that doesn't have a clear answer. If you've ever finished a doctor's visit with more questions than you started with, or spent late nights googling what you ate, this is for you." },
   { q: 'How often should I use it?', a: "There's no minimum. Some people check in daily by logging meals, asking questions, and reviewing patterns. Others use it situationally, when something flares up or they're planning a tricky meal. Both work. The product is designed to fit how you actually live." },
-  { q: 'Can I cancel anytime?', a: "Yes, in two taps from your account settings. No phone calls, no retention offers, no dark patterns. Your 2-day trial is also free and doesn't require a credit card to start." },
+  { q: 'Can I cancel anytime?', a: "Yes, in two taps from your account settings. No phone calls, no retention offers, no dark patterns. Your 7-day trial gives you full access. Cancel during the trial and you won't be charged at all." },
 ];
 
 export default function FAQ() {
