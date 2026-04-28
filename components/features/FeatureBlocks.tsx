@@ -103,37 +103,127 @@ function MockGoal() {
     return () => obs.disconnect();
   }, []);
 
-  const bars = [55, 80, 65, 90, 45, 70, 85];
+  // Lower is better — symptoms improving across the week.
+  const bloating = [6, 5, 5, 4, 3, 4, 3];
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const macros = [
+    { label: 'Protein', current: 87, target: 120, unit: 'g' },
+    { label: 'Carbs', current: 142, target: 180, unit: 'g' },
+    { label: 'Fat', current: 38, target: 55, unit: 'g' },
+  ];
 
   return (
-    <div ref={ref} style={{ width: 280, background: '#fff', borderRadius: 20, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden', fontFamily: 'var(--font-body)', padding: '20px' }}>
-      <div style={{ textAlign: 'center', marginBottom: 16 }}>
-        <div style={{ position: 'relative', width: 110, height: 110, margin: '0 auto 12px' }}>
-          <svg viewBox="0 0 110 110" style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
-            <circle cx="55" cy="55" r="46" fill="none" stroke="var(--cream-100)" strokeWidth="10" />
-            <circle cx="55" cy="55" r="46" fill="none" stroke="var(--forest-500)" strokeWidth="10" strokeLinecap="round"
-              strokeDasharray={`${2 * Math.PI * 46}`}
-              strokeDashoffset={visible ? 2 * Math.PI * 46 * (1 - 0.64) : 2 * Math.PI * 46}
-              style={{ transition: 'stroke-dashoffset 1.2s var(--ease-out)' }}
-            />
-          </svg>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-900)' }}>64%</div>
-            <div style={{ fontSize: 10, color: 'var(--ink-500)' }}>to goal</div>
-          </div>
+    <div ref={ref} style={{
+      width: 300, background: '#fff', borderRadius: 20, border: '1px solid var(--border)',
+      boxShadow: 'var(--shadow-lg)', overflow: 'hidden', fontFamily: 'var(--font-body)',
+    }}>
+      {/* Header */}
+      <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid var(--ink-100)' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-500)' }}>
+          Your week
         </div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>172 lbs → 158 lbs</div>
-        <div style={{ fontSize: 11, color: 'var(--ink-500)', marginTop: 2 }}>9 lbs lost · 5 to go</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 2 }}>
+          Apr 21 &ndash; Apr 27
+        </div>
       </div>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-500)', marginBottom: 8 }}>Weekly calories</div>
-      <div style={{ display: 'flex', gap: 5, alignItems: 'flex-end', height: 60 }}>
-        {bars.map((h, i) => (
-          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: '100%', background: i === 6 ? 'var(--terracotta-400)' : 'var(--forest-400)', borderRadius: 4, height: visible ? `${h}%` : '0%', transition: `height 800ms ${i * 80}ms var(--ease-out)` }} />
-            <div style={{ fontSize: 9, color: 'var(--ink-400)' }}>{days[i]}</div>
-          </div>
-        ))}
+
+      {/* Symptoms — most prominent */}
+      <div style={{ padding: '16px 18px 14px' }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-900)', marginBottom: 10 }}>
+          Bloating
+        </div>
+        <svg
+          role="img"
+          aria-label={`Daily bloating severity (lower is better) — ${days.map((d, i) => `${d} ${bloating[i]}`).join(', ')}`}
+          viewBox="0 0 280 100" preserveAspectRatio="none"
+          style={{ width: '100%', height: 100, display: 'block' }}
+        >
+          {bloating.map((v, i) => {
+            const barW = 26;
+            const gap = (280 - barW * 7) / 6;
+            const x = i * (barW + gap);
+            const fullH = 80;
+            const h = (v / 10) * fullH;
+            const y = 90 - h;
+            return (
+              <g key={i}>
+                <rect x={x} y={90 - fullH} width={barW} height={fullH} rx={4} fill="var(--cream-100)" />
+                <rect
+                  x={x}
+                  y={visible ? y : 90}
+                  width={barW}
+                  height={visible ? h : 0}
+                  rx={4}
+                  fill="var(--forest-400)"
+                  style={{ transition: `y 800ms ${i * 70}ms var(--ease-out), height 800ms ${i * 70}ms var(--ease-out)` }}
+                >
+                  <title>{`${days[i]}: ${v}/10`}</title>
+                </rect>
+                <text x={x + barW / 2} y={98} textAnchor="middle" fontSize={9} fill="var(--ink-400)" fontFamily="var(--font-body)">{days[i]}</text>
+              </g>
+            );
+          })}
+        </svg>
+        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--forest-400)', fontWeight: 600 }}>
+          <TrendingUp size={13} style={{ transform: 'scaleY(-1)' }} aria-hidden />
+          Symptoms down 32% this week
+        </div>
+      </div>
+
+      {/* Macros — medium prominence */}
+      <div style={{ padding: '14px 18px', borderTop: '1px solid var(--ink-100)' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-500)', marginBottom: 10 }}>
+          Today&rsquo;s macros
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {macros.map((m, i) => {
+            const pct = Math.round((m.current / m.target) * 100);
+            return (
+              <div key={m.label}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 3 }}>
+                  <span style={{ fontSize: 11, color: 'var(--ink-700)', fontWeight: 500 }}>{m.label}</span>
+                  <span style={{ fontSize: 11, color: 'var(--ink-500)' }}>
+                    {m.current} / {m.target}{m.unit}
+                  </span>
+                </div>
+                <div
+                  role="progressbar"
+                  aria-label={`${m.label}: ${m.current} of ${m.target} ${m.unit}`}
+                  aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}
+                  style={{ height: 5, background: 'var(--cream-100)', borderRadius: 99, overflow: 'hidden' }}
+                >
+                  <div style={{
+                    height: '100%',
+                    width: visible ? `${pct}%` : '0%',
+                    background: 'var(--ink-700)',
+                    borderRadius: 99,
+                    transition: `width 700ms ${300 + i * 80}ms var(--ease-out)`,
+                  }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Weight — least prominent */}
+      <div style={{ padding: '12px 18px', borderTop: '1px solid var(--ink-100)', display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <span style={{ fontSize: 12, color: 'var(--ink-700)' }}>
+          <strong style={{ color: 'var(--ink-900)', fontWeight: 600 }}>Weight:</strong> 168 lb
+        </span>
+        <span style={{ fontSize: 11, color: 'var(--forest-400)', fontWeight: 600 }}>
+          down 1.2 lb this week
+        </span>
+      </div>
+
+      {/* Coach insight */}
+      <div style={{
+        padding: '12px 18px 14px', borderTop: '1px solid var(--ink-100)',
+        background: 'var(--terracotta-50)',
+        fontSize: 11, lineHeight: 1.5, fontStyle: 'italic',
+        color: 'var(--terracotta-700)',
+      }}>
+        Symptoms improving as you&rsquo;ve cut onion and dairy. Stay the course.
       </div>
     </div>
   );
@@ -342,9 +432,14 @@ const blocks = [
   {
     id: 'goal',
     eyebrow: 'Goal tracker',
-    headline: 'See exactly where you stand.',
-    body: 'Set your target weight and daily macro goals. Guthub tracks every meal, charts your progress week by week, and nudges you gently when you drift off course.',
-    bullets: ['Visual progress ring toward goal weight', 'Daily macro bar charts', 'Gentle nudges when you need them'],
+    headline: 'Real progress, not just numbers on a scale.',
+    body: "Set the goals that matter to you, whether that's reducing bloating, sticking to an elimination protocol, hitting daily macro targets, or working toward a healthy weight. Guthub tracks every dimension you care about, charts your trends week by week, and nudges you gently when something drifts.",
+    bullets: [
+      'Track weight, macros, symptoms, and adherence in one view',
+      'See weekly trends, not just daily snapshots',
+      'Gentle nudges when you start to drift, no shame, no shouting',
+      'Connects every data point back to what you ate and how you felt',
+    ],
     icon: Target,
     visual: <MockGoal />,
     bg: 'var(--cream-50)',
