@@ -8,7 +8,7 @@ const milestones = [
   { done: true, label: 'Launched private beta', detail: 'Jan 2025' },
   { done: true, label: 'AI chat & meal planning live', detail: 'Feb 2025' },
   { done: true, label: 'Photo macro analysis', detail: 'Mar 2025' },
-  { done: false, label: 'GutTalk voice journaling', detail: 'Summer 2025' },
+  { done: false, label: 'Voice journaling', detail: 'Summer 2025' },
   { done: false, label: 'Microbiome test integration', detail: 'Fall 2025' },
   { done: false, label: 'Wearable health sync', detail: '2026' },
 ];

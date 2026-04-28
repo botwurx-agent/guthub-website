@@ -6,7 +6,6 @@ import FeaturesHero from '@/components/features/FeaturesHero';
 import OnboardingFlowAnimation from '@/components/features/OnboardingFlowAnimation';
 import FeatureBlocks from '@/components/features/FeatureBlocks';
 import CrossPlatformShowcase from '@/components/features/CrossPlatformShowcase';
-import ComingSoon from '@/components/features/ComingSoon';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -23,7 +22,6 @@ export default function FeaturesPage() {
         <OnboardingFlowAnimation />
         <FeatureBlocks />
         <CrossPlatformShowcase />
-        <ComingSoon />
         <FinalCTA />
       </main>
       <Footer />
