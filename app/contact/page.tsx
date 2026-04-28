@@ -20,7 +20,7 @@ export default function ContactPage() {
           title={<>How to <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>reach us.</em></>}
           lastUpdated="April 28, 2026"
         >
-          <p>For general questions, support, or feedback, email us at [contact email]. We aim to respond within two business days.</p>
+          <p>For general questions, support, or feedback, email us at <a href="mailto:support@guthub.ai" style={{ color: 'var(--terracotta-600)', textDecoration: 'none', fontWeight: 600 }}>support@guthub.ai</a>. We aim to respond within two business days.</p>
           <p>For press, partnerships, or other business inquiries, please use the same address and include a subject line that describes the topic.</p>
         </ContentPage>
         <FinalCTA />
