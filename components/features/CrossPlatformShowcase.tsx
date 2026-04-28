@@ -1,12 +1,20 @@
 'use client';
 
-import { Smartphone, Monitor, Tablet } from 'lucide-react';
+import { Smartphone, Monitor } from 'lucide-react';
 import { Eyebrow, Reveal } from '../ui';
 
-const platforms = [
-  { icon: Monitor, label: 'Web app', desc: 'Full dashboard experience on any browser' },
-  { icon: Smartphone, label: 'iOS & Android', desc: 'Native app with camera snap & offline logs' },
-  { icon: Tablet, label: 'Tablet', desc: 'Optimized for meal planning on larger screens' },
+type Platform = {
+  icon: typeof Monitor;
+  label: string;
+  subtitle: string;
+  desc: string;
+  comingSoon?: boolean;
+};
+
+const platforms: Platform[] = [
+  { icon: Monitor, label: 'Desktop', subtitle: 'Browser app, full experience', desc: 'Plan meals, chat with your coach, and review your week from any laptop or desktop.' },
+  { icon: Smartphone, label: 'Mobile', subtitle: 'Browser app on your phone', desc: 'Snap meals and log symptoms on the go. Works in Safari, Chrome, and any modern mobile browser.' },
+  { icon: Smartphone, label: 'iOS app', subtitle: 'Coming soon', desc: 'A dedicated iOS app with camera shortcuts and offline logging is in development.', comingSoon: true },
 ];
 
 function LaptopMockup() {
@@ -152,14 +160,14 @@ export default function CrossPlatformShowcase() {
     <section className="section-pad section-pad-v" style={{ padding: '112px 32px', background: 'var(--cream-100)', position: 'relative', overflow: 'hidden' }}>
       <div aria-hidden style={{ position: 'absolute', top: -80, left: '50%', transform: 'translateX(-50%)', width: 600, height: 400, background: 'radial-gradient(ellipse, rgba(75,120,105,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto', position: 'relative' }}>
-        <Reveal style={{ textAlign: 'center', marginBottom: 72, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto' }}>
-          <Eyebrow>Works everywhere</Eyebrow>
+        <Reveal style={{ textAlign: 'center', marginBottom: 72, maxWidth: 680, marginLeft: 'auto', marginRight: 'auto' }}>
+          <Eyebrow>Use it your way</Eyebrow>
           <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.4vw, 2.75rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, marginTop: 18, marginBottom: 18, color: 'var(--ink-900)' }}>
-            On every device,{' '}
-            <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>always in sync.</em>
+            On your phone, your laptop, or{' '}
+            <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>both.</em>
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--ink-700)' }}>
-            Snap a photo on your phone, review the analysis on your laptop, plan meals on your tablet. Everything stays in sync automatically.
+            Guthub works fully in any modern browser. Use it on your laptop when you&rsquo;re sitting down to plan meals, on your phone when you&rsquo;re snapping photos at lunch, or both, with everything in sync. A native iOS app is on the way for users who prefer it.
           </p>
         </Reveal>
 
@@ -175,11 +183,22 @@ export default function CrossPlatformShowcase() {
         <div className="cards-3-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, maxWidth: 760, margin: '0 auto' }}>
           {platforms.map((p, i) => (
             <Reveal key={p.label} delay={i * 80} y={16}>
-              <div style={{ padding: '28px 24px', background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', textAlign: 'center' }}>
+              <div style={{ position: 'relative', padding: '28px 24px', background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', textAlign: 'center', height: '100%' }}>
+                {p.comingSoon && (
+                  <span style={{
+                    position: 'absolute', top: 12, right: 12,
+                    padding: '4px 10px', borderRadius: 999,
+                    background: 'var(--cream-200)', color: 'var(--ink-700)',
+                    fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+                  }}>
+                    Coming soon
+                  </span>
+                )}
                 <div style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--forest-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
                   <p.icon size={22} color="var(--forest-500)" />
                 </div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, color: 'var(--ink-900)', marginBottom: 6 }}>{p.label}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, color: 'var(--ink-900)', marginBottom: 4 }}>{p.label}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--terracotta-700)', letterSpacing: '0.02em', marginBottom: 10 }}>{p.subtitle}</div>
                 <div style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--ink-600)' }}>{p.desc}</div>
               </div>
             </Reveal>
