@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Camera, Zap, ChevronRight, MessageCircle, Target, CalendarDays, FileText, LayoutDashboard, TrendingUp, Check } from 'lucide-react';
+import { Camera, Zap, MessageCircle, Target, CalendarDays, FileText, LayoutDashboard, TrendingUp, Check } from 'lucide-react';
 import { Reveal } from '../ui';
+import CoachChat, { CoachScriptItem } from '../CoachChat';
 
 /* ── Mock UIs ── */
 
@@ -78,60 +79,16 @@ function MockSnap() {
   );
 }
 
+const featuresChatScript: CoachScriptItem[] = [
+  { from: 'user', text: "I've been off dairy for two weeks but my bloating is back.", delay: 100 },
+  { from: 'ai', text: "Frustrating. Before I help diagnose, two questions: has your stress changed in the last week? And are you eating any new foods to replace the dairy, like coconut milk, oat milk, or soy?", delay: 1400 },
+  { from: 'user', text: "Stress has been higher. And yeah, I've been using oat milk a lot.", delay: 1500 },
+  { from: 'ai', text: "Both could be playing in. Oat milk is generally well-tolerated, but it's high in FODMAPs and a common trigger for IBS.", delay: 1400 },
+  { from: 'ai', text: "Want to swap to almond or rice milk for 5 days and see if the bloating settles?", delay: 1300 },
+];
+
 function MockChat() {
-  const messages = [
-    { role: 'user', text: 'My stomach has been off since yesterday. Any ideas?' },
-    { role: 'ai', text: "Looking at yesterday's log — you had the high-FODMAP pasta at dinner. That's likely the culprit. Try plain rice or steamed fish today." },
-    { role: 'user', text: 'Good call. What should I avoid at lunch?' },
-    { role: 'ai', text: 'Skip onions, garlic, and anything creamy. A grilled salmon salad with olive oil would be perfect for you today.' },
-  ];
-
-  const [shown, setShown] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) setVisible(true); });
-    }, { threshold: 0.4 });
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!visible || shown >= messages.length) return;
-    const t = setTimeout(() => setShown(s => s + 1), shown === 0 ? 400 : 1400);
-    return () => clearTimeout(t);
-  }, [shown, visible]);
-
-  return (
-    <div ref={ref} style={{ width: 300, background: '#fff', borderRadius: 20, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden', fontFamily: 'var(--font-body)' }}>
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--cream-50)', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--forest-500)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <MessageCircle size={16} color="#fff" />
-        </div>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-900)' }}>Guthub AI</div>
-          <div style={{ fontSize: 11, color: 'var(--forest-500)', fontWeight: 600 }}>● Online</div>
-        </div>
-      </div>
-      <div style={{ padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10, minHeight: 220 }}>
-        {messages.slice(0, shown).map((m, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start', opacity: 1, animation: 'bubbleIn 300ms var(--ease-out) both' }}>
-            <div style={{ maxWidth: '82%', padding: '8px 12px', borderRadius: m.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: m.role === 'user' ? 'var(--terracotta-400)' : 'var(--cream-100)', color: m.role === 'user' ? '#fff' : 'var(--ink-800)', fontSize: 12, lineHeight: 1.5 }}>
-              {m.text}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={{ padding: '10px 12px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, alignItems: 'center' }}>
-        <div style={{ flex: 1, padding: '8px 12px', background: 'var(--cream-50)', borderRadius: 20, fontSize: 12, color: 'var(--ink-400)' }}>Ask anything…</div>
-        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--terracotta-400)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <ChevronRight size={16} color="#fff" />
-        </div>
-      </div>
-    </div>
-  );
+  return <CoachChat script={featuresChatScript} loop={false} />;
 }
 
 function MockGoal() {
@@ -369,9 +326,14 @@ const blocks = [
   {
     id: 'chat',
     eyebrow: 'AI chat',
-    headline: 'An AI that already knows you.',
-    body: "From your very first message, Guthub's chat knows your goal, your sensitivities, your recent meals, and your test history. No need to re-explain yourself every time.",
-    bullets: ['Remembers your full history', 'Answers in plain language', 'Connects symptoms to meals automatically'],
+    headline: "A coach that builds on every conversation you've had.",
+    body: "Guthub's chat doesn't reset between messages. It pulls from your intake, your meal logs, your symptoms, and every conversation you've had, and it gets sharper the more you use it. Most AI chatbots forget you the moment you close the tab. Guthub remembers, connects, and keeps learning.",
+    bullets: [
+      'Pulls context from your intake, meal logs, and past conversations automatically',
+      "Spots patterns across days and weeks you'd never catch on your own",
+      'Suggests small adjustments to test, not dramatic eliminations',
+      'Asks follow-up questions like a real coach, not one-shot answers',
+    ],
     icon: MessageCircle,
     visual: <MockChat />,
     bg: 'var(--cream-100)',
