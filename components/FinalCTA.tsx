@@ -22,7 +22,7 @@ export default function FinalCTA() {
           Take the guesswork out of your gut.
         </h2>
         <p style={{ fontSize: 19, color: 'rgba(253,250,243,.88)', marginBottom: 36, lineHeight: 1.55 }}>
-          Join 1,000+ people rebuilding their relationship with food — with guidance that actually knows them.
+          Personalized guidance that actually knows you. Founding member pricing locked for life, while spots last.
         </p>
         <Button variant="inverse" size="lg" onClick={() => openAuth('signup')}>
           Start your 7-day free trial

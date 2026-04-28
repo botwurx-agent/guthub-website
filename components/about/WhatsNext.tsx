@@ -4,13 +4,10 @@ import { ArrowRight } from 'lucide-react';
 import { Button, Eyebrow, Reveal } from '../ui';
 import { openAuth } from '../AuthModal';
 
-const milestones = [
-  { done: true, label: 'Launched private beta', detail: 'Jan 2025' },
-  { done: true, label: 'AI chat & meal planning live', detail: 'Feb 2025' },
-  { done: true, label: 'Photo macro analysis', detail: 'Mar 2025' },
-  { done: false, label: 'Voice journaling', detail: 'Summer 2025' },
-  { done: false, label: 'Microbiome test integration', detail: 'Fall 2025' },
-  { done: false, label: 'Wearable health sync', detail: '2026' },
+const milestones: { label: string; status: string; done: boolean }[] = [
+  { label: 'Private beta', status: 'In progress', done: true },
+  { label: 'Founding member launch', status: 'Coming soon', done: false },
+  { label: 'Notifications', status: 'Next on the roadmap', done: false },
 ];
 
 export default function WhatsNext() {
@@ -23,7 +20,7 @@ export default function WhatsNext() {
             The road ahead.
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--ink-700)' }}>
-            We're moving fast — and founding members get early access to everything the moment it ships.
+            Guthub is in active development. Founding members get every feature we ship, no upgrades or waiting lists.
           </p>
         </Reveal>
 
@@ -41,7 +38,7 @@ export default function WhatsNext() {
                   {/* Content */}
                   <div style={{ flex: 1, padding: '10px 16px', background: '#fff', borderRadius: 10, border: `1px solid ${m.done ? 'var(--forest-200)' : 'var(--border)'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: 15, fontWeight: m.done ? 600 : 400, color: m.done ? 'var(--ink-900)' : 'var(--ink-600)' }}>{m.label}</span>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: m.done ? 'var(--forest-600)' : 'var(--ink-400)', padding: '3px 10px', borderRadius: 999, background: m.done ? 'var(--forest-50)' : 'var(--cream-50)' }}>{m.detail}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: m.done ? 'var(--forest-600)' : 'var(--ink-400)', padding: '3px 10px', borderRadius: 999, background: m.done ? 'var(--forest-50)' : 'var(--cream-50)' }}>{m.status}</span>
                   </div>
                 </div>
               ))}

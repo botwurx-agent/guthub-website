@@ -16,7 +16,7 @@ export default function LeadAdvisor() {
             Clinical expertise behind every recommendation.
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
-            Alina Nazari is a certified gut health practitioner and founder of <a href="https://gohappybelly.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--terracotta-500)', textDecoration: 'none', fontWeight: 500 }}>GoHappyBelly</a>, where she's helped hundreds of clients resolve chronic digestive issues through personalized nutrition.
+            Alina Nazari is a certified gut health practitioner and founder of GoHappyBelly, where she&rsquo;s helped hundreds of clients resolve chronic digestive issues through personalized nutrition.
           </p>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
             As Guthub's lead advisor, Alina shapes every protocol, reviews the AI's dietary guidance, and ensures that the advice Guthub gives is clinically grounded — not just algorithmically convenient.
@@ -25,7 +25,7 @@ export default function LeadAdvisor() {
             {[
               'Certified gut health practitioner',
               'Founder of GoHappyBelly',
-              '5+ years helping clients with IBS, SIBO & food sensitivities',
+              '8+ years helping clients with IBS, SIBO & food sensitivities',
               'Specializes in Low-FODMAP and elimination protocols',
             ].map(c => (
               <div key={c} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14, color: 'var(--ink-700)' }}>

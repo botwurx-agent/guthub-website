@@ -21,7 +21,7 @@ export default function FounderStory() {
           {/* Floating caption */}
           <div className="founder-caption" style={{ position: 'absolute', bottom: -16, right: -16, background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', padding: '14px 18px', boxShadow: 'var(--shadow-md)', maxWidth: 240 }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, color: 'var(--ink-900)', marginBottom: 2 }}>Steve Nazari</div>
-            <div style={{ fontSize: 12, color: 'var(--ink-600)' }}>Founder · BJJ brown belt · gut-health convert</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-600)' }}>Founder &middot; Guthub</div>
           </div>
         </Reveal>
 
@@ -43,7 +43,7 @@ export default function FounderStory() {
             I could relate. There have been plenty of times I felt lost, following a specific diet, trying to fix a particular issue, not knowing what to eat. And the help you need doesn't come on your schedule. It comes at 11pm when you're standing in front of the fridge.
           </p>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
-            GuthubAi is my answer to that gap. Someone — anyone — with a helping hand, any time of the day.
+            Guthub is my answer to that gap. Someone — anyone — with a helping hand, any time of the day.
           </p>
           <blockquote style={{ margin: 0, padding: '16px 20px', borderLeft: '3px solid var(--terracotta-400)', background: 'var(--terracotta-50)', borderRadius: '0 10px 10px 0' }}>
             <p style={{ fontSize: 16, lineHeight: 1.65, color: 'var(--ink-800)', fontStyle: 'italic', margin: 0 }}>
