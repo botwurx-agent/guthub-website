@@ -340,7 +340,7 @@ function MockReports() {
   );
 }
 
-function MockDashboard() {
+function MockDailyHome() {
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -352,48 +352,141 @@ function MockDashboard() {
     return () => obs.disconnect();
   }, []);
 
-  const symptomData = [30, 55, 40, 70, 35, 20, 15];
-  const mealData = [65, 70, 60, 85, 55, 75, 80];
-  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const score = 72;
+  const ringSize = 72;
+  const ringStroke = 7;
+  const ringR = (ringSize - ringStroke) / 2;
+  const ringC = 2 * Math.PI * ringR;
+  const ringPct = score / 100;
 
   return (
-    <div ref={ref} style={{ width: 320, background: 'rgba(255,255,255,0.08)', borderRadius: 20, border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', overflow: 'hidden', fontFamily: 'var(--font-body)', padding: '20px', color: 'var(--cream-100)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 700 }}>Health dashboard</div>
-        <div style={{ fontSize: 10, color: 'rgba(250,245,238,0.6)' }}>Last 7 days</div>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-        {[
-          { label: 'Gut score', val: '82', unit: '/100', color: 'var(--terracotta-300)' },
-          { label: 'Avg calories', val: '1,840', unit: 'kcal', color: 'var(--forest-300)' },
-        ].map((s, i) => (
-          <div key={s.label} style={{ padding: '12px', background: 'rgba(255,255,255,0.07)', borderRadius: 12 }}>
-            <div style={{ fontSize: 10, color: 'rgba(250,245,238,0.6)', marginBottom: 4 }}>{s.label}</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: s.color, opacity: visible ? 1 : 0, transition: `opacity 600ms ${i * 150}ms` }}>{s.val}</span>
-              <span style={{ fontSize: 11, color: 'rgba(250,245,238,0.5)' }}>{s.unit}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={{ fontSize: 11, color: 'rgba(250,245,238,0.6)', marginBottom: 8 }}>Symptoms vs meals</div>
-      <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 60, position: 'relative' }}>
-        {days.map((d, i) => (
-          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, position: 'relative', height: '100%', justifyContent: 'flex-end' }}>
-            <div style={{ width: '100%', position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 2 }}>
-              <div style={{ width: '100%', background: 'rgba(224,124,89,0.7)', borderRadius: '2px 2px 0 0', height: visible ? `${symptomData[i]}%` : '0%', transition: `height 700ms ${i * 60}ms var(--ease-out)` }} />
-            </div>
-            <div style={{ fontSize: 8, color: 'rgba(250,245,238,0.4)' }}>{d}</div>
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', gap: 14, marginTop: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'rgba(250,245,238,0.6)' }}>
-          <div style={{ width: 8, height: 8, borderRadius: 2, background: 'rgba(224,124,89,0.7)' }} /> Symptoms
+    <div ref={ref} style={{
+      width: 340, background: '#fff', borderRadius: 20, border: '1px solid var(--border)',
+      boxShadow: 'var(--shadow-lg)', overflow: 'hidden', fontFamily: 'var(--font-body)',
+      padding: 18, display: 'flex', flexDirection: 'column', gap: 14,
+    }}>
+      {/* Greeting */}
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--terracotta-700)' }}>
+          Tuesday &middot; April 22
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'rgba(250,245,238,0.6)' }}>
-          <div style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--forest-400)' }} /> Meals logged
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, lineHeight: 1.2, color: 'var(--ink-900)', marginTop: 4 }}>
+          Good afternoon, <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>Steve.</em>
         </div>
+        <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 4 }}>
+          Your gut score is up 8 points this week.
+        </div>
+      </div>
+
+      {/* Proactive coach card — most prominent */}
+      <div style={{
+        background: 'var(--forest-500)', color: 'var(--cream-100)',
+        borderRadius: 14, padding: '16px 16px 14px',
+        boxShadow: '0 12px 24px -10px rgba(34, 67, 46, 0.45)',
+      }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--terracotta-300)' }}>
+          Coach &middot; Proactive
+        </div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, lineHeight: 1.3, marginTop: 8, marginBottom: 6, color: 'var(--cream-100)' }}>
+          You bloated <em style={{ fontStyle: 'italic', color: 'var(--terracotta-300)' }}>4 of 5</em> times after dairy in the last 14 days.
+        </div>
+        <div style={{ fontSize: 13, lineHeight: 1.5, color: 'rgba(250,245,238,0.78)', marginBottom: 12 }}>
+          Want to try a 7-day no-dairy window and see what happens?
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button style={{
+            background: 'var(--terracotta-400)', color: '#fff',
+            border: 'none', borderRadius: 999, padding: '9px 14px',
+            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'var(--font-body)',
+          }}>Start the 7-day window</button>
+          <button style={{
+            background: 'transparent', color: 'var(--cream-100)',
+            border: '1px solid rgba(250,245,238,0.32)', borderRadius: 999,
+            padding: '8px 14px', fontSize: 12, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'var(--font-body)',
+          }}>Talk it through with Coach</button>
+        </div>
+      </div>
+
+      {/* Gut score row */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 14,
+        padding: '12px 14px',
+        background: 'var(--cream-50)', border: '1px solid var(--ink-100)', borderRadius: 14,
+      }}>
+        <div style={{ position: 'relative', width: ringSize, height: ringSize, flexShrink: 0 }}>
+          <svg width={ringSize} height={ringSize} aria-hidden>
+            <circle cx={ringSize / 2} cy={ringSize / 2} r={ringR} fill="none" stroke="var(--cream-200)" strokeWidth={ringStroke} />
+            <circle
+              cx={ringSize / 2} cy={ringSize / 2} r={ringR} fill="none"
+              stroke="var(--terracotta-400)" strokeWidth={ringStroke}
+              strokeLinecap="round"
+              strokeDasharray={ringC}
+              strokeDashoffset={visible ? ringC * (1 - ringPct) : ringC}
+              transform={`rotate(-90 ${ringSize / 2} ${ringSize / 2})`}
+              style={{ transition: 'stroke-dashoffset 1100ms var(--ease-out)' }}
+            />
+          </svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-900)', lineHeight: 1 }}>{score}</div>
+            <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--ink-500)', marginTop: 2 }}>GUT SCORE</div>
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-500)', marginBottom: 4 }}>
+            Today
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--forest-400)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
+            <span aria-hidden>&uarr;</span> +8 this week
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px', fontSize: 11, color: 'var(--ink-700)' }}>
+            <Chip dotColor="var(--forest-400)" label="Sleep good" />
+            <Chip dotColor="var(--terracotta-300)" label="Stress mid" />
+            <Chip dotColor="var(--forest-400)" label="Bloat" suffix="↓" />
+          </div>
+        </div>
+      </div>
+
+      {/* Today's meals */}
+      <div style={{
+        padding: '12px 14px',
+        background: 'var(--cream-50)', border: '1px solid var(--ink-100)', borderRadius: 14,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-900)' }}>Today&rsquo;s meals</div>
+          <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>3 logged &middot; 1240 kcal</div>
+        </div>
+        <Meal time="7:42 AM" name="Oatmeal with berries & almond butter" kcal="380 kcal" tags={['high-fiber']} />
+        <div style={{ height: 1, background: 'var(--ink-100)', margin: '8px 0' }} />
+        <Meal time="12:18 PM" name="Grilled chicken with roasted veg & quinoa" kcal="520 kcal" tags={['lean-protein', 'low-FODMAP']} />
+      </div>
+    </div>
+  );
+}
+
+function Chip({ dotColor, label, suffix }: { dotColor: string; label: string; suffix?: string }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor }} aria-hidden />
+      {label}{suffix ? ` ${suffix}` : ''}
+    </span>
+  );
+}
+
+function Meal({ time, name, kcal, tags }: { time: string; name: string; kcal: string; tags: string[] }) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, color: 'var(--ink-500)', marginBottom: 2 }}>{time} &middot; {kcal}</div>
+      <div style={{ fontSize: 12, color: 'var(--ink-800)', lineHeight: 1.4 }}>{name}</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 5 }}>
+        {tags.map(t => (
+          <span key={t} style={{
+            padding: '2px 8px', borderRadius: 999,
+            background: 'var(--cream-200)', color: 'var(--ink-700)',
+            fontSize: 9, fontWeight: 600, letterSpacing: '0.02em',
+          }}>{t}</span>
+        ))}
       </div>
     </div>
   );
@@ -402,17 +495,6 @@ function MockDashboard() {
 /* ── Feature block data ── */
 
 const blocks = [
-  {
-    id: 'snap',
-    eyebrow: 'Snap & know',
-    headline: 'Point. Snap. Done.',
-    body: 'Photograph any meal and Guthub returns full macros in seconds — calories, protein, carbs, and fat. It also flags ingredients that conflict with your sensitivities before you take a single bite.',
-    bullets: ['Instant macro breakdown from a photo', 'Auto-flags your personal triggers', 'Logs to your daily tracker automatically'],
-    icon: Camera,
-    visual: <MockSnap />,
-    bg: 'var(--cream-50)',
-    visualRight: true,
-  },
   {
     id: 'chat',
     eyebrow: 'AI chat',
@@ -430,18 +512,13 @@ const blocks = [
     visualRight: false,
   },
   {
-    id: 'goal',
-    eyebrow: 'Goal tracker',
-    headline: 'Real progress, not just numbers on a scale.',
-    body: "Set the goals that matter to you, whether that's reducing bloating, sticking to an elimination protocol, hitting daily macro targets, or working toward a healthy weight. Guthub tracks every dimension you care about, charts your trends week by week, and nudges you gently when something drifts.",
-    bullets: [
-      'Track weight, macros, symptoms, and adherence in one view',
-      'See weekly trends, not just daily snapshots',
-      'Gentle nudges when you start to drift, no shame, no shouting',
-      'Connects every data point back to what you ate and how you felt',
-    ],
-    icon: Target,
-    visual: <MockGoal />,
+    id: 'snap',
+    eyebrow: 'Snap & know',
+    headline: 'Point. Snap. Done.',
+    body: 'Photograph any meal and Guthub returns full macros in seconds — calories, protein, carbs, and fat. It also flags ingredients that conflict with your sensitivities before you take a single bite.',
+    bullets: ['Instant macro breakdown from a photo', 'Auto-flags your personal triggers', 'Logs to your daily tracker automatically'],
+    icon: Camera,
+    visual: <MockSnap />,
     bg: 'var(--cream-50)',
     visualRight: true,
   },
@@ -462,6 +539,38 @@ const blocks = [
     visualRight: false,
   },
   {
+    id: 'goal',
+    eyebrow: 'Goal tracker',
+    headline: 'Real progress, not just numbers on a scale.',
+    body: "Set the goals that matter to you, whether that's reducing bloating, sticking to an elimination protocol, hitting daily macro targets, or working toward a healthy weight. Guthub tracks every dimension you care about, charts your trends week by week, and nudges you gently when something drifts.",
+    bullets: [
+      'Track weight, macros, symptoms, and adherence in one view',
+      'See weekly trends, not just daily snapshots',
+      'Gentle nudges when you start to drift, no shame, no shouting',
+      'Connects every data point back to what you ate and how you felt',
+    ],
+    icon: Target,
+    visual: <MockGoal />,
+    bg: 'var(--cream-50)',
+    visualRight: true,
+  },
+  {
+    id: 'daily-home',
+    eyebrow: 'Daily home',
+    headline: 'Your gut, summarized every morning.',
+    body: "Open Guthub and you're not greeted with another empty input field. You're greeted with a coach who's been paying attention. Your gut score, what's trending, what your symptoms looked like this week, what to focus on today. And when Guthub spots a pattern worth acting on, it tells you, with a one-tap suggestion to test it.",
+    bullets: [
+      'Daily gut score with trend, built from your symptoms, sleep, stress, and meals',
+      'Proactive insights when Guthub spots a pattern in your logs',
+      "Today's meals, macros, and how you're feeling, all on one screen",
+      'One-tap suggestions you can accept, decline, or talk through with your coach',
+    ],
+    icon: LayoutDashboard,
+    visual: <MockDailyHome />,
+    bg: 'var(--cream-100)',
+    visualRight: false,
+  },
+  {
     id: 'reports',
     eyebrow: 'Test reports',
     headline: 'Your lab results, finally explained.',
@@ -471,18 +580,6 @@ const blocks = [
     visual: <MockReports />,
     bg: 'var(--cream-50)',
     visualRight: true,
-  },
-  {
-    id: 'dashboard',
-    eyebrow: 'Health dashboard',
-    headline: 'Everything in one view.',
-    body: "The dashboard pulls together your gut score, symptom trends, calorie history, and meal logs into a single at-a-glance view — so you always know if you're heading in the right direction.",
-    bullets: ['Gut score + symptom trend chart', 'Calorie and macro history', 'Meal-to-symptom correlation view'],
-    icon: LayoutDashboard,
-    visual: <MockDashboard />,
-    bg: 'var(--forest-500)',
-    visualRight: false,
-    dark: true,
   },
 ];
 
@@ -497,28 +594,22 @@ export default function FeatureBlocks() {
 }
 
 function FeatureBlock({ block }: { block: typeof blocks[0] }) {
-  const textColor = block.dark ? 'var(--cream-100)' : 'var(--ink-900)';
-  const subColor = block.dark ? 'rgba(250,245,238,0.75)' : 'var(--ink-700)';
-  const bulletColor = block.dark ? 'rgba(250,245,238,0.65)' : 'var(--ink-600)';
-  const dotColor = block.dark ? 'var(--terracotta-300)' : 'var(--terracotta-400)';
-  const eyebrowColor = block.dark ? 'var(--terracotta-300)' : undefined;
-
   const textCol = (
     <Reveal style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', maxWidth: 480 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: eyebrowColor ?? 'var(--terracotta-500)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--terracotta-500)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
         <block.icon size={14} />
         {block.eyebrow}
       </div>
-      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem, 2.8vw, 2.5rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, color: textColor, marginBottom: 18 }}>
+      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem, 2.8vw, 2.5rem)', lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400, color: 'var(--ink-900)', marginBottom: 18 }}>
         {block.headline}
       </h2>
-      <p style={{ fontSize: 17, lineHeight: 1.65, color: subColor, marginBottom: 24 }}>
+      <p style={{ fontSize: 17, lineHeight: 1.65, color: 'var(--ink-700)', marginBottom: 24 }}>
         {block.body}
       </p>
       <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
         {block.bullets.map(b => (
-          <li key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 15, color: bulletColor }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0, marginTop: 7 }} />
+          <li key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 15, color: 'var(--ink-600)' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--terracotta-400)', flexShrink: 0, marginTop: 7 }} />
             {b}
           </li>
         ))}
@@ -534,12 +625,7 @@ function FeatureBlock({ block }: { block: typeof blocks[0] }) {
 
   return (
     <section className="section-pad section-pad-v" style={{ padding: '96px 32px', background: block.bg, position: 'relative', overflow: 'hidden' }}>
-      {block.dark && (
-        <>
-          <div aria-hidden style={{ position: 'absolute', top: -100, right: -60, width: 400, height: 400, background: 'radial-gradient(circle, rgba(224,124,89,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
-          <div aria-hidden style={{ position: 'absolute', bottom: -120, left: -80, width: 360, height: 360, background: 'radial-gradient(circle, rgba(244,208,162,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        </>
-      )}
+
       <div className="stack-to-one" style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center', position: 'relative' }}>
         {block.visualRight ? (
           <>
