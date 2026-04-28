@@ -119,7 +119,7 @@ export default function AuthModal() {
             borderTop: '1px solid var(--border)',
             fontSize: 12, color: 'var(--ink-600)', lineHeight: 1.5, textAlign: 'center',
           }}>
-            By continuing you agree to our <a href="#" style={{ color: 'var(--ink-800)', fontWeight: 500 }}>Terms</a> and <a href="#" style={{ color: 'var(--ink-800)', fontWeight: 500 }}>Privacy Policy</a>.
+            By continuing you agree to our <a href="/terms" style={{ color: 'var(--ink-800)', fontWeight: 500 }}>Terms</a> and <a href="/privacy" style={{ color: 'var(--ink-800)', fontWeight: 500 }}>Privacy Policy</a>.
           </div>
         )}
       </div>
