@@ -430,7 +430,7 @@ function MockDailyHome() {
           </svg>
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-900)', lineHeight: 1 }}>{score}</div>
-            <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--ink-500)', marginTop: 2 }}>GUT SCORE</div>
+            <div style={{ fontSize: 6, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--ink-500)', marginTop: 2 }}>GUT SCORE</div>
           </div>
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
