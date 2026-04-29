@@ -32,17 +32,17 @@ Cream / forest / terracotta palette: `--cream-50/100/200`, `--forest-300/400/500
 1. **Start dev server first**: `npm run dev` from the repo root (background it, wait for "Ready"). It dies between sessions. The repo path varies per session — use whatever the CWD is (e.g. `/home/user/guthub-website` or `/home/claude/repo`).
 2. **Make edits** with Edit/Write tools.
 3. **Verify visually**: write a small playwright script to `/tmp/`, screenshot the page or a specific section, Read the PNG. The user can't preview localhost — screenshots are how they confirm.
-4. **Commit + push** when the user approves. Push needs a fresh PAT from the user (classic, `repo` scope) — they reuse it across sessions and rotate themselves.
+4. **Commit + push** when the user approves. The PAT is already saved in `~/.netrc` — no need to ask the user for it. If pushes start failing with 401/403, the PAT may have rotated; ask for a fresh one (classic, `repo` scope) and overwrite `~/.netrc` (`machine github.com / login x-access-token / password <PAT>`, `chmod 600`).
 
 ## Push protocol (important — don't use `git push origin`)
 
-The sandbox's `origin` remote is a local HTTP proxy (`http://local_proxy@127.0.0.1:40429/...`) that is **read-only** for this identity — `git push origin` 403s, and MCP GitHub write tools also 403. Fetches work fine. Always push directly to `github.com` with the inline-PAT pattern below, and sync tracking refs afterward.
+The sandbox's `origin` remote is a local HTTP proxy (`http://local_proxy@127.0.0.1:40429/...`) that is **read-only** for this identity — `git push origin` 403s, and MCP GitHub write tools also 403. Fetches work fine. Always push directly to `github.com`; credentials come from `~/.netrc`.
 
-**1. Push directly to github.com with inline PAT:**
+**1. Push directly to github.com (auth via `~/.netrc`):**
 ```
-git -c "http.https://github.com/.extraheader=Authorization: Basic $(printf 'x-access-token:%s' <PAT> | base64 -w0)" push https://github.com/botwurx-agent/guthub-website.git <localBranch>:<remoteBranch> 2>&1 | sed 's/ghp_[A-Za-z0-9]*/ghp_***/g' | tail -5
+git push https://github.com/botwurx-agent/guthub-website.git <localBranch>:<remoteBranch> 2>&1 | tail -5
 ```
-Always pipe through `sed 's/ghp_[A-Za-z0-9]*/ghp_***/g'` to keep the token out of logs.
+No inline PAT needed — `~/.netrc` (file mode 600, `machine github.com login x-access-token password <PAT>`) handles auth transparently. If you ever do echo a token, pipe through `sed 's/ghp_[A-Za-z0-9]*/ghp_***/g'`.
 
 **2. Sync local tracking refs so the stop hook clears:**
 ```
