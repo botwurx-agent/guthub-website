@@ -1,7 +1,7 @@
 # GutHub App — Implementation Spec
 
 **Status:** Ready to build. Flask app fully reviewed.
-**Last updated:** 2026-05-06
+**Last updated:** 2026-05-06 (updated with differentiator features)
 **Branch:** `claude/continue-guthub-backend-QiJwE`
 
 ---
@@ -440,23 +440,105 @@ Bypass mode: `STRIPE_BYPASS_MODE=true` env var (dev only) → skip Stripe, activ
 
 ---
 
+## Differentiator Features
+
+These are features ChatGPT/Claude chat structurally cannot offer because they require persistent structured user data. These are product moats — they get stronger the longer a user stays.
+
+---
+
+### 1. Symptom-Food Correlation Engine
+
+**What it does:** Detects patterns between logged meals and logged symptoms over time.
+Example output: *"You've logged bloating 5 of the last 6 times you ate a meal containing dairy or high-FODMAP ingredients. Consider trying a 2-week elimination."*
+
+**Why it's a moat:** Generic AI has no access to your logged history. GutHub has both the meals table and the symptoms table. The correlation is a SQL query + LLM synthesis — not complex to build, but impossible to replicate in a chat interface.
+
+**Schema needed:** `symptoms` table (already in schema) + `meals` table (already in schema).
+
+**New API route:** `api/insights/correlations/route.ts`
+- Queries last 30–90 days of symptoms and meals
+- Groups by symptom type + meal ingredients
+- Passes summary to LLM for plain-English pattern narrative
+- Returns: top 2–3 correlations with confidence ("5 of 7 occurrences")
+
+**New UI:** Section in Insights page — "Your Patterns" card. Shows top correlations with a prompt to share with Coach for a protocol.
+
+**Trigger:** Run automatically after user has ≥14 days of both meal and symptom data. Show a "New insight available" nudge on dashboard.
+
+---
+
+### 2. Weight Loss Timeline Projection
+
+**What it does:** Based on the user's average weekly weight loss rate (calculated from `daily_records`), projects their estimated goal weight arrival date.
+Example: *"At your current pace of −0.8 lbs/week, you'll reach your goal weight of 165 lbs in approximately 11 weeks (around August 12)."*
+
+**Why it's compelling:** Progress % is motivating but abstract. A concrete date is visceral. This is the feature users screenshot and share.
+
+**Calculation logic (server-side, no LLM needed):**
+```
+1. Pull last 4 weeks of daily_records where current_weight > 0
+2. Calculate average weekly delta (can be loss or gain)
+3. weeks_remaining = (current_weight - goal_weight) / avg_weekly_delta
+4. projected_date = today + (weeks_remaining × 7 days)
+5. If avg_weekly_delta ≈ 0 (plateau) → show plateau message instead
+6. If on pace: show projected date + confidence note
+7. Edge cases: gaining when goal is loss → show off-track message
+```
+
+**UI placement:** Weight progress card in Log page, below the progress bar.
+Shows: projected date, weeks remaining, average weekly rate, on-track / off-track / plateau status.
+
+**No LLM required** for the calculation itself. LLM is used only for the accompanying Coach nudge (see below).
+
+---
+
+### 3. Weekly Check-In (Proactive Coach Nudge)
+
+**What it does:** Every Monday, GutHub proactively summarizes the user's previous week and offers one specific adjustment — without the user having to ask.
+
+Example message in Coach:
+> *"Week recap: You lost 1.2 lbs this week — you're on track for your goal. Your protein was below target 4 of 7 days, which may be slowing progress. This week, try adding a protein source to breakfast. Want me to suggest some options?"*
+
+**Why it's a differentiator:** ChatGPT is reactive — it answers when asked. GutHub is proactive. This creates a coaching relationship, not just a Q&A tool. It also drives weekly active usage (the single best predictor of retention).
+
+**Implementation:**
+- Triggered server-side on Monday (Vercel cron job or Supabase scheduled function)
+- Pulls last 7 days of `daily_records`, `meals`, `symptoms`, `tracking`
+- LLM prompt: summarize week, identify top 1 gap vs targets, suggest one specific action
+- Injects summary as a `system`-role message at the top of the Coach conversation for that week
+- User opens Coach and sees it waiting for them (not a push notification — part of the conversation)
+
+**New infrastructure:** `api/cron/weekly-checkin/route.ts` (Vercel cron, runs Monday 8am UTC)
+
+**LLM prompt additions** (extend `lib/ai/insights.ts`):
+```
+Inputs: 7-day weight delta, macro adherence % per day, symptom count, gut score trend
+Output: 2-3 sentence recap + 1 specific actionable suggestion
+Tone: encouraging coach, not clinical
+Temperature: 0.7
+```
+
+---
+
 ## Build Order
 
 1. **AppShell + route group** — sidebar, topbar, protected layout
 2. **Supabase Auth** — signup/login wired to marketing site CTAs, 3-day trial grant on signup
 3. **Onboarding** — 6-step form (design handoff), unit normalization, post-submit cascade (goal weight + macros LLM calls)
 4. **Today** — dashboard with gut score, weekly charts, gut tip, meal of the day
-5. **Log** — daily record CRUD, weight tracking, macro logging, progress %, date navigation
+5. **Log** — daily record CRUD, weight tracking, macro logging, progress %, date navigation + **weight loss timeline projection**
 6. **Plan** — meal planner with 10 diet modes, accept/save flow
 7. **Insights** — lab report upload, PDF extraction, LLM analysis, previous reports
-8. **Coach** — streaming chat, image upload, conversation history, clear/download
-9. **Symptom tracking** — new feature (schema ready, needs design finalization)
-10. **Stripe paywall** — checkout, webhook, customer portal
-11. **Settings** — profile edit, subscription management
-12. **Wire marketing CTAs** — "Start free trial" → onboarding
-13. **Mobile responsive pass**
-14. **Empty / loading / error states**
-15. **Push notifications** (VAPID)
+8. **Coach** — streaming chat, image upload, conversation history, clear/download + **weekly check-in injection**
+9. **Symptom tracking** — log symptom type, severity 1–10, notes per day
+10. **Symptom-food correlation engine** — pattern detection after 14 days of data, surfaced in Insights
+11. **Weekly check-in cron** — Vercel cron, Monday 8am UTC, proactive Coach nudge
+12. **Stripe paywall** — checkout, webhook, customer portal
+13. **Settings** — profile edit, subscription management
+14. **Wire marketing CTAs** — "Start free trial" → onboarding
+15. **Mobile responsive pass**
+16. **Empty / loading / error states**
+17. **Push notifications** (VAPID)
 
 ---
 
