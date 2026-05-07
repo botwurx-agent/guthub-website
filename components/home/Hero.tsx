@@ -27,13 +27,13 @@ export default function Hero() {
             }}>
               Nutrition guidance{' '}
               <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>
-                you can actually talk to. Anytime.
+                you can actually talk to.
               </em>
             </h1>
           </Reveal>
           <Reveal delay={260} y={12}>
             <p style={{ fontSize: 19, lineHeight: 1.55, color: 'var(--ink-700)', maxWidth: 520, marginBottom: 36 }}>
-              A personalized coach that knows your gut. So you can stop guessing, googling, or feeling alone.
+              Your personalized AI gut health assistant — ongoing support, clarity, and real-time feedback. So you're never stuck guessing, googling, or feeling alone.
             </p>
           </Reveal>
           <Reveal delay={380} y={12}>
@@ -48,9 +48,9 @@ export default function Hero() {
           </Reveal>
           <Reveal delay={500} y={10}>
             <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', alignItems: 'center', fontSize: 14, color: 'var(--ink-600)' }}>
-              <TrustBullet Icon={CheckCircle}>7 days free</TrustBullet>
+              <TrustBullet Icon={CheckCircle}>Full access for 7 days</TrustBullet>
               <TrustBullet Icon={XCircle}>Cancel anytime</TrustBullet>
-              <TrustBullet Icon={Stethoscope}>Shaped by a certified gut health practitioner</TrustBullet>
+              <TrustBullet Icon={Stethoscope}>Complements professional care</TrustBullet>
             </div>
           </Reveal>
         </div>

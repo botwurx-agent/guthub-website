@@ -30,63 +30,53 @@ export default function Header() {
   }, [menuOpen]);
 
   return (
-    <>
-      <header style={{
-        position: 'sticky', top: 0, zIndex: 50,
-        background: scrolled ? 'rgba(253,250,243,0.82)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(12px)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
-        borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
-        transition: 'all 240ms var(--ease-out)',
+    <header style={{
+      position: 'sticky', top: 0, zIndex: 50,
+      background: scrolled ? 'rgba(253,250,243,0.82)' : 'transparent',
+      backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
+      borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
+      transition: 'all 240ms var(--ease-out)',
+    }}>
+      <div className="header-inner" style={{
+        maxWidth: 'var(--maxw-wide)', margin: '0 auto',
+        padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 32,
       }}>
-        <div className="header-inner" style={{
-          maxWidth: 'var(--maxw-wide)', margin: '0 auto',
-          padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 32,
-        }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <Image src="/logo-full.png" alt="GutHub" width={120} height={32} style={{ height: 32, width: 'auto' }} priority />
-          </Link>
-          <nav className="nav-links" style={{ display: 'flex', gap: 28, marginLeft: 16 }}>
-            {navItems.map(item => (
-              <NavLink key={item.label} href={item.href} label={item.label} />
-            ))}
-          </nav>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
-            <button className="signin-btn" onClick={() => openAuth('signin')} style={{
-              fontSize: 15, fontWeight: 500, color: 'var(--ink-800)',
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontFamily: 'var(--font-body)', padding: 0,
-            }}>
-              Sign in
-            </button>
-            <Button variant="primary" size="sm" onClick={() => openAuth('signup')}>
-              <span className="header-cta-full">Start free — 7 days</span>
-              <span className="header-cta-short" style={{ display: 'none' }}>Start free</span>
-            </Button>
-            <button
-              className="menu-toggle"
-              aria-label="Open menu"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen(true)}
-              style={{
-                display: 'none',
-                background: 'none', border: 'none', padding: 6, marginLeft: 4,
-                cursor: 'pointer', color: 'var(--ink-800)',
-              }}
-            >
-              <Menu size={24} />
-            </button>
-          </div>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <Image src="/logo-full.png" alt="GutHub" width={120} height={32} style={{ height: 32, width: 'auto' }} priority />
+        </Link>
+        <nav className="nav-links" style={{ display: 'flex', gap: 28, marginLeft: 16 }}>
+          {navItems.map(item => (
+            <NavLink key={item.label} href={item.href} label={item.label} />
+          ))}
+        </nav>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button className="signin-btn" onClick={() => openAuth('signin')} style={{
+            fontSize: 15, fontWeight: 500, color: 'var(--ink-800)',
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontFamily: 'var(--font-body)', padding: 0,
+          }}>
+            Sign in
+          </button>
+          <Button variant="primary" size="sm" onClick={() => openAuth('signup')}>
+            <span className="header-cta-full">Start free — 7 days</span>
+            <span className="header-cta-short" style={{ display: 'none' }}>Start free</span>
+          </Button>
+          <button
+            className="menu-toggle"
+            aria-label="Open menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(true)}
+            style={{
+              display: 'none',
+              background: 'none', border: 'none', padding: 6, marginLeft: 4,
+              cursor: 'pointer', color: 'var(--ink-800)',
+            }}
+          >
+            <Menu size={24} />
+          </button>
         </div>
-
-        <style>{`
-          @media (max-width: 767px) {
-            .header-cta-full { display: none !important; }
-            .header-cta-short { display: inline !important; }
-            .menu-toggle { display: inline-flex !important; }
-          }
-        `}</style>
-      </header>
+      </div>
 
       {menuOpen && (
         <div
@@ -94,8 +84,8 @@ export default function Header() {
           role="dialog"
           aria-modal="true"
           style={{
-            position: 'fixed', inset: 0, zIndex: 100,
-            backgroundColor: 'var(--cream-50)',
+            position: 'fixed', inset: 0, zIndex: 60,
+            background: 'var(--cream-50)',
             display: 'flex', flexDirection: 'column',
             animation: 'authFadeIn 200ms var(--ease-out)',
           }}
@@ -103,7 +93,6 @@ export default function Header() {
           <div style={{
             display: 'flex', alignItems: 'center',
             padding: '14px 20px', borderBottom: '1px solid var(--border)',
-            backgroundColor: 'var(--cream-50)',
           }}>
             <Link href="/" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
               <Image src="/logo-full.png" alt="GutHub" width={120} height={32} style={{ height: 32, width: 'auto' }} />
@@ -160,7 +149,15 @@ export default function Header() {
           </div>
         </div>
       )}
-    </>
+
+      <style>{`
+        @media (max-width: 767px) {
+          .header-cta-full { display: none !important; }
+          .header-cta-short { display: inline !important; }
+          .menu-toggle { display: inline-flex !important; }
+        }
+      `}</style>
+    </header>
   );
 }
 
