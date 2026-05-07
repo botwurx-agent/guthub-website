@@ -3,7 +3,8 @@
 import { useState, useEffect, useTransition } from 'react';
 import Image from 'next/image';
 import { X, AlertCircle } from 'lucide-react';
-import { signUp, signIn, signInWithGoogle, resetPassword } from '@/app/actions/auth';
+import { signUp, signIn, resetPassword } from '@/app/actions/auth';
+import { createClient } from '@/lib/supabase/client';
 
 export function openAuth(mode: 'signup' | 'signin' = 'signup') {
   window.dispatchEvent(new CustomEvent('open-auth', { detail: { mode } }));
@@ -70,12 +71,16 @@ export default function AuthModal() {
     });
   }
 
-  function handleGoogle() {
-    startTransition(async () => {
-      const result = await signInWithGoogle();
-      if (result?.error) setError(result.error as string);
-      else if (result?.url) window.location.href = result.url;
+  async function handleGoogle() {
+    setError(null);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
+    if (error) setError(error.message);
   }
 
   const isSignup = screen === 'signup';
