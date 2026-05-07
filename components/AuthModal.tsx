@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { X, AlertCircle } from 'lucide-react';
-import { signUp, signIn, resetPassword } from '@/app/actions/auth';
 import { createClient } from '@/lib/supabase/client';
 
 export function openAuth(mode: 'signup' | 'signin' = 'signup') {
@@ -17,7 +16,7 @@ export default function AuthModal() {
   const [screen, setScreen] = useState<Screen>('signup');
   const [error, setError] = useState<string | null>(null);
   const [forgotSent, setForgotSent] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
     const onOpen = (e: Event) => {
@@ -53,22 +52,72 @@ export default function AuthModal() {
 
   if (!open) return null;
 
-  function handleEmailAuth(formData: FormData) {
+  async function handleEmailAuth(formData: FormData) {
     setError(null);
-    startTransition(async () => {
-      const action = screen === 'signup' ? signUp : signIn;
-      const result = await action(formData);
-      if (result?.error) setError(result.error);
-    });
+    setIsPending(true);
+    const supabase = createClient();
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const name = formData.get('name') as string;
+
+    if (!email || !password) {
+      setError('Email and password are required.');
+      setIsPending(false);
+      return;
+    }
+
+    if (screen === 'signup') {
+      if (password.length < 8) {
+        setError('Password must be at least 8 characters.');
+        setIsPending(false);
+        return;
+      }
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name } },
+      });
+      if (error) {
+        setError(error.message);
+        setIsPending(false);
+        return;
+      }
+      window.location.href = '/onboarding';
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError(error.message);
+        setIsPending(false);
+        return;
+      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', user.id)
+          .single();
+        window.location.href = profile?.onboarding_completed ? '/dashboard' : '/onboarding';
+      }
+    }
   }
 
-  function handleForgot(formData: FormData) {
+  async function handleForgot(formData: FormData) {
     setError(null);
-    startTransition(async () => {
-      const result = await resetPassword(formData);
-      if (result?.error) setError(result.error);
-      else setForgotSent(true);
+    setIsPending(true);
+    const supabase = createClient();
+    const email = formData.get('email') as string;
+    if (!email) {
+      setError('Email is required.');
+      setIsPending(false);
+      return;
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
     });
+    setIsPending(false);
+    if (error) setError(error.message);
+    else setForgotSent(true);
   }
 
   async function handleGoogle() {
