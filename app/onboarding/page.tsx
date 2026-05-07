@@ -1,20 +1,72 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import Image from 'next/image'
-import { ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Check, Loader2, Lock } from 'lucide-react'
 import { saveProfileStep, completeOnboarding } from '@/app/actions/onboarding'
+import { createClient } from '@/lib/supabase/client'
 
 const TOTAL_STEPS = 6
 
 // ─── Step definitions ──────────────────────────────────────────────────────
-const STEPS = [
-  { title: 'About you', subtitle: 'Let\'s start with the basics.' },
-  { title: 'Your body', subtitle: 'We use this to calculate your personalized targets.' },
-  { title: 'Your goals', subtitle: 'What are you working toward?' },
-  { title: 'Health history', subtitle: 'Helps us give you safer, more relevant guidance.' },
-  { title: 'Daily habits', subtitle: 'The full picture of how you live.' },
-  { title: 'All set!', subtitle: 'We\'re calculating your personalized plan…' },
+type StepDef = {
+  sidebarLabel: string
+  eyebrow: string
+  titleStart: string
+  titleEm: string
+  titleEnd: string
+  subtitle: string
+}
+
+const STEPS: StepDef[] = [
+  {
+    sidebarLabel: 'About you',
+    eyebrow: '01 — ABOUT YOU',
+    titleStart: "Let's start with the ",
+    titleEm: 'basics',
+    titleEnd: '.',
+    subtitle: 'A couple quick details so we can call you the right thing.',
+  },
+  {
+    sidebarLabel: 'Health & history',
+    eyebrow: '02 — HEALTH & HISTORY',
+    titleStart: 'Your ',
+    titleEm: 'body & health',
+    titleEnd: ' picture.',
+    subtitle: 'We use this to calculate your personalized targets and give you safer guidance.',
+  },
+  {
+    sidebarLabel: 'How you eat',
+    eyebrow: '03 — HOW YOU EAT',
+    titleStart: 'Tell us about your ',
+    titleEm: 'eating style',
+    titleEnd: '.',
+    subtitle: "We'll tune your macros and meal suggestions to match.",
+  },
+  {
+    sidebarLabel: 'Goals',
+    eyebrow: '04 — GOALS',
+    titleStart: 'What are you ',
+    titleEm: 'working toward',
+    titleEnd: '?',
+    subtitle: "We'll align your daily targets and coaching to your goal.",
+  },
+  {
+    sidebarLabel: 'Lifestyle',
+    eyebrow: '05 — LIFESTYLE',
+    titleStart: 'The full ',
+    titleEm: 'picture',
+    titleEnd: ' of how you live.',
+    subtitle: 'Sleep, stress, and hydration shape gut health more than people realize.',
+  },
+  {
+    sidebarLabel: 'Final touches',
+    eyebrow: '06 — FINAL TOUCHES',
+    titleStart: "You're ",
+    titleEm: 'all set',
+    titleEnd: '.',
+    subtitle: "Tap below and we'll calculate your personalized plan.",
+  },
 ]
 
 const DIET_OPTIONS = [
@@ -51,26 +103,45 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [firstName, setFirstName] = useState('')
 
   // Form state
-  const [name, setName] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [nickname, setNickname] = useState('')
   const [dob, setDob] = useState('')
   const [gender, setGender] = useState('')
   const [weightLbs, setWeightLbs] = useState('')
   const [heightFt, setHeightFt] = useState('')
   const [heightIn, setHeightIn] = useState('')
-  const [dietMode, setDietMode] = useState('default')
-  const [activityLevel, setActivityLevel] = useState('moderate')
-  const [primaryGoal, setPrimaryGoal] = useState('gut_health')
-  const [targetWeightLbs, setTargetWeightLbs] = useState('')
   const [medications, setMedications] = useState('')
   const [medicalConditions, setMedicalConditions] = useState('')
-  const [familyHistory, setFamilyHistory] = useState('')
   const [allergies, setAllergies] = useState('')
+  const [dietMode, setDietMode] = useState('default')
+  const [eatingStyle, setEatingStyle] = useState('')
+  const [primaryGoal, setPrimaryGoal] = useState('gut_health')
+  const [targetWeightLbs, setTargetWeightLbs] = useState('')
+  const [activityLevel, setActivityLevel] = useState('moderate')
   const [sleepHours, setSleepHours] = useState('')
   const [stressLevel, setStressLevel] = useState('')
   const [hydrationGlasses, setHydrationGlasses] = useState('')
   const [additionalNotes, setAdditionalNotes] = useState('')
+
+  // Pre-fill name from auth metadata
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const meta = user?.user_metadata ?? {}
+      const name = meta.name ?? meta.full_name ?? ''
+      if (name) {
+        setFullName(name)
+        setFirstName(name.split(' ')[0])
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    if (fullName) setFirstName(fullName.split(' ')[0])
+  }, [fullName])
 
   function lbsToKg(lbs: number) { return lbs / 2.20462 }
   function feetInToCm(ft: number, inches: number) { return (ft * 12 + inches) * 2.54 }
@@ -79,11 +150,16 @@ export default function OnboardingPage() {
     setError(null)
 
     if (step === 0) {
-      if (!name.trim()) return setError('Please enter your name.')
+      if (!fullName.trim()) return setError('Please enter your name.')
       if (!dob) return setError('Please enter your date of birth.')
       if (!gender) return setError('Please select your gender.')
       startTransition(async () => {
-        const res = await saveProfileStep(1, { name, dob, gender })
+        const res = await saveProfileStep(1, {
+          name: fullName,
+          dob,
+          gender,
+          health_profile: { nickname: nickname || null },
+        })
         if (res?.error) setError(res.error)
         else setStep(1)
       })
@@ -98,6 +174,12 @@ export default function OnboardingPage() {
         const res = await saveProfileStep(2, {
           weight_kg: lbsToKg(wt),
           height_cm: feetInToCm(ft, inches),
+          health_profile: {
+            nickname: nickname || null,
+            medications: medications || null,
+            medical_conditions: medicalConditions || null,
+            allergies: allergies || null,
+          },
         })
         if (res?.error) setError(res.error)
         else setStep(2)
@@ -108,9 +190,11 @@ export default function OnboardingPage() {
         const res = await saveProfileStep(3, {
           diet_mode: dietMode,
           health_profile: {
-            activity_level: activityLevel,
-            primary_goal: primaryGoal,
-            target_weight_lbs: targetWeightLbs || null,
+            nickname: nickname || null,
+            medications: medications || null,
+            medical_conditions: medicalConditions || null,
+            allergies: allergies || null,
+            eating_style: eatingStyle || null,
           },
         })
         if (res?.error) setError(res.error)
@@ -119,14 +203,16 @@ export default function OnboardingPage() {
 
     } else if (step === 3) {
       startTransition(async () => {
-        const existing = await getExistingHealthProfile()
         const res = await saveProfileStep(4, {
           health_profile: {
-            ...existing,
+            nickname: nickname || null,
             medications: medications || null,
             medical_conditions: medicalConditions || null,
-            family_history: familyHistory || null,
             allergies: allergies || null,
+            eating_style: eatingStyle || null,
+            primary_goal: primaryGoal,
+            target_weight_lbs: targetWeightLbs || null,
+            activity_level: activityLevel,
           },
         })
         if (res?.error) setError(res.error)
@@ -135,10 +221,16 @@ export default function OnboardingPage() {
 
     } else if (step === 4) {
       startTransition(async () => {
-        const existing = await getExistingHealthProfile()
         const res = await saveProfileStep(5, {
           health_profile: {
-            ...existing,
+            nickname: nickname || null,
+            medications: medications || null,
+            medical_conditions: medicalConditions || null,
+            allergies: allergies || null,
+            eating_style: eatingStyle || null,
+            primary_goal: primaryGoal,
+            target_weight_lbs: targetWeightLbs || null,
+            activity_level: activityLevel,
             sleep_hours: sleepHours || null,
             stress_level: stressLevel || null,
             hydration_glasses: hydrationGlasses || null,
@@ -157,106 +249,171 @@ export default function OnboardingPage() {
     }
   }
 
-  // We merge health_profile fields client-side to avoid overwriting
-  // In production this would be a server-side merge; fine for onboarding
-  async function getExistingHealthProfile() {
-    return {
-      activity_level: activityLevel,
-      primary_goal: primaryGoal,
-      target_weight_lbs: targetWeightLbs || null,
-    }
-  }
-
   const currentStep = STEPS[step]
-  const isLastStep = step === TOTAL_STEPS - 1
 
   return (
     <div style={{
+      display: 'flex',
       minHeight: '100vh',
       background: 'var(--cream-50)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      padding: '32px 24px 80px',
       fontFamily: 'var(--font-body)',
     }}>
-      {/* Logo */}
-      <div style={{ marginBottom: 40 }}>
-        <Image src="/logo-full.png" alt="GutHub" width={110} height={28} style={{ height: 28, width: 'auto' }} />
-      </div>
-
-      {/* Progress bar */}
-      <div style={{ width: '100%', maxWidth: 560, marginBottom: 40 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          {STEPS.map((_, i) => (
-            <div key={i} style={{
-              width: `${100 / TOTAL_STEPS - 1}%`,
-              height: 4,
-              borderRadius: 999,
-              background: i <= step ? 'var(--terracotta-400)' : 'var(--ink-200)',
-              transition: 'background 300ms',
-            }} />
-          ))}
-        </div>
-        <p style={{ fontSize: 12, color: 'var(--ink-500)', textAlign: 'right' }}>
-          Step {step + 1} of {TOTAL_STEPS}
-        </p>
-      </div>
-
-      {/* Card */}
-      <div style={{
-        width: '100%', maxWidth: 560,
-        background: '#fff',
-        borderRadius: 'var(--radius-2xl)',
-        boxShadow: '0 4px 24px rgba(31,45,42,0.08)',
-        padding: '40px 40px 32px',
+      {/* ─── SIDEBAR ─────────────────────────────────────────────────── */}
+      <aside className="onb-sidebar" style={{
+        width: 380, flexShrink: 0,
+        background: 'var(--forest-500)',
+        padding: '40px 36px',
+        display: 'flex', flexDirection: 'column',
+        position: 'sticky', top: 0, height: '100vh',
       }}>
+        {/* Logo */}
+        <div style={{ marginBottom: 40 }}>
+          <Image src="/logo-full.png" alt="GutHub" width={120} height={30} style={{ height: 30, width: 'auto', filter: 'brightness(0) invert(1)' }} />
+        </div>
+
+        {/* Welcome */}
+        <h2 style={{
+          fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 400,
+          color: 'var(--cream-100)', margin: '0 0 12px', lineHeight: 1.15,
+          letterSpacing: '-0.02em',
+        }}>
+          Welcome
+          {firstName && <>, <em style={{ fontStyle: 'italic', color: '#e8c870' }}>{firstName}</em></>}
+          .
+        </h2>
+        <p style={{
+          fontSize: 14.5, color: 'rgba(255,255,255,0.65)',
+          lineHeight: 1.55, margin: '0 0 36px', maxWidth: 280,
+        }}>
+          About 6 minutes. The more your coach knows now, the better it can help later.
+        </p>
+
+        {/* Step list */}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+          {STEPS.map((s, i) => {
+            const isActive = i === step
+            const isComplete = i < step
+            return (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '12px 14px', borderRadius: 12,
+                background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
+                transition: 'background 200ms',
+              }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                  background: isActive ? 'var(--terracotta-400)' : isComplete ? 'rgba(232,200,112,0.15)' : 'transparent',
+                  border: isActive ? 'none' : `1.5px solid ${isComplete ? '#e8c870' : 'rgba(255,255,255,0.25)'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 700,
+                  color: isActive ? '#fff' : isComplete ? '#e8c870' : 'rgba(255,255,255,0.5)',
+                }}>
+                  {isComplete ? <Check size={14} strokeWidth={2.5} /> : i + 1}
+                </div>
+                <span style={{
+                  fontSize: 14.5,
+                  fontWeight: isActive ? 600 : 400,
+                  color: isActive ? '#fff' : isComplete ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.5)',
+                }}>
+                  {s.sidebarLabel}
+                </span>
+              </div>
+            )
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 8,
+          fontSize: 12, color: 'rgba(255,255,255,0.45)',
+          marginTop: 24, lineHeight: 1.5,
+        }}>
+          <Lock size={14} style={{ flexShrink: 0, marginTop: 2 }} />
+          <span>Your information is encrypted and never shared with third parties.</span>
+        </div>
+      </aside>
+
+      {/* ─── MAIN CONTENT ──────────────────────────────────────────────── */}
+      <main className="onb-main" style={{
+        flex: 1, padding: '64px 80px',
+        display: 'flex', flexDirection: 'column',
+        maxWidth: 760, width: '100%',
+      }}>
+        {/* Eyebrow */}
+        <div style={{
+          fontSize: 12, fontWeight: 700, letterSpacing: '0.12em',
+          color: 'var(--terracotta-500)', textTransform: 'uppercase',
+          marginBottom: 14,
+        }}>
+          {currentStep.eyebrow}
+        </div>
+
+        {/* Title */}
         <h1 style={{
-          fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 400,
-          letterSpacing: '-0.02em', color: 'var(--ink-900)', margin: '0 0 6px',
-        }}>{currentStep.title}</h1>
-        <p style={{ fontSize: 15, color: 'var(--ink-500)', margin: '0 0 32px' }}>
+          fontFamily: 'var(--font-display)', fontSize: 40, fontWeight: 400,
+          letterSpacing: '-0.02em', color: 'var(--ink-900)',
+          margin: '0 0 14px', lineHeight: 1.15,
+        }}>
+          {currentStep.titleStart}
+          <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>{currentStep.titleEm}</em>
+          {currentStep.titleEnd}
+        </h1>
+
+        {/* Subtitle */}
+        <p style={{
+          fontSize: 17, color: 'var(--ink-500)', lineHeight: 1.55,
+          margin: '0 0 36px', maxWidth: 540,
+        }}>
           {currentStep.subtitle}
         </p>
 
         {/* Step content */}
-        {step === 0 && <StepPersonal name={name} setName={setName} dob={dob} setDob={setDob} gender={gender} setGender={setGender} />}
-        {step === 1 && <StepBiometrics weightLbs={weightLbs} setWeightLbs={setWeightLbs} heightFt={heightFt} setHeightFt={setHeightFt} heightIn={heightIn} setHeightIn={setHeightIn} />}
-        {step === 2 && <StepGoals dietMode={dietMode} setDietMode={setDietMode} activityLevel={activityLevel} setActivityLevel={setActivityLevel} primaryGoal={primaryGoal} setPrimaryGoal={setPrimaryGoal} targetWeightLbs={targetWeightLbs} setTargetWeightLbs={setTargetWeightLbs} />}
-        {step === 3 && <StepHealthHistory medications={medications} setMedications={setMedications} medicalConditions={medicalConditions} setMedicalConditions={setMedicalConditions} familyHistory={familyHistory} setFamilyHistory={setFamilyHistory} allergies={allergies} setAllergies={setAllergies} />}
-        {step === 4 && <StepHabits sleepHours={sleepHours} setSleepHours={setSleepHours} stressLevel={stressLevel} setStressLevel={setStressLevel} hydrationGlasses={hydrationGlasses} setHydrationGlasses={setHydrationGlasses} additionalNotes={additionalNotes} setAdditionalNotes={setAdditionalNotes} />}
-        {step === 5 && <StepFinish isPending={isPending} />}
+        <div style={{ flex: 1 }}>
+          {step === 0 && <StepAboutYou {...{ fullName, setFullName, nickname, setNickname, dob, setDob, gender, setGender }} />}
+          {step === 1 && <StepHealth {...{ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, medications, setMedications, medicalConditions, setMedicalConditions, allergies, setAllergies }} />}
+          {step === 2 && <StepEating {...{ dietMode, setDietMode, eatingStyle, setEatingStyle }} />}
+          {step === 3 && <StepGoals {...{ primaryGoal, setPrimaryGoal, targetWeightLbs, setTargetWeightLbs, activityLevel, setActivityLevel }} />}
+          {step === 4 && <StepLifestyle {...{ sleepHours, setSleepHours, stressLevel, setStressLevel, hydrationGlasses, setHydrationGlasses, additionalNotes, setAdditionalNotes }} />}
+          {step === 5 && <StepFinish isPending={isPending} />}
+        </div>
 
         {/* Error */}
         {error && (
           <div style={{
             marginTop: 16, padding: '12px 14px',
             background: 'rgba(180,66,44,0.08)', border: '1px solid rgba(180,66,44,0.2)',
-            borderRadius: 10, fontSize: 13.5, color: 'var(--error)', lineHeight: 1.4,
+            borderRadius: 10, fontSize: 13.5, color: 'var(--terracotta-600)',
           }}>
             {error}
           </div>
         )}
 
-        {/* Navigation */}
-        {step < 5 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 32 }}>
-            <button
-              onClick={() => { setStep(s => s - 1); setError(null) }}
-              disabled={step === 0 || isPending}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '10px 18px', borderRadius: 999,
-                border: '1px solid var(--border)', background: 'transparent',
-                fontSize: 14, fontWeight: 500, color: 'var(--ink-600)',
-                cursor: step === 0 ? 'default' : 'pointer',
-                opacity: step === 0 ? 0 : 1,
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              <ChevronLeft size={16} /> Back
-            </button>
+        {/* Footer nav */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginTop: 40, paddingTop: 32, borderTop: '1px solid var(--cream-200)',
+        }}>
+          <button
+            onClick={() => { setStep(s => Math.max(0, s - 1)); setError(null) }}
+            disabled={step === 0 || isPending}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '10px 18px', borderRadius: 999,
+              border: '1px solid var(--cream-200)', background: 'transparent',
+              fontSize: 14, fontWeight: 500, color: 'var(--ink-600)',
+              cursor: step === 0 ? 'default' : 'pointer',
+              opacity: step === 0 ? 0 : 1,
+              fontFamily: 'var(--font-body)',
+              transition: 'opacity 200ms',
+            }}
+          >
+            <ChevronLeft size={16} /> Back
+          </button>
 
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <span style={{ fontSize: 13, color: 'var(--ink-400)' }}>
+              Step {step + 1} of {TOTAL_STEPS}
+            </span>
             <button
               onClick={handleNext}
               disabled={isPending}
@@ -268,67 +425,88 @@ export default function OnboardingPage() {
                 cursor: isPending ? 'not-allowed' : 'pointer',
                 opacity: isPending ? 0.7 : 1,
                 fontFamily: 'var(--font-body)',
-                transition: 'background 200ms',
+                transition: 'background 200ms, transform 200ms',
               }}
             >
-              {isPending ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Saving…</> : <>Continue <ChevronRight size={16} /></>}
+              {isPending ? (
+                <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Saving…</>
+              ) : step === 5 ? (
+                <>Build my plan <ChevronRight size={16} /></>
+              ) : (
+                <>Continue <ChevronRight size={16} /></>
+              )}
             </button>
           </div>
-        )}
+        </div>
+      </main>
 
-        {step === 5 && !isPending && (
-          <button
-            onClick={handleNext}
-            style={{
-              width: '100%', marginTop: 24, padding: '14px 20px',
-              borderRadius: 999, border: 'none',
-              background: 'var(--terracotta-400)',
-              fontSize: 15, fontWeight: 600, color: '#fff',
-              cursor: 'pointer', fontFamily: 'var(--font-body)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}
-          >
-            Build my plan <ChevronRight size={16} />
-          </button>
-        )}
-      </div>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 900px) {
+          .onb-sidebar {
+            position: relative !important;
+            width: 100% !important;
+            height: auto !important;
+            padding: 24px !important;
+          }
+          .onb-main {
+            padding: 32px 24px !important;
+          }
+          div:has(> .onb-sidebar) {
+            flex-direction: column !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }
 
-// ─── Step 1: Personal ─────────────────────────────────────────────────────
-function StepPersonal({ name, setName, dob, setDob, gender, setGender }: {
-  name: string; setName: (v: string) => void
+// ─── Step 1: About you ────────────────────────────────────────────────────
+function StepAboutYou({ fullName, setFullName, nickname, setNickname, dob, setDob, gender, setGender }: {
+  fullName: string; setFullName: (v: string) => void
+  nickname: string; setNickname: (v: string) => void
   dob: string; setDob: (v: string) => void
   gender: string; setGender: (v: string) => void
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 540 }}>
       <OField label="Full name" required>
-        <OInput value={name} onChange={setName} placeholder="Alex Morgan" type="text" autoComplete="name" />
+        <OInput value={fullName} onChange={setFullName} placeholder="Alex Morgan" type="text" autoComplete="name" />
       </OField>
-      <OField label="Date of birth" required>
-        <OInput value={dob} onChange={setDob} placeholder="" type="date" autoComplete="bday" />
-      </OField>
-      <OField label="Gender" required>
-        <div style={{ display: 'flex', gap: 10 }}>
-          {['male', 'female', 'other', 'prefer_not_to_say'].map(g => (
-            <ChipButton key={g} label={g === 'prefer_not_to_say' ? 'Prefer not to say' : g.charAt(0).toUpperCase() + g.slice(1)} selected={gender === g} onClick={() => setGender(g)} />
-          ))}
-        </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <OField label="Date of birth" required>
+          <OInput value={dob} onChange={setDob} placeholder="" type="date" autoComplete="bday" />
+        </OField>
+        <OField label="Gender" required>
+          <OSelect value={gender} onChange={setGender} options={[
+            { value: '', label: 'Select…' },
+            { value: 'male', label: 'Male' },
+            { value: 'female', label: 'Female' },
+            { value: 'other', label: 'Other' },
+            { value: 'prefer_not_to_say', label: 'Prefer not to say' },
+          ]} />
+        </OField>
+      </div>
+
+      <OField label="What should we call you?" hint="If different from your full name.">
+        <OInput value={nickname} onChange={setNickname} placeholder="Alex" type="text" autoComplete="nickname" />
       </OField>
     </div>
   )
 }
 
-// ─── Step 2: Biometrics ───────────────────────────────────────────────────
-function StepBiometrics({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn }: {
+// ─── Step 2: Health & history ────────────────────────────────────────────
+function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, medications, setMedications, medicalConditions, setMedicalConditions, allergies, setAllergies }: {
   weightLbs: string; setWeightLbs: (v: string) => void
   heightFt: string; setHeightFt: (v: string) => void
   heightIn: string; setHeightIn: (v: string) => void
+  medications: string; setMedications: (v: string) => void
+  medicalConditions: string; setMedicalConditions: (v: string) => void
+  allergies: string; setAllergies: (v: string) => void
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 540 }}>
       <OField label="Current weight (lbs)" required>
         <OInput value={weightLbs} onChange={setWeightLbs} placeholder="165" type="number" />
       </OField>
@@ -344,23 +522,53 @@ function StepBiometrics({ weightLbs, setWeightLbs, heightFt, setHeightFt, height
           </div>
         </div>
       </OField>
-      <p style={{ fontSize: 13, color: 'var(--ink-500)', lineHeight: 1.5, margin: 0 }}>
-        We use these to calculate your TDEE and personalized macro targets using the Mifflin-St Jeor formula.
-      </p>
+      <OField label="Medical conditions" hint="Optional. e.g. IBS, GERD, diabetes…">
+        <OTextarea value={medicalConditions} onChange={setMedicalConditions} placeholder="" />
+      </OField>
+      <OField label="Current medications" hint="Optional. e.g. Metformin, Omeprazole…">
+        <OTextarea value={medications} onChange={setMedications} placeholder="" />
+      </OField>
+      <OField label="Food allergies or intolerances" hint="Optional. e.g. Gluten, lactose, tree nuts…">
+        <OTextarea value={allergies} onChange={setAllergies} placeholder="" />
+      </OField>
     </div>
   )
 }
 
-// ─── Step 3: Goals ────────────────────────────────────────────────────────
-function StepGoals({ dietMode, setDietMode, activityLevel, setActivityLevel, primaryGoal, setPrimaryGoal, targetWeightLbs, setTargetWeightLbs }: {
+// ─── Step 3: How you eat ────────────────────────────────────────────────
+function StepEating({ dietMode, setDietMode, eatingStyle, setEatingStyle }: {
   dietMode: string; setDietMode: (v: string) => void
-  activityLevel: string; setActivityLevel: (v: string) => void
+  eatingStyle: string; setEatingStyle: (v: string) => void
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 600 }}>
+      <OField label="Diet preference">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {DIET_OPTIONS.map(d => (
+            <RadioCard key={d.value} label={d.label} desc={d.desc} selected={dietMode === d.value} onClick={() => setDietMode(d.value)} />
+          ))}
+        </div>
+      </OField>
+      <OField label="How would you describe your eating?" hint="Optional.">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {['3 meals/day', 'Grazer', 'Skip breakfast', 'Late dinners', 'Inconsistent', 'On the go'].map(s => (
+            <ChipButton key={s} label={s} selected={eatingStyle === s} onClick={() => setEatingStyle(eatingStyle === s ? '' : s)} />
+          ))}
+        </div>
+      </OField>
+    </div>
+  )
+}
+
+// ─── Step 4: Goals ───────────────────────────────────────────────────────
+function StepGoals({ primaryGoal, setPrimaryGoal, targetWeightLbs, setTargetWeightLbs, activityLevel, setActivityLevel }: {
   primaryGoal: string; setPrimaryGoal: (v: string) => void
   targetWeightLbs: string; setTargetWeightLbs: (v: string) => void
+  activityLevel: string; setActivityLevel: (v: string) => void
 }) {
   const showTargetWeight = primaryGoal === 'weight_loss' || primaryGoal === 'muscle_gain'
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 600 }}>
       <OField label="Primary goal">
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {GOAL_OPTIONS.map(g => (
@@ -370,7 +578,7 @@ function StepGoals({ dietMode, setDietMode, activityLevel, setActivityLevel, pri
       </OField>
 
       {showTargetWeight && (
-        <OField label="Target weight (lbs) — optional">
+        <OField label="Target weight (lbs)" hint="Optional.">
           <OInput value={targetWeightLbs} onChange={setTargetWeightLbs} placeholder="150" type="number" />
         </OField>
       )}
@@ -382,58 +590,27 @@ function StepGoals({ dietMode, setDietMode, activityLevel, setActivityLevel, pri
           ))}
         </div>
       </OField>
-
-      <OField label="Diet preference">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {DIET_OPTIONS.map(d => (
-            <RadioCard key={d.value} label={d.label} desc={d.desc} selected={dietMode === d.value} onClick={() => setDietMode(d.value)} />
-          ))}
-        </div>
-      </OField>
     </div>
   )
 }
 
-// ─── Step 4: Health history ───────────────────────────────────────────────
-function StepHealthHistory({ medications, setMedications, medicalConditions, setMedicalConditions, familyHistory, setFamilyHistory, allergies, setAllergies }: {
-  medications: string; setMedications: (v: string) => void
-  medicalConditions: string; setMedicalConditions: (v: string) => void
-  familyHistory: string; setFamilyHistory: (v: string) => void
-  allergies: string; setAllergies: (v: string) => void
-}) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <p style={{ fontSize: 13, color: 'var(--ink-500)', lineHeight: 1.5, margin: 0 }}>
-        All fields optional. This helps GutHub give you safer, more personalized guidance.
-      </p>
-      <OField label="Current medications">
-        <OTextarea value={medications} onChange={setMedications} placeholder="e.g. Metformin, Omeprazole…" />
-      </OField>
-      <OField label="Medical conditions">
-        <OTextarea value={medicalConditions} onChange={setMedicalConditions} placeholder="e.g. Type 2 diabetes, IBS, GERD…" />
-      </OField>
-      <OField label="Family health history">
-        <OTextarea value={familyHistory} onChange={setFamilyHistory} placeholder="e.g. Heart disease, colon cancer…" />
-      </OField>
-      <OField label="Food allergies or intolerances">
-        <OTextarea value={allergies} onChange={setAllergies} placeholder="e.g. Gluten, lactose, tree nuts…" />
-      </OField>
-    </div>
-  )
-}
-
-// ─── Step 5: Daily habits ─────────────────────────────────────────────────
-function StepHabits({ sleepHours, setSleepHours, stressLevel, setStressLevel, hydrationGlasses, setHydrationGlasses, additionalNotes, setAdditionalNotes }: {
+// ─── Step 5: Lifestyle ───────────────────────────────────────────────────
+function StepLifestyle({ sleepHours, setSleepHours, stressLevel, setStressLevel, hydrationGlasses, setHydrationGlasses, additionalNotes, setAdditionalNotes }: {
   sleepHours: string; setSleepHours: (v: string) => void
   stressLevel: string; setStressLevel: (v: string) => void
   hydrationGlasses: string; setHydrationGlasses: (v: string) => void
   additionalNotes: string; setAdditionalNotes: (v: string) => void
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <OField label="Average sleep (hours/night)">
-        <OInput value={sleepHours} onChange={setSleepHours} placeholder="7" type="number" />
-      </OField>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 540 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <OField label="Average sleep (hrs/night)">
+          <OInput value={sleepHours} onChange={setSleepHours} placeholder="7" type="number" />
+        </OField>
+        <OField label="Water intake (glasses/day)">
+          <OInput value={hydrationGlasses} onChange={setHydrationGlasses} placeholder="8" type="number" />
+        </OField>
+      </div>
       <OField label="Daily stress level">
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {['Low', 'Moderate', 'High', 'Very high'].map(s => (
@@ -441,25 +618,22 @@ function StepHabits({ sleepHours, setSleepHours, stressLevel, setStressLevel, hy
           ))}
         </div>
       </OField>
-      <OField label="Water intake (glasses/day)">
-        <OInput value={hydrationGlasses} onChange={setHydrationGlasses} placeholder="8" type="number" />
-      </OField>
-      <OField label="Anything else we should know?">
-        <OTextarea value={additionalNotes} onChange={setAdditionalNotes} placeholder="Past diets, recent changes, concerns…" />
+      <OField label="Anything else we should know?" hint="Optional. Past diets, recent changes, concerns…">
+        <OTextarea value={additionalNotes} onChange={setAdditionalNotes} placeholder="" />
       </OField>
     </div>
   )
 }
 
-// ─── Step 6: Finish ───────────────────────────────────────────────────────
+// ─── Step 6: Finish ──────────────────────────────────────────────────────
 function StepFinish({ isPending }: { isPending: boolean }) {
   return (
-    <div style={{ textAlign: 'center', padding: '20px 0' }}>
+    <div style={{ padding: '20px 0' }}>
       <div style={{
         width: 72, height: 72, borderRadius: '50%',
         background: 'var(--terracotta-50)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        margin: '0 auto 24px',
+        marginBottom: 24,
       }}>
         {isPending
           ? <Loader2 size={32} color="var(--terracotta-400)" style={{ animation: 'spin 1s linear infinite' }} />
@@ -470,24 +644,25 @@ function StepFinish({ isPending }: { isPending: boolean }) {
         fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 400,
         color: 'var(--ink-900)', margin: '0 0 12px',
       }}>
-        {isPending ? 'Building your plan…' : 'Your profile is complete!'}
+        {isPending ? 'Building your plan…' : 'Ready when you are.'}
       </h2>
-      <p style={{ fontSize: 15, color: 'var(--ink-500)', lineHeight: 1.6, margin: 0 }}>
+      <p style={{ fontSize: 15, color: 'var(--ink-500)', lineHeight: 1.6, margin: 0, maxWidth: 480 }}>
         {isPending
-          ? 'Calculating your TDEE, macro targets, and goal weight. This takes about 10 seconds.'
-          : 'Tap the button below and we\'ll calculate your personalized macro targets and goal weight using your profile.'}
+          ? 'Calculating your TDEE, macro targets, and personalized plan. Takes about 10 seconds.'
+          : "Tap the button below and we'll calculate your personalized macro targets, goal weight, and starter plan using everything you shared."}
       </p>
     </div>
   )
 }
 
 // ─── Shared UI primitives ─────────────────────────────────────────────────
-function OField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function OField({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)', letterSpacing: '0.02em' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-800)' }}>
         {label}{required && <span style={{ color: 'var(--terracotta-500)', marginLeft: 3 }}>*</span>}
       </label>
+      {hint && <p style={{ fontSize: 12.5, color: 'var(--ink-500)', margin: '0 0 2px' }}>{hint}</p>}
       {children}
     </div>
   )
@@ -506,7 +681,7 @@ function OInput({ value, onChange, placeholder, type, autoComplete }: {
       onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
       style={{
         padding: '12px 14px', background: '#fff',
-        border: `1px solid ${focus ? 'var(--terracotta-400)' : 'var(--border)'}`,
+        border: `1px solid ${focus ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
         borderRadius: 10, fontSize: 15, fontFamily: 'var(--font-body)',
         color: 'var(--ink-900)', outline: 'none', width: '100%',
         boxSizing: 'border-box',
@@ -514,6 +689,29 @@ function OInput({ value, onChange, placeholder, type, autoComplete }: {
         transition: 'border-color 160ms, box-shadow 160ms',
       }}
     />
+  )
+}
+
+function OSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
+  const [focus, setFocus] = useState(false)
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      onFocus={() => setFocus(true)}
+      onBlur={() => setFocus(false)}
+      style={{
+        padding: '12px 14px', background: '#fff',
+        border: `1px solid ${focus ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
+        borderRadius: 10, fontSize: 15, fontFamily: 'var(--font-body)',
+        color: 'var(--ink-900)', outline: 'none', width: '100%',
+        boxSizing: 'border-box', cursor: 'pointer',
+        boxShadow: focus ? '0 0 0 3px rgba(219,111,86,0.12)' : 'none',
+        transition: 'border-color 160ms, box-shadow 160ms',
+      }}
+    >
+      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
   )
 }
 
@@ -527,7 +725,7 @@ function OTextarea({ value, onChange, placeholder }: { value: string; onChange: 
       rows={3}
       style={{
         padding: '12px 14px', background: '#fff',
-        border: `1px solid ${focus ? 'var(--terracotta-400)' : 'var(--border)'}`,
+        border: `1px solid ${focus ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
         borderRadius: 10, fontSize: 15, fontFamily: 'var(--font-body)',
         color: 'var(--ink-900)', outline: 'none', width: '100%',
         boxSizing: 'border-box', resize: 'vertical',
@@ -542,7 +740,7 @@ function ChipButton({ label, selected, onClick }: { label: string; selected: boo
   return (
     <button type="button" onClick={onClick} style={{
       padding: '8px 16px', borderRadius: 999,
-      border: `1.5px solid ${selected ? 'var(--terracotta-400)' : 'var(--border)'}`,
+      border: `1.5px solid ${selected ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
       background: selected ? 'var(--terracotta-50)' : '#fff',
       color: selected ? 'var(--terracotta-600)' : 'var(--ink-700)',
       fontSize: 13.5, fontWeight: selected ? 600 : 400,
@@ -558,7 +756,7 @@ function RadioCard({ label, desc, selected, onClick }: { label: string; desc: st
   return (
     <button type="button" onClick={onClick} style={{
       padding: '12px 16px', borderRadius: 12, textAlign: 'left',
-      border: `1.5px solid ${selected ? 'var(--terracotta-400)' : 'var(--border)'}`,
+      border: `1.5px solid ${selected ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
       background: selected ? 'var(--terracotta-50)' : '#fff',
       cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
       fontFamily: 'var(--font-body)', transition: 'all 160ms',
