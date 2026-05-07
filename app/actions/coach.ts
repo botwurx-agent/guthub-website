@@ -52,6 +52,43 @@ export async function startNewThread() {
   return data
 }
 
+export async function savePlanFromCoach(meals: Array<{
+  day_index: number
+  meal_type: string
+  meal_name: string
+  calories?: number
+  protein_g?: number
+  carbs_g?: number
+  fat_g?: number
+}>) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // day_index 0 = tomorrow
+  const rows = meals.map(m => {
+    const d = new Date()
+    d.setDate(d.getDate() + 1 + (m.day_index ?? 0))
+    return {
+      user_id:   user.id,
+      plan_date: d.toISOString().split('T')[0],
+      meal_type: m.meal_type,
+      meal_name: m.meal_name,
+      calories:  m.calories ?? null,
+      protein_g: m.protein_g ?? null,
+      carbs_g:   m.carbs_g ?? null,
+      fat_g:     m.fat_g ?? null,
+      accepted:  false,
+    }
+  })
+
+  const { error } = await supabase
+    .from('meal_plan_slots')
+    .upsert(rows, { onConflict: 'user_id,plan_date,meal_type' })
+
+  return error ? { error: error.message } : { success: true, count: rows.length }
+}
+
 export async function renameThread(threadId: string, title: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

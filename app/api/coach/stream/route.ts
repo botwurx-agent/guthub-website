@@ -43,6 +43,18 @@ Use these links naturally in conversation — woven into a sentence, not listed 
 
 Don't force links into every message. Only use them when genuinely useful.
 
+## MEAL PLAN DRAFTS — SAVE TO PLANNER FEATURE
+When you create a meal plan with specific named meals for specific days/slots (not just a general suggestion), append the following EXACTLY at the very end of your response on its own line — it will be hidden from the user and used to generate a "Save to Planner" button:
+
+MEAL_PLAN_DRAFT:{"meals":[{"day_index":0,"meal_type":"breakfast","meal_name":"Scrambled eggs with spinach","calories":350,"protein_g":28,"carbs_g":12,"fat_g":22},{"day_index":0,"meal_type":"lunch","meal_name":"Grilled chicken salad","calories":420,"protein_g":38,"carbs_g":18,"fat_g":16}]}
+
+Rules for the JSON:
+- day_index is 0-based (0 = tomorrow, 1 = day after, etc.)
+- meal_type must be "breakfast", "lunch", or "dinner"
+- Always include calories, protein_g, carbs_g, fat_g as integers
+- Only append this block when you have created a concrete plan with real meal names — not for general suggestions
+- Do NOT mention this block in your conversational text
+
 ## TONE & VOICE
 You sound like a knowledgeable, caring friend who happens to be a registered dietitian. Think warm, grounded, and real — not peppy, not clinical.
 
@@ -149,12 +161,26 @@ export async function POST(request: Request) {
           }
         }
 
-        // Save assistant message
+        // Extract hidden meal plan draft block before saving
+        let mealPlanDraft: unknown[] | null = null
+        let cleanResponse = fullResponse
+        const planMatch = fullResponse.match(/\nMEAL_PLAN_DRAFT:(\{[\s\S]*\})\s*$/)
+        if (planMatch) {
+          try {
+            const parsed = JSON.parse(planMatch[1])
+            if (Array.isArray(parsed.meals) && parsed.meals.length > 0) {
+              mealPlanDraft = parsed.meals
+            }
+          } catch { /* malformed — ignore */ }
+          cleanResponse = fullResponse.slice(0, planMatch.index).trimEnd()
+        }
+
+        // Save assistant message (without the hidden draft block)
         await supabase.from('coach_messages').insert({
           thread_id: thread,
           user_id: user.id,
           role: 'assistant',
-          content: fullResponse,
+          content: cleanResponse,
         })
 
         // Auto-generate a meaningful thread title on first exchange
@@ -180,7 +206,12 @@ export async function POST(request: Request) {
           }
         }
 
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, threadId: thread, ...(autoTitle ? { title: autoTitle } : {}) })}\n\n`))
+        // Replace streamed text with clean version (strips MEAL_PLAN_DRAFT block)
+        if (mealPlanDraft) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ replaceContent: cleanResponse })}\n\n`))
+        }
+
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, threadId: thread, ...(autoTitle ? { title: autoTitle } : {}), ...(mealPlanDraft ? { mealPlanDraft } : {}) })}\n\n`))
         controller.close()
       } catch {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Stream interrupted.' })}\n\n`))

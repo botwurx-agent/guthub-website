@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from 'react'
-import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown, Pencil, Trash2, Check } from 'lucide-react'
-import { startNewThread, getThreadMessages, renameThread, deleteThread } from '@/app/actions/coach'
+import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown, Pencil, Trash2, Check, CalendarPlus } from 'lucide-react'
+import { startNewThread, getThreadMessages, renameThread, deleteThread, savePlanFromCoach } from '@/app/actions/coach'
 
 type Message = {
   id?: string
@@ -15,6 +15,16 @@ type Thread = {
   id: string
   title: string
   updated_at: string
+}
+
+type PlanSlot = {
+  day_index: number
+  meal_type: string
+  meal_name: string
+  calories?: number
+  protein_g?: number
+  carbs_g?: number
+  fat_g?: number
 }
 
 const SUGGESTIONS = [
@@ -52,6 +62,9 @@ export default function CoachClient({
   const [streamingText, setStreamingText] = useState('')
   const [image, setImage] = useState<{ base64: string; type: string; preview: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [mealPlanDraft, setMealPlanDraft] = useState<PlanSlot[] | null>(null)
+  const [savingPlan, setSavingPlan] = useState(false)
+  const [planSaved, setPlanSaved] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
@@ -118,12 +131,17 @@ export default function CoachClient({
             const payload = JSON.parse(line.slice(6))
             if (payload.delta) { accumulated += payload.delta; setStreamingText(accumulated) }
             if (payload.threadId && !threadId) setThreadId(payload.threadId)
+            if (payload.replaceContent) { accumulated = payload.replaceContent; setStreamingText(accumulated) }
             if (payload.done) {
               setMessages(prev => [...prev, { role: 'assistant', content: accumulated }])
               setStreamingText('')
               if (payload.title) {
                 const tid = payload.threadId ?? threadId
                 setThreads(prev => prev.map(t => t.id === tid ? { ...t, title: payload.title } : t))
+              }
+              if (payload.mealPlanDraft) {
+                setMealPlanDraft(payload.mealPlanDraft)
+                setPlanSaved(false)
               }
             }
             if (payload.error) setError(payload.error)
@@ -154,6 +172,15 @@ export default function CoachClient({
         inputRef.current?.focus()
       }
     })
+  }
+
+  async function handleSavePlan() {
+    if (!mealPlanDraft) return
+    setSavingPlan(true)
+    const result = await savePlanFromCoach(mealPlanDraft)
+    setSavingPlan(false)
+    if (!result?.error) setPlanSaved(true)
+    else setError(result.error)
   }
 
   function startEditing(t: Thread) {
@@ -286,6 +313,14 @@ export default function CoachClient({
                   fontSize: 13, color: '#b4422c',
                 }}>{error}</div>
               )}
+              {mealPlanDraft && !streaming && (
+                <MealPlanDraftCard
+                  slots={mealPlanDraft}
+                  saving={savingPlan}
+                  saved={planSaved}
+                  onSave={handleSavePlan}
+                />
+              )}
             </>
           )}
           <div ref={bottomRef} />
@@ -355,6 +390,91 @@ export default function CoachClient({
             Coach knows your intake, meals, symptoms, and labs. · Not medical advice.
           </p>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Meal plan draft save card ────────────────────────────────────────────────
+function MealPlanDraftCard({ slots, saving, saved, onSave }: {
+  slots: PlanSlot[]
+  saving: boolean
+  saved: boolean
+  onSave: () => void
+}) {
+  const days = Array.from(new Set(slots.map(s => s.day_index))).sort()
+  const dayLabel = (i: number) => {
+    const d = new Date()
+    d.setDate(d.getDate() + 1 + i)
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  }
+
+  return (
+    <div style={{
+      margin: '8px 0 16px 44px',
+      borderRadius: 14,
+      border: '1.5px solid var(--forest-300)',
+      background: 'var(--forest-50, #f2f7f4)',
+      overflow: 'hidden',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: '12px 16px 10px',
+        borderBottom: '1px solid var(--forest-200, #c8ddd1)',
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}>
+        <CalendarPlus size={16} color="var(--forest-600)" />
+        <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--forest-700)' }}>
+          {days.length}-day meal plan ready to save
+        </span>
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--forest-500)' }}>
+          {slots.length} meals · starts tomorrow
+        </span>
+      </div>
+
+      {/* Meal list */}
+      <div style={{ padding: '10px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {days.map(di => (
+          <div key={di}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--forest-500)', marginBottom: 4 }}>
+              {dayLabel(di)}
+            </div>
+            {slots.filter(s => s.day_index === di).map((s, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8, paddingLeft: 4, marginBottom: 3 }}>
+                <span style={{ fontSize: 11.5, color: 'var(--forest-500)', width: 62, flexShrink: 0, textTransform: 'capitalize' }}>{s.meal_type}</span>
+                <span style={{ fontSize: 13, color: 'var(--ink-800)', fontWeight: 500 }}>{s.meal_name}</span>
+                {s.calories && <span style={{ fontSize: 11.5, color: 'var(--ink-400)', marginLeft: 'auto', flexShrink: 0 }}>{s.calories} kcal</span>}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Action */}
+      <div style={{ padding: '10px 16px 14px' }}>
+        {saved ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13.5, fontWeight: 600, color: 'var(--forest-600)' }}>
+            <Check size={15} />
+            Saved! <a href="/meal-planner" style={{ color: 'var(--terracotta-500)', textDecoration: 'underline', marginLeft: 4 }}>View in Planner →</a>
+          </div>
+        ) : (
+          <button
+            onClick={onSave}
+            disabled={saving}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '9px 18px', borderRadius: 10,
+              background: saving ? 'var(--forest-300)' : 'var(--forest-500)',
+              color: '#fff', border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
+              fontSize: 13.5, fontWeight: 600, fontFamily: 'var(--font-body)',
+              transition: 'background 160ms',
+            }}
+          >
+            {saving
+              ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Saving…</>
+              : <><CalendarPlus size={14} /> Save to Planner</>}
+          </button>
+        )}
       </div>
     </div>
   )
