@@ -128,7 +128,7 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
 
   return (
     <LogPageClient
-      initialType={type ?? 'meal'}
+      initialType={type ?? ''}
       userId={user.id}
       today={today}
       timeline={timeline}
