@@ -36,12 +36,13 @@ function relativeTime(iso: string) {
 }
 
 export default function CoachClient({
-  initialThreadId, initialMessages, initialThreads, firstName,
+  initialThreadId, initialMessages, initialThreads, firstName, welcomeMessage,
 }: {
   initialThreadId: string | null
   initialMessages: Message[]
   initialThreads: Thread[]
   firstName: string
+  welcomeMessage: string
 }) {
   const [threadId, setThreadId] = useState<string | null>(initialThreadId)
   const [messages, setMessages] = useState<Message[]>(initialMessages)
@@ -120,6 +121,10 @@ export default function CoachClient({
             if (payload.done) {
               setMessages(prev => [...prev, { role: 'assistant', content: accumulated }])
               setStreamingText('')
+              if (payload.title) {
+                const tid = payload.threadId ?? threadId
+                setThreads(prev => prev.map(t => t.id === tid ? { ...t, title: payload.title } : t))
+              }
             }
             if (payload.error) setError(payload.error)
           } catch {}
@@ -268,7 +273,7 @@ export default function CoachClient({
         {/* Messages scroll */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px 8px' }}>
           {isEmpty ? (
-            <EmptyChat firstName={firstName} onSuggest={text => { setInput(text); send(text) }} />
+            <EmptyChat firstName={firstName} welcomeMessage={welcomeMessage} onSuggest={text => { setInput(text); send(text) }} />
           ) : (
             <>
               {messages.map((msg, i) => <MessageBubble key={i} message={msg} firstName={firstName} />)}
@@ -450,26 +455,25 @@ function ThreadRow({
 }
 
 // ── Empty / welcome state ────────────────────────────────────────────────────
-function EmptyChat({ firstName, onSuggest }: { firstName: string; onSuggest: (text: string) => void }) {
+function EmptyChat({ firstName, welcomeMessage, onSuggest }: { firstName: string; welcomeMessage: string; onSuggest: (text: string) => void }) {
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 0 24px' }}>
-      <div style={{ textAlign: 'center', marginBottom: 36 }}>
+      {/* Personalized welcome bubble */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 32, alignItems: 'flex-start' }}>
+        <CoachAvatar />
         <div style={{
-          width: 64, height: 64, borderRadius: 18,
-          background: 'var(--forest-500)', color: 'var(--cream-100)',
-          margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          maxWidth: '88%', padding: '14px 18px',
+          borderRadius: '18px 18px 18px 4px',
+          background: '#fff', border: '1px solid var(--cream-200)',
+          fontSize: 15, lineHeight: 1.65, color: 'var(--ink-800)',
+          boxShadow: '0 1px 4px rgba(31,45,42,0.05)',
         }}>
-          <Sparkles size={28} />
+          <FormattedText text={welcomeMessage} />
         </div>
-        <h1 style={{
-          fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 400,
-          letterSpacing: '-0.02em', margin: '0 0 10px', color: 'var(--ink-900)',
-        }}>
-          Hi <em style={{ color: 'var(--terracotta-500)' }}>{firstName}</em>. What can I help with?
-        </h1>
-        <p style={{ fontSize: 16, color: 'var(--ink-500)', maxWidth: 480, margin: '0 auto', lineHeight: 1.55 }}>
-          I know your health profile, recent logs, and goals. Ask me anything — or pick a starter below.
-        </p>
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <p style={{ fontSize: 13, color: 'var(--ink-400)', margin: '0 0 12px', paddingLeft: 4 }}>Or pick a conversation starter:</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

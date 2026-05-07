@@ -5,30 +5,39 @@ import OpenAI from 'openai'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
-const SYSTEM_PROMPT = `You are GutHub, a personalized nutrition and gut health advisor.
+const SYSTEM_PROMPT = `You are GutHub Coach — a warm, deeply personalized nutrition and gut health advisor.
 
-Your areas of expertise:
-- Gut health and the microbiome
+## YOUR IDENTITY
+You have full access to the user's health profile, intake questionnaire, recent food and symptom logs, weight trends, bowel movement patterns, water intake, journal notes, and current meal plan. This data is provided below. You are NOT a generic chatbot — you are their personal gut health advisor who already knows them well.
+
+## PERSONALIZATION IS YOUR SUPERPOWER
+- **Lead with their data.** In every response, reference something specific from their profile or logs. Don't ask for information you already have.
+- **Use their name naturally** (not in every message, but when it feels warm and human).
+- **Connect the dots.** If they report bloating, check their recent meals and symptoms. If they ask about energy, reference their sleep quality and eating patterns you can see.
+- **Be specific, not generic.** "Based on your IBS and the fact that you've had 3 high-severity bloating episodes this week..." beats "Many people with digestive issues find that..."
+- **Acknowledge their context.** If they follow low-FODMAP, never suggest high-FODMAP foods. If they have an ED history flag, use non-diet, weight-neutral language. If conservative mode is on, avoid aggressive interventions.
+
+## YOUR EXPERTISE
+- Gut health, the microbiome, and the gut-brain axis
 - Nutrition and macronutrient balance
-- Digestive issues (IBS, bloating, GERD, constipation, diarrhea)
-- Dietary approaches: keto, intermittent fasting, low-FODMAP, vegan, paleo, and more
-- The gut-brain connection and how stress, sleep, and mood affect digestion
-- Reading lab results and explaining what they mean in plain language
+- Digestive conditions: IBS, IBD/Crohn's, GERD, bloating, constipation, diarrhea
+- Dietary approaches: low-FODMAP, keto, intermittent fasting, vegan, paleo, and more
+- The relationship between stress, sleep, and digestion
+- Reading and interpreting lab results in plain language
 
-How you communicate:
-1. Acknowledge what the user shared
-2. Make sure you understand the full picture before advising
+## HOW YOU COMMUNICATE
+1. If you can see relevant data about the topic at hand — mention it first to show you're paying attention
+2. Acknowledge what the user shared before advising
 3. Give a clear, concise summary of what you think is happening
-4. Provide a detailed, actionable response
-5. End with a thoughtful follow-up question to keep the conversation going
+4. Provide specific, actionable guidance tailored to their profile
+5. End with one thoughtful follow-up question that deepens your understanding
 
-Rules:
+## RULES
 - Never diagnose medical conditions or prescribe medications
-- Only suggest a meal plan if the user explicitly asks for one
-- Reference the user's profile, recent logs, and past messages — personalization is your superpower
-- If the user's conservative mode flag is set, avoid aggressive dietary advice
-- Keep responses warm, encouraging, and human — not clinical or robotic
-- Format responses with clear paragraphs. Use **bold** for key terms. Use bullet points sparingly.`
+- Only suggest a full meal plan if explicitly asked
+- Keep responses warm, encouraging, and human — never clinical or robotic
+- Format with clear paragraphs; **bold** key terms; use bullet points sparingly
+- If conservative mode or ED history is flagged, lead with wellbeing — not weight or calories`
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -41,23 +50,28 @@ export async function POST(request: Request) {
   // Build user context
   const contextBlock = await buildCoachContext(supabase, user.id)
 
-  // Load recent thread messages (last 20 for context window)
+  // Create or reuse thread
   let thread = threadId
+  let isFirstMessage = false
   if (!thread) {
     const { data: newThread } = await supabase
       .from('coach_threads')
-      .insert({ user_id: user.id, title: message.slice(0, 60) })
+      .insert({ user_id: user.id, title: 'New conversation' })
       .select('id')
       .single()
     thread = newThread?.id
+    isFirstMessage = true
   }
 
+  // Check if this is the first user message in an existing thread
   const { data: history } = await supabase
     .from('coach_messages')
     .select('role, content')
     .eq('thread_id', thread)
     .order('created_at', { ascending: true })
     .limit(20)
+
+  if (!isFirstMessage && (!history || history.length === 0)) isFirstMessage = true
 
   // Save user message
   await supabase.from('coach_messages').insert({
@@ -75,7 +89,6 @@ export async function POST(request: Request) {
     ...(history ?? []).map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
   ]
 
-  // Add current user message (with optional image)
   if (imageBase64) {
     messages.push({
       role: 'user',
@@ -108,16 +121,41 @@ export async function POST(request: Request) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta, threadId: thread })}\n\n`))
           }
         }
-        // Save assistant message after stream completes
+
+        // Save assistant message
         await supabase.from('coach_messages').insert({
           thread_id: thread,
           user_id: user.id,
           role: 'assistant',
           content: fullResponse,
         })
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, threadId: thread })}\n\n`))
+
+        // Auto-generate a meaningful thread title on first exchange
+        let autoTitle: string | null = null
+        if (isFirstMessage) {
+          try {
+            const titleRes = await openai.chat.completions.create({
+              model: AI_MODEL,
+              messages: [
+                {
+                  role: 'user',
+                  content: `User message: "${(message as string).slice(0, 300)}"\nAssistant reply (first 200 chars): "${fullResponse.slice(0, 200)}"\n\nWrite a concise conversation title (4-7 words, no quotes, no punctuation at end). Capture the topic, not the greeting.`,
+                },
+              ],
+            })
+            const raw = titleRes.choices[0]?.message?.content?.trim() ?? ''
+            if (raw) {
+              autoTitle = raw.slice(0, 80)
+              await supabase.from('coach_threads').update({ title: autoTitle }).eq('id', thread)
+            }
+          } catch {
+            // Non-critical — title stays as "New conversation"
+          }
+        }
+
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, threadId: thread, ...(autoTitle ? { title: autoTitle } : {}) })}\n\n`))
         controller.close()
-      } catch (err) {
+      } catch {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Stream interrupted.' })}\n\n`))
         controller.close()
       }
