@@ -10,8 +10,9 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { weekStart, regenerate } = await request.json()
-  // regenerate: null = full week | { date: 'YYYY-MM-DD', mealType: string } = single slot
+  const { weekStart, regenerate, days = 7 } = await request.json()
+  // regenerate: null = full plan | { date: 'YYYY-MM-DD', mealType: string } = single slot
+  // days: 1 | 3 | 7 (how many days to generate when regenerate is null)
 
   const [{ data: profile }, { data: macroTarget }] = await Promise.all([
     supabase.from('profiles').select('diet_mode, health_profile').eq('id', user.id).single(),
@@ -34,7 +35,8 @@ export async function POST(request: Request) {
     slots.push({ date: regenerate.date, meal_type: regenerate.mealType })
   } else {
     const mealTypes = ['breakfast', 'lunch', 'dinner']
-    for (let i = 0; i < 7; i++) {
+    const numDays = Math.min(Math.max(Number(days) || 7, 1), 7)
+    for (let i = 0; i < numDays; i++) {
       const d = new Date(weekStart)
       d.setUTCDate(d.getUTCDate() + i)
       const dateStr = d.toISOString().split('T')[0]

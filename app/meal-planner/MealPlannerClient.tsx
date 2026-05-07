@@ -77,6 +77,7 @@ export default function MealPlannerClient() {
   const [acceptingSlot, setAcceptingSlot] = useState<string | null>(null)
   const [activeDay, setActiveDay] = useState(0)
   const [activeMeal, setActiveMeal] = useState<'breakfast' | 'lunch' | 'dinner'>('dinner')
+  const [planDays, setPlanDays] = useState<1 | 3 | 7>(7)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [macros, setMacros] = useState<MacroTarget | null>(null)
   const supabase = createClient()
@@ -132,7 +133,7 @@ export default function MealPlannerClient() {
     await fetch('/api/meal-planner/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: null }),
+      body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: null, days: planDays }),
     })
     await fetchSlots()
     setGenerating(false)
@@ -194,20 +195,40 @@ export default function MealPlannerClient() {
               Built from your eating style, dietary needs, and macro targets. Swap anything you don&apos;t like.
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flexShrink: 0 }}>
+            {/* Day count selector */}
+            <div style={{ display: 'flex', background: 'var(--cream-100)', border: '1px solid var(--cream-200)', borderRadius: 10, padding: 3, gap: 2 }}>
+              {([1, 3, 7] as const).map(d => (
+                <button
+                  key={d}
+                  onClick={() => setPlanDays(d)}
+                  style={{
+                    padding: '6px 14px', borderRadius: 8, border: 'none',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    background: planDays === d ? '#fff' : 'transparent',
+                    color: planDays === d ? 'var(--ink-800)' : 'var(--ink-400)',
+                    boxShadow: planDays === d ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                    transition: 'all 140ms',
+                  }}
+                >
+                  {d} {d === 1 ? 'day' : 'days'}
+                </button>
+              ))}
+            </div>
             <button
               onClick={generateWeek}
               disabled={generating}
               style={{
                 display: 'flex', alignItems: 'center', gap: 7,
-                background: 'var(--cream-100)', border: '1px solid var(--cream-200)',
-                borderRadius: 10, padding: '9px 16px',
+                background: generating ? 'var(--cream-100)' : 'var(--terracotta-500)',
+                border: '1px solid transparent',
+                borderRadius: 10, padding: '9px 18px',
                 fontSize: 14, fontWeight: 600, cursor: generating ? 'not-allowed' : 'pointer',
-                color: 'var(--ink-600)', transition: 'all 160ms',
+                color: generating ? 'var(--ink-400)' : '#fff', transition: 'all 160ms',
               }}
             >
               <Sparkles size={15} />
-              {generating ? 'Generating…' : hasAnyMeals ? 'Regenerate week' : 'Generate week'}
+              {generating ? 'Generating…' : hasAnyMeals ? `Regenerate ${planDays === 1 ? '1 day' : `${planDays} days`}` : `Generate ${planDays === 1 ? '1 day' : `${planDays} days`}`}
             </button>
           </div>
         </div>
@@ -223,7 +244,7 @@ export default function MealPlannerClient() {
             <div style={{ width: 40, height: 40, border: '3px solid var(--cream-200)', borderTopColor: 'var(--terracotta-500)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           </div>
           <p style={{ margin: '0 0 4px', fontWeight: 600, color: 'var(--ink-700)' }}>Building your meal plan…</p>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-400)' }}>AI is crafting 21 gut-friendly meals</p>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-400)' }}>AI is crafting {planDays * 3} gut-friendly meals</p>
         </div>
       )}
 
@@ -236,7 +257,7 @@ export default function MealPlannerClient() {
           <UtensilsCrossed size={44} color="var(--ink-300)" style={{ marginBottom: 20 }} />
           <p style={{ fontWeight: 600, fontSize: 17, color: 'var(--ink-600)', margin: '0 0 8px' }}>No meals planned yet</p>
           <p style={{ fontSize: 14, color: 'var(--ink-400)', margin: '0 0 24px' }}>
-            Click <strong>Generate week</strong> above to get AI-crafted meals based on your macros.
+            Select how many days to plan above, then click <strong>Generate</strong> to get AI-crafted meals based on your macros.
           </p>
           <button
             onClick={generateWeek}
