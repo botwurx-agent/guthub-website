@@ -131,7 +131,7 @@ export default function AuthModal() {
               {error && <ErrorBanner message={error} />}
 
               {!forgotSent && (
-                <form action={handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <form onSubmit={e => { e.preventDefault(); handleForgot(new FormData(e.currentTarget)); }} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <Field name="email" label="Email" type="email" placeholder="you@example.com" autoComplete="email" />
                   <SubmitButton label="Send reset link" disabled={isPending} loading={isPending} />
                 </form>
@@ -176,7 +176,7 @@ export default function AuthModal() {
 
               {error && <ErrorBanner message={error} />}
 
-              <form action={handleEmailAuth} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <form onSubmit={e => { e.preventDefault(); handleEmailAuth(new FormData(e.currentTarget)); }} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {isSignup && <Field name="name" label="Name" type="text" placeholder="Alex Morgan" autoComplete="name" />}
                 <Field name="email" label="Email" type="email" placeholder="you@example.com" autoComplete="email" />
                 <Field
