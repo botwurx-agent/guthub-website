@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, useRef, useCallback } from 'react'
-import { Camera, Upload, X, Sparkles, ImagePlus } from 'lucide-react'
+import { Camera, Upload, X, Sparkles, ImagePlus, Loader2 } from 'lucide-react'
 import { logMeal } from '@/app/actions/log'
 import { SuccessBanner, ErrorBanner, Field, Input, SubmitBtn } from './shared'
 
@@ -10,22 +10,53 @@ const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack']
 type ImageData = { base64: string; type: string; preview: string }
 type Macros = { meal_name: string; calories: string; protein: string; carbs: string; fat: string }
 
+function isHeic(file: File) {
+  return (
+    file.type === 'image/heic' ||
+    file.type === 'image/heif' ||
+    /\.(heic|heif)$/i.test(file.name)
+  )
+}
+
 export default function LogMealPhoto({ onSuccess }: { onSuccess: () => void }) {
-  const [mealType, setMealType]     = useState('breakfast')
-  const [image, setImage]           = useState<ImageData | null>(null)
-  const [macros, setMacros]         = useState<Macros>({ meal_name: '', calories: '', protein: '', carbs: '', fat: '' })
-  const [analyzing, setAnalyzing]   = useState(false)
-  const [analyzed, setAnalyzed]     = useState(false)
-  const [dragging, setDragging]     = useState(false)
-  const [error, setError]           = useState<string | null>(null)
-  const [done, setDone]             = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const [mealType, setMealType]       = useState('breakfast')
+  const [image, setImage]             = useState<ImageData | null>(null)
+  const [macros, setMacros]           = useState<Macros>({ meal_name: '', calories: '', protein: '', carbs: '', fat: '' })
+  const [analyzing, setAnalyzing]     = useState(false)
+  const [converting, setConverting]   = useState(false)
+  const [analyzed, setAnalyzed]       = useState(false)
+  const [dragging, setDragging]       = useState(false)
+  const [error, setError]             = useState<string | null>(null)
+  const [done, setDone]               = useState(false)
+  const [isPending, startTransition]  = useTransition()
 
   const fileInputRef   = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
-  function readFile(file: File) {
-    if (!file.type.startsWith('image/')) { setError('Please select an image file.'); return }
+  async function readFile(file: File) {
+    if (!file.type.startsWith('image/') && !isHeic(file)) {
+      setError('Please select an image file.')
+      return
+    }
+    setError(null)
+
+    let processedFile = file
+
+    // Convert HEIC/HEIF → JPEG so the browser can display it and OpenAI can read it
+    if (isHeic(file)) {
+      setConverting(true)
+      try {
+        const heic2any = (await import('heic2any')).default
+        const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 }) as Blob
+        processedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' })
+      } catch {
+        setError('Could not convert HEIC image. Please export it as JPEG from your Photos app and try again.')
+        setConverting(false)
+        return
+      }
+      setConverting(false)
+    }
+
     const reader = new FileReader()
     reader.onload = (e) => {
       const result = e.target?.result as string
@@ -34,9 +65,8 @@ export default function LogMealPhoto({ onSuccess }: { onSuccess: () => void }) {
       setImage({ base64, type, preview: result })
       setAnalyzed(false)
       setMacros({ meal_name: '', calories: '', protein: '', carbs: '', fat: '' })
-      setError(null)
     }
-    reader.readAsDataURL(file)
+    reader.readAsDataURL(processedFile)
   }
 
   async function analyze() {
@@ -90,6 +120,7 @@ export default function LogMealPhoto({ onSuccess }: { onSuccess: () => void }) {
     setDragging(false)
     const file = e.dataTransfer.files[0]
     if (file) readFile(file)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (done) return <SuccessBanner message="Meal logged!" />
@@ -119,7 +150,12 @@ export default function LogMealPhoto({ onSuccess }: { onSuccess: () => void }) {
 
       {/* Upload area */}
       <Field label="Photo" required>
-        {image ? (
+        {converting ? (
+          <div style={{ border: '2px dashed var(--border)', borderRadius: 14, padding: '48px 20px', background: 'var(--cream-50)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <Loader2 size={28} color="var(--terracotta-400)" style={{ animation: 'spin 1s linear infinite' }} />
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-500)', fontWeight: 500 }}>Converting HEIC to JPEG…</p>
+          </div>
+        ) : image ? (
           <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)' }}>
             <img src={image.preview} alt="Meal" style={{ width: '100%', maxHeight: 260, objectFit: 'cover', display: 'block' }} />
             <button
