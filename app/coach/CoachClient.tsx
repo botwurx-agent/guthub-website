@@ -141,7 +141,7 @@ export default function CoachClient({
         setThreadId(thread.id)
         setMessages([])
         setStreamingText('')
-        setThreads(prev => [{ ...thread, updated_at: thread.updated_at ?? thread.created_at ?? new Date().toISOString() }, ...prev])
+        setThreads(prev => [{ id: thread.id, title: thread.title, updated_at: thread.created_at ?? new Date().toISOString() }, ...prev])
         inputRef.current?.focus()
       }
     })
