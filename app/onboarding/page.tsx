@@ -258,9 +258,15 @@ export default function OnboardingPage() {
       })
 
     } else if (step === 2) {
+      // Map eating style to valid diet_mode enum values in the DB
+      const dietModeMap: Record<string, string> = {
+        mediterranean: 'default', vegetarian: 'default', pescatarian: 'default',
+        no_specific: 'default', default: 'default',
+        low_fodmap: 'low_fodmap', keto: 'keto', paleo: 'paleo', vegan: 'vegan',
+      }
       startTransition(async () => {
         const res = await saveProfileStep(3, {
-          diet_mode: eatingStyle,
+          diet_mode: dietModeMap[eatingStyle] ?? 'default',
           health_profile: {
             eating_style: eatingStyle,
             eating_style_relationship: eatingStyleFollowing || null,
