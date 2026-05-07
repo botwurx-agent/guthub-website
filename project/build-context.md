@@ -77,6 +77,12 @@ Source code repo:
 
 Status: deployed but never launched. **Zero real users, zero paying customers** (confirmed against the database and Stripe dashboard). $0 in AWS data transfer last month.
 
+**Known broken state (to be fixed):** The onboarding macro calculation (final step "06 — Final touches" → "Build my plan") returns:
+
+> `Macro calculation failed: Error: 400 Unsupported value: 'temperature' does not support 0.1 with this model. Only the default (1) value is supported.`
+
+Cause: `OPENAI_MODEL` was recently changed to **`gpt-5-mini`**, which is a reasoning-class model that only accepts the default `temperature=1`. The existing macro-calc OpenAI call still passes `temperature=0.1` (left over from when the model was `gpt-4o`-class). Fix is small: remove the `temperature` arg from the macro-calc call, or guard it so it's only passed for chat-class models.
+
 ### Features already built in the Flask app
 
 From the templates and routes:
@@ -149,9 +155,29 @@ The user mentioned researching GPT-5.1 as cheap-and-capable; this is a per-call 
 
 ## Pending actions
 
+### 🔧 Immediate next task (fix Flask onboarding error)
+
+Steve wants to be able to complete the onboarding flow in the existing Flask app to see what comes after step 6 (dashboard, Today, Log, etc.) — useful reconnaissance for the rebuild. Currently blocked by the temperature/model mismatch described above.
+
+Steps:
+1. Have Steve open Lightsail browser SSH into `Guthub-machine` (AWS Console → Lightsail → click the `>_` icon next to the instance).
+2. Find the macro-calculation OpenAI call in `/home/ubuntu/GutHub/app.py`. Likely route is the onboarding completion handler called by the "Build my plan" button. Try `grep -n -i 'macro\|build_plan\|finalize\|temperature' /home/ubuntu/GutHub/app.py` to locate it.
+3. Edit that call to **drop the `temperature` argument** (simplest) or **guard it** based on model name (more robust):
+   ```python
+   kwargs = {"model": OPENAI_MODEL, "messages": [...]}
+   if not OPENAI_MODEL.startswith(("o1", "o3", "o4", "gpt-5")):
+       kwargs["temperature"] = float(os.getenv("Temp_R", 0.1))
+   client.chat.completions.create(**kwargs)
+   ```
+4. Restart the Flask app so the change takes effect: `pm2 restart all` (or `pm2 list` first to find the right process name).
+5. Have Steve re-run the onboarding flow at `https://3.235.129.6` and confirm he gets past step 6.
+6. **Don't change anything else** — surgical fix only. Don't refactor, don't update other temperature usages, don't "improve" things. We're not investing in this codebase.
+
+Note: Claude Code in this sandbox cannot SSH out to the Lightsail VM directly. Steve runs the commands; Claude reads the output and tells him what to change.
+
 ### Waiting on developer (request sent)
 
-- [ ] Push GutHub Flask codebase to a fresh repo under Steve's GitHub (e.g. `github.com/<steve-username>/guthub-app`)
+- [ ] Push GutHub Flask codebase to a fresh repo under Steve's GitHub. Steve has created an empty private repo at `github.com/botwurx-agent/guthub-app` and is adding the developer as a collaborator so he can push.
 - [ ] Confirm in writing that all code/designs/content are Steve's IP
 
 ### To do once code transfer arrives
@@ -205,7 +231,7 @@ The user mentioned researching GPT-5.1 as cheap-and-capable; this is a per-call 
 
 ## Open questions to revisit
 
-- **LLM model choice:** OpenAI is the default since the existing Flask app already tunes its prompts for OpenAI. Steve mentioned GPT-5.1 as cheap-and-capable; verify current pricing and capabilities (vision, structured output, prompt caching, latency) before committing.
+- **LLM model choice:** OpenAI is the default since the existing Flask app already tunes its prompts for OpenAI. The Flask app currently uses `gpt-5-mini` (a reasoning-class model — doesn't support custom `temperature`). Steve mentioned researching `gpt-5.1` as cheap-and-capable. Verify current pricing and capabilities (vision, structured output, prompt caching, latency) before committing for the rebuild. Reasoning vs chat class affects the API shape — the `lib/ai/` service layer must handle both.
 - **Mixed-provider setup?** Technically optimal (Anthropic stronger for Coach + long-context analysis; OpenAI fine for vision + structured extraction). Adds operational complexity. Default to single-provider initially, abstract via `lib/ai/` service layer for easy swap.
 - **Mobile strategy:** Web-responsive only at launch? PWA install? Native app later?
 - **Compliance:** Health data + test report uploads = real privacy considerations even before formal HIPAA. Decide on disclaimers, consent flow, deletion-on-request, encryption-at-rest before user data is collected.
