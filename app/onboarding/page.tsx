@@ -68,18 +68,32 @@ const STEPS: StepDef[] = [
   },
 ]
 
+// Spec v2.2 — Appendix A canonical lists (Alina-reviewed, locked)
+
+// A.1 Medical conditions — Tier 1 visible chips
 const CONDITION_OPTIONS = [
-  'IBS', "IBD / Crohn's", 'Acid reflux / GERD', 'Diabetes',
-  'High blood pressure', 'Thyroid condition', 'Autoimmune condition',
-  'Celiac disease', 'SIBO', 'Gastroparesis', 'None of these',
+  'IBS',
+  'IBD / Crohn\'s / Ulcerative Colitis',
+  'SIBO',
+  'Acid Reflux / GERD',
+  'Constipation',
+  'Diarrhea',
+  'Thyroid Condition',
+  'Autoimmune Condition',
+  'Diabetes / Blood Sugar Issues',
+  'None of These',
 ]
 
+// IBD flare status sub-field (required when IBD is selected)
+const IBD_STATUS_OPTIONS = ['Active flare', 'Mild symptoms', 'Stable / remission']
+
+// A.2 Food allergies & sensitivities — Tier 1 visible chips
 const ALLERGEN_OPTIONS = [
-  'Dairy', 'Gluten', 'Eggs', 'Soy', 'Tree nuts', 'Peanuts', 'Shellfish', 'Fish', 'Nightshades', 'Corn',
+  'Dairy', 'Gluten', 'Eggs', 'Soy', 'Tree nuts', 'Peanuts', 'Shellfish', 'Fish', 'Garlic', 'Onions',
 ]
 
+// A.3 Eating style — Tier 1 visible chips (single-select)
 const EATING_STYLE_OPTIONS = [
-  { value: 'default', label: 'No restrictions' },
   { value: 'mediterranean', label: 'Mediterranean' },
   { value: 'low_fodmap', label: 'Low-FODMAP' },
   { value: 'vegetarian', label: 'Vegetarian' },
@@ -87,24 +101,39 @@ const EATING_STYLE_OPTIONS = [
   { value: 'pescatarian', label: 'Pescatarian' },
   { value: 'keto', label: 'Keto' },
   { value: 'paleo', label: 'Paleo' },
-  { value: 'gluten_free', label: 'Gluten Free' },
-  { value: 'high_protein_low_carb', label: 'High Protein / Low Carb' },
-  { value: 'intermittent_fasting', label: 'Intermittent Fasting' },
-  { value: 'wfpb', label: 'Whole Food Plant-Based' },
+  { value: 'no_specific', label: 'No specific style' },
+]
+
+const FODMAP_PHASE_OPTIONS = [
+  { value: 'elimination', label: 'Elimination phase' },
+  { value: 'reintroduction', label: 'Reintroduction phase' },
+  { value: 'personalization', label: 'Personalization / maintenance' },
 ]
 
 const COOKING_OPTIONS = ['Almost every meal', 'Most meals', 'About half', 'A few times a week', 'Rarely']
-const EAT_OUT_OPTIONS = ['Rarely', '1–2 times a week', '3–4 times a week', '5+ times a week', 'Most meals']
+const EAT_OUT_OPTIONS = ['Rarely', '1–2/week', '3–4/week', '5+/week', 'Most meals']
 
+// A.4 Primary goals — Tier 1 visible chips (Alina's clinical list, multi-select max 3)
 const GOAL_OPTIONS = [
-  { value: 'reduce_bloating', label: 'Reduce bloating' },
-  { value: 'better_digestion', label: 'Better digestion' },
-  { value: 'weight_loss', label: 'Weight loss' },
-  { value: 'steady_energy', label: 'More steady energy' },
-  { value: 'better_sleep', label: 'Better sleep' },
-  { value: 'identify_triggers', label: 'Identify trigger foods' },
-  { value: 'build_habits', label: 'Build healthy habits' },
-  { value: 'reduce_reflux', label: 'Reduce reflux' },
+  { value: 'improve_regularity', label: 'Improve regularity' },
+  { value: 'reduce_constipation', label: 'Reduce constipation' },
+  { value: 'reduce_diarrhea', label: 'Reduce diarrhea' },
+  { value: 'reduce_gas', label: 'Reduce gas' },
+  { value: 'reduce_inflammation', label: 'Reduce inflammation' },
+  { value: 'improve_gut_healing', label: 'Improve gut healing' },
+  { value: 'improve_skin_health', label: 'Improve skin health' },
+  { value: 'reduce_brain_fog', label: 'Reduce brain fog' },
+  { value: 'reduce_food_anxiety', label: 'Reduce food anxiety' },
+  { value: 'reintroduce_foods', label: 'Reintroduce foods safely' },
+  { value: 'improve_mood', label: 'Improve mood' },
+  { value: 'feel_better_after_meals', label: 'Feel better after meals' },
+  { value: 'improve_stool_consistency', label: 'Improve stool consistency' },
+  // Weight-related — clinically reframed (not "Weight loss")
+  { value: 'improve_body_composition', label: 'Improve body composition' },
+  { value: 'feel_healthier_in_body', label: 'Feel healthier in my body' },
+  { value: 'support_healthy_weight', label: 'Support healthy weight' },
+  // Exploratory
+  { value: 'just_exploring', label: 'Just exploring / not sure yet' },
 ]
 
 const ACTIVITY_OPTIONS = [
@@ -152,12 +181,24 @@ export default function OnboardingPage() {
   const [activityLevel, setActivityLevel] = useState('moderate')
   const [targetWeightLbs, setTargetWeightLbs] = useState('')
 
+  // Step 2 (extra)
+  const [ibdStatus, setIbdStatus] = useState('')
+
+  // Step 3 (extra)
+  const [eatingStyleFollowing, setEatingStyleFollowing] = useState('')
+  const [fodmapPhase, setFodmapPhase] = useState('')
+
   // Step 5
   const [sleepQuality, setSleepQuality] = useState('')
   const [sleepHours, setSleepHours] = useState('')
   const [energyLevel, setEnergyLevel] = useState('')
   const [stressLevel, setStressLevel] = useState(3)
+  const [exerciseRoutine, setExerciseRoutine] = useState('')
   const [additionalNotes, setAdditionalNotes] = useState('')
+
+  // Step 6
+  const [edHistory, setEdHistory] = useState('')
+  const [isPregnant, setIsPregnant] = useState('')
 
   useEffect(() => {
     const supabase = createClient()
@@ -207,6 +248,7 @@ export default function OnboardingPage() {
           health_profile: {
             nickname: nickname || null,
             medical_conditions: conditions.join(', ') || null,
+            ibd_status: ibdStatus || null,
             allergens: allergens.join(', ') || null,
             medications: medications || null,
           },
@@ -221,6 +263,8 @@ export default function OnboardingPage() {
           diet_mode: eatingStyle,
           health_profile: {
             eating_style: eatingStyle,
+            eating_style_relationship: eatingStyleFollowing || null,
+            fodmap_phase: fodmapPhase || null,
             cooking_frequency: cookingFreq || null,
             eating_out_frequency: eatOutFreq || null,
             typical_day_meals: typicalDay || null,
@@ -253,6 +297,7 @@ export default function OnboardingPage() {
             sleep_hours: sleepHours || null,
             energy_level: energyLevel || null,
             stress_level: stressLevel,
+            exercise_routine: exerciseRoutine || null,
             additional_notes: additionalNotes || null,
           },
         })
@@ -262,6 +307,12 @@ export default function OnboardingPage() {
 
     } else if (step === 5) {
       startTransition(async () => {
+        await saveProfileStep(6, {
+          health_profile: {
+            ed_history: edHistory || null,
+            is_pregnant: isPregnant || null,
+          },
+        })
         const res = await completeOnboarding()
         if (res?.error) setError(res.error)
       })
@@ -380,11 +431,11 @@ export default function OnboardingPage() {
 
         <div style={{ flex: 1 }}>
           {step === 0 && <StepAboutYou {...{ fullName, setFullName, nickname, setNickname, dob, setDob, gender, setGender }} />}
-          {step === 1 && <StepHealth {...{ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, conditions, setConditions, allergens, setAllergens, medications, setMedications }} />}
-          {step === 2 && <StepEating {...{ eatingStyle, setEatingStyle, cookingFreq, setCookingFreq, eatOutFreq, setEatOutFreq, typicalDay, setTypicalDay }} />}
+          {step === 1 && <StepHealth {...{ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, conditions, setConditions, ibdStatus, setIbdStatus, allergens, setAllergens, medications, setMedications }} />}
+          {step === 2 && <StepEating {...{ eatingStyle, setEatingStyle, eatingStyleFollowing, setEatingStyleFollowing, fodmapPhase, setFodmapPhase, cookingFreq, setCookingFreq, eatOutFreq, setEatOutFreq, typicalDay, setTypicalDay }} />}
           {step === 3 && <StepGoals {...{ goals, setGoals, specificConcerns, setSpecificConcerns, priorRd, setPriorRd, activityLevel, setActivityLevel, targetWeightLbs, setTargetWeightLbs }} />}
-          {step === 4 && <StepLifestyle {...{ sleepQuality, setSleepQuality, sleepHours, setSleepHours, energyLevel, setEnergyLevel, stressLevel, setStressLevel, additionalNotes, setAdditionalNotes }} />}
-          {step === 5 && <StepFinish isPending={isPending} />}
+          {step === 4 && <StepLifestyle {...{ sleepQuality, setSleepQuality, sleepHours, setSleepHours, energyLevel, setEnergyLevel, stressLevel, setStressLevel, exerciseRoutine, setExerciseRoutine, additionalNotes, setAdditionalNotes }} />}
+          {step === 5 && <StepFinish {...{ isPending, edHistory, setEdHistory, isPregnant, setIsPregnant }} />}
         </div>
 
         {error && (
@@ -494,14 +545,16 @@ function StepAboutYou({ fullName, setFullName, nickname, setNickname, dob, setDo
 }
 
 // ─── Step 2: Health & history ─────────────────────────────────────────────
-function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, conditions, setConditions, allergens, setAllergens, medications, setMedications }: {
+function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, conditions, setConditions, ibdStatus, setIbdStatus, allergens, setAllergens, medications, setMedications }: {
   weightLbs: string; setWeightLbs: (v: string) => void
   heightFt: string; setHeightFt: (v: string) => void
   heightIn: string; setHeightIn: (v: string) => void
   conditions: string[]; setConditions: (v: string[]) => void
+  ibdStatus: string; setIbdStatus: (v: string) => void
   allergens: string[]; setAllergens: (v: string[]) => void
   medications: string; setMedications: (v: string) => void
 }) {
+  const hasIbd = conditions.includes("IBD / Crohn's / Ulcerative Colitis")
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 580 }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -526,6 +579,17 @@ function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, 
         <ChipGroup options={CONDITION_OPTIONS} value={conditions} onChange={setConditions} />
       </OField>
 
+      {hasIbd && (
+        <OField label="Current IBD status">
+          <ChipGroup
+            options={IBD_STATUS_OPTIONS}
+            value={ibdStatus ? [ibdStatus] : []}
+            onChange={v => setIbdStatus(v[v.length - 1] ?? '')}
+            multi={false}
+          />
+        </OField>
+      )}
+
       <OField label="Food allergies & sensitivities">
         <ChipGroup options={ALLERGEN_OPTIONS} value={allergens} onChange={setAllergens} />
       </OField>
@@ -539,26 +603,76 @@ function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, 
 }
 
 // ─── Step 3: How you eat ──────────────────────────────────────────────────
-function StepEating({ eatingStyle, setEatingStyle, cookingFreq, setCookingFreq, eatOutFreq, setEatOutFreq, typicalDay, setTypicalDay }: {
+function StepEating({ eatingStyle, setEatingStyle, eatingStyleFollowing, setEatingStyleFollowing, fodmapPhase, setFodmapPhase, cookingFreq, setCookingFreq, eatOutFreq, setEatOutFreq, typicalDay, setTypicalDay }: {
   eatingStyle: string; setEatingStyle: (v: string) => void
+  eatingStyleFollowing: string; setEatingStyleFollowing: (v: string) => void
+  fodmapPhase: string; setFodmapPhase: (v: string) => void
   cookingFreq: string; setCookingFreq: (v: string) => void
   eatOutFreq: string; setEatOutFreq: (v: string) => void
   typicalDay: string; setTypicalDay: (v: string) => void
 }) {
+  const hasStyle = eatingStyle && eatingStyle !== 'default' && eatingStyle !== 'no_specific'
+  const isLowFodmap = eatingStyle === 'low_fodmap'
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 580 }}>
-      <OField label="Eating style">
+      <OField label="Eating style" hint="Pick the one that best describes how you eat.">
         <ChipGroup
           options={EATING_STYLE_OPTIONS.map(o => o.label)}
           value={eatingStyle ? [EATING_STYLE_OPTIONS.find(o => o.value === eatingStyle)?.label ?? eatingStyle] : []}
           onChange={v => {
             const last = v[v.length - 1]
             const match = EATING_STYLE_OPTIONS.find(o => o.label === last)
-            setEatingStyle(match ? match.value : last ?? 'default')
+            const newVal = match ? match.value : last ?? 'default'
+            setEatingStyle(newVal)
+            if (newVal === 'no_specific' || newVal === 'default') {
+              setEatingStyleFollowing('')
+              setFodmapPhase('')
+            }
+            if (newVal !== 'low_fodmap') setFodmapPhase('')
           }}
           multi={false}
         />
       </OField>
+
+      {hasStyle && (
+        <OField label="Your relationship to this style">
+          <div style={{ display: 'flex', gap: 8 }}>
+            {(['currently', 'curious']).map(opt => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setEatingStyleFollowing(opt)}
+                style={{
+                  flex: 1, padding: '10px 16px', borderRadius: 999, cursor: 'pointer',
+                  border: `1.5px solid ${eatingStyleFollowing === opt ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
+                  background: eatingStyleFollowing === opt ? 'var(--terracotta-50)' : '#fff',
+                  color: eatingStyleFollowing === opt ? 'var(--terracotta-600)' : 'var(--ink-700)',
+                  fontSize: 13.5, fontWeight: eatingStyleFollowing === opt ? 600 : 400,
+                  fontFamily: 'var(--font-body)', transition: 'all 160ms',
+                }}
+              >
+                {opt === 'currently' ? 'Currently following' : 'Curious about it'}
+              </button>
+            ))}
+          </div>
+        </OField>
+      )}
+
+      {isLowFodmap && (
+        <OField label="Low-FODMAP phase">
+          <ChipGroup
+            options={FODMAP_PHASE_OPTIONS.map(o => o.label)}
+            value={fodmapPhase ? [FODMAP_PHASE_OPTIONS.find(o => o.value === fodmapPhase)?.label ?? fodmapPhase] : []}
+            onChange={v => {
+              const last = v[v.length - 1]
+              const match = FODMAP_PHASE_OPTIONS.find(o => o.label === last)
+              setFodmapPhase(match ? match.value : last ?? '')
+            }}
+            multi={false}
+          />
+        </OField>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <OField label="How often do you cook?">
@@ -587,7 +701,7 @@ function StepGoals({ goals, setGoals, specificConcerns, setSpecificConcerns, pri
   activityLevel: string; setActivityLevel: (v: string) => void
   targetWeightLbs: string; setTargetWeightLbs: (v: string) => void
 }) {
-  const showTargetWeight = goals.includes('weight_loss')
+  const showTargetWeight = goals.some(g => ['improve_body_composition', 'support_healthy_weight'].includes(g))
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 580 }}>
       <OField label="What do you want to work on?" hint="Pick up to 3.">
@@ -645,11 +759,12 @@ function StepGoals({ goals, setGoals, specificConcerns, setSpecificConcerns, pri
 }
 
 // ─── Step 5: Lifestyle ────────────────────────────────────────────────────
-function StepLifestyle({ sleepQuality, setSleepQuality, sleepHours, setSleepHours, energyLevel, setEnergyLevel, stressLevel, setStressLevel, additionalNotes, setAdditionalNotes }: {
+function StepLifestyle({ sleepQuality, setSleepQuality, sleepHours, setSleepHours, energyLevel, setEnergyLevel, stressLevel, setStressLevel, exerciseRoutine, setExerciseRoutine, additionalNotes, setAdditionalNotes }: {
   sleepQuality: string; setSleepQuality: (v: string) => void
   sleepHours: string; setSleepHours: (v: string) => void
   energyLevel: string; setEnergyLevel: (v: string) => void
   stressLevel: number; setStressLevel: (v: number) => void
+  exerciseRoutine: string; setExerciseRoutine: (v: string) => void
   additionalNotes: string; setAdditionalNotes: (v: string) => void
 }) {
   return (
@@ -683,6 +798,11 @@ function StepLifestyle({ sleepQuality, setSleepQuality, sleepHours, setSleepHour
         </div>
       </OField>
 
+      <OField label="Exercise routine" hint="Optional. Describe what you typically do and how often.">
+        <OTextarea value={exerciseRoutine} onChange={setExerciseRoutine}
+          placeholder="e.g., 30-min walk 5x/week, yoga on weekends, occasional weightlifting" />
+      </OField>
+
       <OField label="Anything else your coach should know?" hint="Optional. The more context, the more personalized the guidance.">
         <OTextarea value={additionalNotes} onChange={setAdditionalNotes}
           placeholder="e.g., I travel often, my partner is vegetarian, I really want to avoid medications if I can…" />
@@ -692,31 +812,66 @@ function StepLifestyle({ sleepQuality, setSleepQuality, sleepHours, setSleepHour
 }
 
 // ─── Step 6: Finish ───────────────────────────────────────────────────────
-function StepFinish({ isPending }: { isPending: boolean }) {
+const ED_OPTIONS = ['Yes', 'No', 'Prefer not to say']
+const PREGNANT_OPTIONS = ['Yes', 'No', 'Not applicable']
+
+function StepFinish({ isPending, edHistory, setEdHistory, isPregnant, setIsPregnant }: {
+  isPending: boolean
+  edHistory: string; setEdHistory: (v: string) => void
+  isPregnant: string; setIsPregnant: (v: string) => void
+}) {
   return (
-    <div style={{ padding: '20px 0' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 580 }}>
+      <OField
+        label="Do you have a history of disordered eating or restrictive eating patterns?"
+        hint="This helps your coach avoid triggering language and calibrate recommendations safely."
+      >
+        <ChipGroup
+          options={ED_OPTIONS}
+          value={edHistory ? [edHistory] : []}
+          onChange={v => setEdHistory(v[v.length - 1] ?? '')}
+          multi={false}
+        />
+      </OField>
+
+      <OField label="Are you currently pregnant or breastfeeding?">
+        <ChipGroup
+          options={PREGNANT_OPTIONS}
+          value={isPregnant ? [isPregnant] : []}
+          onChange={v => setIsPregnant(v[v.length - 1] ?? '')}
+          multi={false}
+        />
+      </OField>
+
       <div style={{
-        width: 72, height: 72, borderRadius: '50%',
-        background: 'var(--terracotta-50)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        marginBottom: 24,
+        marginTop: 8, padding: '20px 24px',
+        background: 'var(--cream-100)', borderRadius: 16,
+        display: 'flex', alignItems: 'flex-start', gap: 16,
       }}>
-        {isPending
-          ? <Loader2 size={32} color="var(--terracotta-400)" style={{ animation: 'spin 1s linear infinite' }} />
-          : <Check size={32} color="var(--terracotta-400)" />
-        }
+        <div style={{
+          width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
+          background: 'var(--terracotta-50)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {isPending
+            ? <Loader2 size={24} color="var(--terracotta-400)" style={{ animation: 'spin 1s linear infinite' }} />
+            : <Check size={24} color="var(--terracotta-400)" />
+          }
+        </div>
+        <div>
+          <h2 style={{
+            fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 400,
+            color: 'var(--ink-900)', margin: '0 0 8px',
+          }}>
+            {isPending ? 'Building your plan…' : "You're almost there."}
+          </h2>
+          <p style={{ fontSize: 14.5, color: 'var(--ink-500)', lineHeight: 1.6, margin: 0 }}>
+            {isPending
+              ? 'Calculating your TDEE, macro targets, and personalized plan. Takes about 10 seconds.'
+              : "Hit the button and we'll calculate your personalized macro targets and starter plan using everything you shared."}
+          </p>
+        </div>
       </div>
-      <h2 style={{
-        fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 400,
-        color: 'var(--ink-900)', margin: '0 0 12px',
-      }}>
-        {isPending ? 'Building your plan…' : 'Ready when you are.'}
-      </h2>
-      <p style={{ fontSize: 15, color: 'var(--ink-500)', lineHeight: 1.6, margin: 0, maxWidth: 480 }}>
-        {isPending
-          ? 'Calculating your TDEE, macro targets, and personalized plan. Takes about 10 seconds.'
-          : "Tap the button below and we'll calculate your personalized macro targets, goal weight, and starter plan using everything you shared."}
-      </p>
     </div>
   )
 }
