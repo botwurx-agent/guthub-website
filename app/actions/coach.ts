@@ -52,6 +52,38 @@ export async function startNewThread() {
   return data
 }
 
+export async function renameThread(threadId: string, title: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const trimmed = title.trim().slice(0, 100)
+  if (!trimmed) return { error: 'Title cannot be empty.' }
+
+  const { error } = await supabase
+    .from('coach_threads')
+    .update({ title: trimmed })
+    .eq('id', threadId)
+    .eq('user_id', user.id)
+
+  return error ? { error: error.message } : { success: true, title: trimmed }
+}
+
+export async function deleteThread(threadId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // Messages are deleted via cascade (FK on thread_id)
+  const { error } = await supabase
+    .from('coach_threads')
+    .delete()
+    .eq('id', threadId)
+    .eq('user_id', user.id)
+
+  return error ? { error: error.message } : { success: true }
+}
+
 export async function getThreadList() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from 'react'
-import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown } from 'lucide-react'
-import { startNewThread, getThreadMessages } from '@/app/actions/coach'
+import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown, Pencil, Trash2, Check } from 'lucide-react'
+import { startNewThread, getThreadMessages, renameThread, deleteThread } from '@/app/actions/coach'
 
 type Message = {
   id?: string
@@ -52,9 +52,13 @@ export default function CoachClient({
   const [image, setImage] = useState<{ base64: string; type: string; preview: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const editInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -147,6 +151,42 @@ export default function CoachClient({
     })
   }
 
+  function startEditing(t: Thread) {
+    setEditingId(t.id)
+    setEditingTitle(t.title)
+    setTimeout(() => editInputRef.current?.select(), 0)
+  }
+
+  async function commitRename() {
+    if (!editingId) return
+    const result = await renameThread(editingId, editingTitle)
+    if (!result?.error) {
+      setThreads(prev => prev.map(t => t.id === editingId ? { ...t, title: editingTitle.trim() } : t))
+    }
+    setEditingId(null)
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id)
+    const result = await deleteThread(id)
+    setDeletingId(null)
+    if (!result?.error) {
+      setThreads(prev => prev.filter(t => t.id !== id))
+      if (threadId === id) {
+        // Switch to next available thread or clear
+        const remaining = threads.filter(t => t.id !== id)
+        if (remaining.length > 0) {
+          setThreadId(remaining[0].id)
+          const msgs = await getThreadMessages(remaining[0].id)
+          setMessages(msgs)
+        } else {
+          setThreadId(null)
+          setMessages([])
+        }
+      }
+    }
+  }
+
   async function switchThread(id: string) {
     if (id === threadId || streaming) return
     setThreadId(id)
@@ -185,19 +225,21 @@ export default function CoachClient({
             Recent
           </div>
           {threads.map(t => (
-            <button key={t.id} onClick={() => switchThread(t.id)} style={{
-              width: '100%', textAlign: 'left', padding: '9px 10px', borderRadius: 8,
-              border: t.id === threadId ? '1px solid var(--cream-200)' : '1px solid transparent',
-              background: t.id === threadId ? 'var(--cream-100)' : 'transparent',
-              cursor: 'pointer', transition: 'all 140ms', marginBottom: 1,
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {t.title}
-              </div>
-              <div style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 1 }}>
-                {relativeTime(t.updated_at)}
-              </div>
-            </button>
+            <ThreadRow
+              key={t.id}
+              thread={t}
+              active={t.id === threadId}
+              editing={editingId === t.id}
+              editingTitle={editingTitle}
+              deleting={deletingId === t.id}
+              editInputRef={editInputRef}
+              onSelect={() => switchThread(t.id)}
+              onStartEdit={() => startEditing(t)}
+              onEditChange={setEditingTitle}
+              onCommitRename={commitRename}
+              onCancelRename={() => setEditingId(null)}
+              onDelete={() => handleDelete(t.id)}
+            />
           ))}
           {threads.length === 0 && (
             <div style={{ fontSize: 12.5, color: 'var(--ink-400)', padding: '8px 6px' }}>No conversations yet</div>
@@ -309,6 +351,100 @@ export default function CoachClient({
           </p>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── Thread row with rename / delete ─────────────────────────────────────────
+function ThreadRow({
+  thread, active, editing, editingTitle, deleting, editInputRef,
+  onSelect, onStartEdit, onEditChange, onCommitRename, onCancelRename, onDelete,
+}: {
+  thread: { id: string; title: string; updated_at: string }
+  active: boolean
+  editing: boolean
+  editingTitle: string
+  deleting: boolean
+  editInputRef: React.RefObject<HTMLInputElement | null>
+  onSelect: () => void
+  onStartEdit: () => void
+  onEditChange: (v: string) => void
+  onCommitRename: () => void
+  onCancelRename: () => void
+  onDelete: () => void
+}) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'relative', borderRadius: 8, marginBottom: 1,
+        border: active ? '1px solid var(--cream-200)' : '1px solid transparent',
+        background: active ? 'var(--cream-100)' : 'transparent',
+        transition: 'all 140ms',
+      }}
+    >
+      {editing ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '7px 8px' }}>
+          <input
+            ref={editInputRef}
+            value={editingTitle}
+            onChange={e => onEditChange(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') onCommitRename(); if (e.key === 'Escape') onCancelRename() }}
+            autoFocus
+            style={{
+              flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--ink-800)',
+              border: '1.5px solid var(--terracotta-300)', borderRadius: 6,
+              padding: '3px 7px', outline: 'none', fontFamily: 'var(--font-body)',
+              background: '#fff', minWidth: 0,
+            }}
+          />
+          <button onClick={onCommitRename} title="Save" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--forest-500)', padding: 2, display: 'flex' }}>
+            <Check size={14} />
+          </button>
+          <button onClick={onCancelRename} title="Cancel" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-400)', padding: 2, display: 'flex' }}>
+            <X size={14} />
+          </button>
+        </div>
+      ) : (
+        <button onClick={onSelect} style={{
+          width: '100%', textAlign: 'left', padding: '9px 10px', borderRadius: 8,
+          border: 'none', background: 'transparent', cursor: 'pointer',
+          paddingRight: hovered ? 60 : 10,
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {thread.title}
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 1 }}>{relativeTime(thread.updated_at)}</div>
+        </button>
+      )}
+
+      {/* Action icons — shown on hover, hidden when editing */}
+      {!editing && hovered && (
+        <div style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: 2 }}>
+          <button
+            onClick={e => { e.stopPropagation(); onStartEdit() }}
+            title="Rename"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-400)', padding: '4px', borderRadius: 6, display: 'flex', transition: 'color 120ms' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--ink-700)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-400)')}
+          >
+            <Pencil size={13} />
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onDelete() }}
+            title="Delete"
+            disabled={deleting}
+            style={{ background: 'none', border: 'none', cursor: deleting ? 'not-allowed' : 'pointer', color: 'var(--ink-400)', padding: '4px', borderRadius: 6, display: 'flex', transition: 'color 120ms' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#b4422c')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-400)')}
+          >
+            {deleting ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Trash2 size={13} />}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
