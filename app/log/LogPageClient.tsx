@@ -2,116 +2,346 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Utensils, Frown, Circle, Droplets, Scale, StickyNote } from 'lucide-react'
+import {
+  Utensils, Frown, Circle, Droplets, Scale, StickyNote,
+  Camera, Sparkles, TrendingDown, TrendingUp,
+} from 'lucide-react'
 import LogMeal from '@/components/app/log/LogMeal'
 import LogSymptom from '@/components/app/log/LogSymptom'
 import LogBM from '@/components/app/log/LogBM'
 import LogWater from '@/components/app/log/LogWater'
 import LogWeight from '@/components/app/log/LogWeight'
 import LogNote from '@/components/app/log/LogNote'
+import type { TimelineDay, WeekStats } from './page'
 
-const TABS = [
-  { id: 'meal',    label: 'Meal',    icon: Utensils,   color: '#DB6F56' },
-  { id: 'symptom', label: 'Symptom', icon: Frown,      color: '#C98A1E' },
-  { id: 'bm',      label: 'Bowel',   icon: Circle,     color: '#6F9477' },
-  { id: 'water',   label: 'Water',   icon: Droplets,   color: '#6FB8A8' },
-  { id: 'weight',  label: 'Weight',  icon: Scale,      color: '#9D978A' },
-  { id: 'note',    label: 'Note',    icon: StickyNote, color: '#7A7468' },
+type FilterId = 'all' | 'meal' | 'symptom' | 'weight' | 'note'
+type FormId = 'meal' | 'symptom' | 'bm' | 'water' | 'weight' | 'note'
+
+const FILTER_TABS: { id: FilterId; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'meal', label: 'Meals' },
+  { id: 'symptom', label: 'Symptoms' },
+  { id: 'weight', label: 'Weight' },
+  { id: 'note', label: 'Notes' },
 ]
 
-type TabId = 'meal' | 'symptom' | 'bm' | 'water' | 'weight' | 'note'
+const KIND_STYLE: Record<string, { color: string; bg: string }> = {
+  meal:    { color: '#DB6F56', bg: 'rgba(219,111,86,0.12)' },
+  symptom: { color: '#C98A1E', bg: 'rgba(201,138,30,0.12)' },
+  weight:  { color: '#9D978A', bg: 'rgba(157,151,138,0.12)' },
+  bm:      { color: '#6F9477', bg: 'rgba(111,148,119,0.12)' },
+  water:   { color: '#6FB8A8', bg: 'rgba(111,184,168,0.12)' },
+  note:    { color: '#7A7468', bg: 'rgba(122,116,104,0.12)' },
+}
 
-export default function LogPageClient({ initialType, userId, today, currentLbs, goalLbs, waterGlasses }: {
+const KIND_ICON: Record<string, React.ElementType> = {
+  meal: Utensils,
+  symptom: Frown,
+  weight: Scale,
+  bm: Circle,
+  water: Droplets,
+  note: StickyNote,
+}
+
+function formatTime(iso: string) {
+  const d = new Date(iso)
+  let h = d.getHours(), m = d.getMinutes()
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  h = h % 12 || 12
+  return `${h}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
+function EventRow({ item }: { item: TimelineDay['items'][number] }) {
+  const style = KIND_STYLE[item.kind] ?? KIND_STYLE.note
+  const Icon = KIND_ICON[item.kind] ?? StickyNote
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', gap: 12,
+      padding: '12px 0', borderBottom: '1px solid var(--cream-200)',
+    }}>
+      <div style={{
+        fontSize: 12, color: 'var(--ink-400)', fontVariantNumeric: 'tabular-nums',
+        width: 60, flexShrink: 0, paddingTop: 2, fontWeight: 500,
+      }}>
+        {formatTime(item.loggedAt)}
+      </div>
+      <div style={{
+        width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+        background: style.bg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Icon size={16} color={style.color} strokeWidth={2} />
+      </div>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{
+          fontSize: 14, fontWeight: 600, color: 'var(--ink-900)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>{item.title}</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 1 }}>{item.meta}</div>
+      </div>
+    </div>
+  )
+}
+
+function QuickAddTile({ icon: Icon, label, onClick, color }: {
+  icon: React.ElementType; label: string; onClick: () => void; color?: string
+}) {
+  const [hover, setHover] = useState(false)
+  return (
+    <button onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+        padding: '16px 12px', borderRadius: 12, border: '1px solid var(--cream-200)',
+        background: hover ? 'var(--cream-100)' : '#fff',
+        cursor: 'pointer', transition: 'all 140ms', width: '100%',
+      }}>
+      <div style={{
+        width: 40, height: 40, borderRadius: 10,
+        background: 'var(--cream-200)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: color ?? 'var(--ink-700)',
+      }}>
+        <Icon size={18} strokeWidth={2} />
+      </div>
+      <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-800)', textAlign: 'center' }}>{label}</span>
+    </button>
+  )
+}
+
+function StatRow({ label, sub, val, trend }: { label: string; sub: string; val: string; trend?: 'up' | 'down' }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div>
+        <div style={{ fontSize: 13, color: 'var(--ink-600)', fontWeight: 500 }}>{label}</div>
+        <div style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
+          {trend === 'down' && <TrendingDown size={11} color="var(--forest-400)" />}
+          {trend === 'up' && <TrendingUp size={11} color="var(--forest-400)" />}
+          {sub}
+        </div>
+      </div>
+      <div style={{
+        fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-900)', letterSpacing: '-0.02em',
+      }}>{val}</div>
+    </div>
+  )
+}
+
+export default function LogPageClient({
+  initialType, userId, today, timeline, weekStats, currentLbs, goalLbs, waterGlasses,
+}: {
   initialType: string
   userId: string
   today: string
+  timeline: TimelineDay[]
+  weekStats: WeekStats
   currentLbs: number | null
   goalLbs: number | null
   waterGlasses: number
 }) {
   const router = useRouter()
-  const [active, setActive] = useState<TabId>((TABS.find(t => t.id === initialType)?.id ?? 'meal') as TabId)
-
-  const activeTab = TABS.find(t => t.id === active)!
+  const [filter, setFilter] = useState<FilterId>('all')
+  const [activeForm, setActiveForm] = useState<FormId | null>(
+    (initialType && initialType !== 'all') ? initialType as FormId : null
+  )
 
   function handleSuccess() {
-    router.push('/dashboard')
     router.refresh()
+    setActiveForm(null)
   }
 
+  const totalItems = timeline.reduce((s, d) => s + d.items.length, 0)
+  const summaryParts = [
+    weekStats.meals ? `${weekStats.meals} meal${weekStats.meals !== 1 ? 's' : ''}` : null,
+    weekStats.symptoms ? `${weekStats.symptoms} symptom${weekStats.symptoms !== 1 ? 's' : ''}` : null,
+    weekStats.weights ? `${weekStats.weights} weight` : null,
+    weekStats.notes ? `${weekStats.notes} note${weekStats.notes !== 1 ? 's' : ''}` : null,
+  ].filter(Boolean)
+
   return (
-    <div style={{ padding: '32px 32px 40px', maxWidth: 680 }}>
-      {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{
-          fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 400,
-          color: 'var(--ink-900)', margin: '0 0 4px', letterSpacing: '-0.02em',
-        }}>Log</h1>
-        <p style={{ fontSize: 14, color: 'var(--ink-500)', margin: 0 }}>
-          Track what matters for your gut health.
-        </p>
-      </div>
-
-      {/* Tab bar */}
-      <div style={{
-        display: 'flex', gap: 6, flexWrap: 'wrap',
-        marginBottom: 28, padding: '4px',
-        background: 'var(--cream-100)', borderRadius: 14,
-        border: '1px solid var(--border)',
-      }}>
-        {TABS.map(({ id, label, icon: Icon, color }) => {
-          const isActive = active === id
-          return (
-            <button key={id} onClick={() => setActive(id as TabId)} style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              padding: '9px 16px', borderRadius: 10, border: 'none',
-              background: isActive ? '#fff' : 'transparent',
-              color: isActive ? 'var(--ink-800)' : 'var(--ink-500)',
-              fontSize: 13.5, fontWeight: isActive ? 600 : 400,
-              cursor: 'pointer', fontFamily: 'var(--font-body)',
-              boxShadow: isActive ? '0 1px 4px rgba(31,45,42,0.1)' : 'none',
-              transition: 'all 160ms',
-            }}>
-              <Icon size={15} color={isActive ? color : 'currentColor'} strokeWidth={2} />
-              {label}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Form card */}
-      <div style={{
-        background: '#fff', borderRadius: 20, padding: '28px 28px 32px',
-        boxShadow: '0 2px 16px rgba(31,45,42,0.07)',
-        border: '1px solid var(--ink-100)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: `${activeTab.color}18`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <activeTab.icon size={18} color={activeTab.color} strokeWidth={2} />
+    <div style={{ padding: '32px 32px 48px' }}>
+      {/* Page header */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 6 }}>
+            Your timeline
           </div>
-          <h2 style={{
-            fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 400,
-            color: 'var(--ink-900)', margin: 0, letterSpacing: '-0.01em',
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 400, color: 'var(--ink-900)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+            Everything in one <em>thread</em>.
+          </h1>
+          <p style={{ fontSize: 14, color: 'var(--ink-500)', margin: 0 }}>
+            Meals, symptoms, weight, and notes — together so patterns are easy to spot.
+          </p>
+        </div>
+        <button
+          onClick={() => setActiveForm('meal')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '10px 20px', borderRadius: 10, border: 'none',
+            background: 'var(--terracotta-400)', color: '#fff',
+            fontSize: 14, fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'var(--font-body)',
           }}>
-            {active === 'meal' && 'Log a meal'}
-            {active === 'symptom' && 'Log a symptom'}
-            {active === 'bm' && 'Log bowel movement'}
-            {active === 'water' && 'Log water intake'}
-            {active === 'weight' && 'Log weight'}
-            {active === 'note' && 'Add a journal note'}
-          </h2>
+          + Add entry
+        </button>
+      </div>
+
+      {/* Filter tabs + summary */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 4, padding: 4, background: 'var(--cream-100)', borderRadius: 12, border: '1px solid var(--cream-200)' }}>
+          {FILTER_TABS.map(t => {
+            const active = filter === t.id
+            return (
+              <button key={t.id} onClick={() => setFilter(t.id)} style={{
+                padding: '7px 14px', borderRadius: 9, border: 'none',
+                background: active ? '#fff' : 'transparent',
+                color: active ? 'var(--ink-900)' : 'var(--ink-500)',
+                fontSize: 13, fontWeight: active ? 600 : 400,
+                cursor: 'pointer', fontFamily: 'var(--font-body)',
+                boxShadow: active ? '0 1px 4px rgba(31,45,42,0.09)' : 'none',
+                transition: 'all 140ms',
+              }}>{t.label}</button>
+            )
+          })}
+        </div>
+        {summaryParts.length > 0 && (
+          <div style={{ fontSize: 13, color: 'var(--ink-400)' }}>
+            {summaryParts.join(' · ')} in last 7 days
+          </div>
+        )}
+      </div>
+
+      {/* 2-col grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)', gap: 20, alignItems: 'start' }}>
+
+        {/* LEFT — timeline */}
+        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid var(--cream-200)', overflow: 'hidden' }}>
+          {timeline.length === 0 ? (
+            <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--ink-400)' }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 4 }}>No entries yet</div>
+              <div style={{ fontSize: 13 }}>Add your first entry using the quick add panel →</div>
+            </div>
+          ) : (
+            <div style={{ padding: '4px 24px' }}>
+              {timeline.map(day => {
+                const visible = day.items.filter(it =>
+                  filter === 'all' || it.kind === filter
+                )
+                if (!visible.length) return null
+                return (
+                  <div key={day.dateStr} style={{ paddingTop: 20, paddingBottom: 8 }}>
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-900)' }}>{day.label}</div>
+                      <div style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 1 }}>
+                        {new Date(day.dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                      </div>
+                    </div>
+                    {visible.map(item => <EventRow key={item.id} item={item} />)}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
-        {active === 'meal'    && <LogMeal onSuccess={handleSuccess} />}
-        {active === 'symptom' && <LogSymptom onSuccess={handleSuccess} />}
-        {active === 'bm'      && <LogBM onSuccess={handleSuccess} />}
-        {active === 'water'   && <LogWater userId={userId} today={today} currentGlasses={waterGlasses} onSuccess={handleSuccess} />}
-        {active === 'weight'  && <LogWeight currentLbs={currentLbs} goalLbs={goalLbs} onSuccess={handleSuccess} />}
-        {active === 'note'    && <LogNote onSuccess={handleSuccess} />}
+        {/* RIGHT — quick add + stats + coach */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Quick add / active form */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid var(--cream-200)', padding: '20px 20px 24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink-900)' }}>
+                {activeForm ? (
+                  (() => {
+                    const labels: Record<FormId, string> = {
+                      meal: 'Log a meal', symptom: 'Log a symptom', bm: 'Log bowel movement',
+                      water: 'Log water', weight: 'Log weight', note: 'Add a note',
+                    }
+                    return labels[activeForm]
+                  })()
+                ) : 'Quick add'}
+              </h3>
+              {activeForm && (
+                <button onClick={() => setActiveForm(null)} style={{
+                  fontSize: 12, color: 'var(--ink-400)', background: 'none', border: 'none',
+                  cursor: 'pointer', padding: '4px 8px', borderRadius: 6,
+                }}>← Back</button>
+              )}
+            </div>
+
+            {!activeForm ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <QuickAddTile icon={Camera} label="Photo meal" onClick={() => setActiveForm('meal')} color="#DB6F56" />
+                <QuickAddTile icon={Utensils} label="Type meal" onClick={() => setActiveForm('meal')} color="#DB6F56" />
+                <QuickAddTile icon={Frown} label="Symptom" onClick={() => setActiveForm('symptom')} color="#C98A1E" />
+                <QuickAddTile icon={Scale} label="Weight" onClick={() => setActiveForm('weight')} color="#9D978A" />
+                <QuickAddTile icon={Droplets} label="Water" onClick={() => setActiveForm('water')} color="#6FB8A8" />
+                <QuickAddTile icon={StickyNote} label="Note" onClick={() => setActiveForm('note')} color="#7A7468" />
+              </div>
+            ) : (
+              <div>
+                {activeForm === 'meal'    && <LogMeal onSuccess={handleSuccess} />}
+                {activeForm === 'symptom' && <LogSymptom onSuccess={handleSuccess} />}
+                {activeForm === 'bm'      && <LogBM onSuccess={handleSuccess} />}
+                {activeForm === 'water'   && <LogWater userId={userId} today={today} currentGlasses={waterGlasses} onSuccess={handleSuccess} />}
+                {activeForm === 'weight'  && <LogWeight currentLbs={currentLbs} goalLbs={goalLbs} onSuccess={handleSuccess} />}
+                {activeForm === 'note'    && <LogNote onSuccess={handleSuccess} />}
+              </div>
+            )}
+          </div>
+
+          {/* This week at a glance */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid var(--cream-200)', padding: '20px 20px 24px' }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700, color: 'var(--ink-900)' }}>This week at a glance</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <StatRow
+                label="Meals logged"
+                val={`${weekStats.meals}`}
+                sub={`of 21 goal (3/day)`}
+              />
+              <StatRow
+                label="Symptoms"
+                val={`${weekStats.symptoms}`}
+                sub="logged this week"
+                trend={weekStats.symptoms === 0 ? undefined : 'down'}
+              />
+              <StatRow
+                label="Weight check-ins"
+                val={`${weekStats.weights}`}
+                sub="this week"
+              />
+              <StatRow
+                label="Journal notes"
+                val={`${weekStats.notes}`}
+                sub="this week"
+              />
+            </div>
+          </div>
+
+          {/* Coach noticed */}
+          <div style={{ background: 'var(--terracotta-50)', borderRadius: 16, border: '1px solid var(--terracotta-100)', padding: '20px' }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'var(--terracotta-400)', color: '#fff', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-900)', marginBottom: 4 }}>Coach noticed</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-700)', lineHeight: 1.6 }}>
+                  {weekStats.symptoms > 0
+                    ? `You logged ${weekStats.symptoms} symptom${weekStats.symptoms !== 1 ? 's' : ''} this week. Keep tracking meals alongside symptoms — patterns usually emerge within 2–3 weeks.`
+                    : `Great week — no symptoms logged. Keep your streak going and I'll flag any food patterns as they emerge.`}
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   )
