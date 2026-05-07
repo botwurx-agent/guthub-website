@@ -42,12 +42,15 @@ export function Field({ label, required, children }: { label: string; required?:
   )
 }
 
-export function Input({ name, type = 'text', placeholder, autoComplete }: {
+export function Input({ name, type = 'text', placeholder, autoComplete, value, onChange }: {
   name: string; type?: string; placeholder?: string; autoComplete?: string
+  value?: string; onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
 }) {
   const [focus, setFocus] = useState(false)
+  const controlled = value !== undefined
   return (
     <input name={name} type={type} placeholder={placeholder} autoComplete={autoComplete}
+      {...(controlled ? { value, onChange } : {})}
       onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
       style={{
         padding: '11px 14px', background: '#fff',
@@ -61,10 +64,15 @@ export function Input({ name, type = 'text', placeholder, autoComplete }: {
   )
 }
 
-export function Textarea({ name, placeholder, rows = 3 }: { name: string; placeholder?: string; rows?: number }) {
+export function Textarea({ name, placeholder, rows = 3, value, onChange }: {
+  name: string; placeholder?: string; rows?: number
+  value?: string; onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+}) {
   const [focus, setFocus] = useState(false)
+  const controlled = value !== undefined
   return (
     <textarea name={name} placeholder={placeholder} rows={rows}
+      {...(controlled ? { value, onChange } : {})}
       onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
       style={{
         padding: '11px 14px', background: '#fff',
