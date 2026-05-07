@@ -591,11 +591,32 @@ function ThinkingBubble() {
 }
 
 function FormattedText({ text }: { text: string }) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  // Split on **bold** and [link](url) tokens
+  const parts = text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\(\/[^)]+\))/g)
   return (
     <>
       {parts.map((part, i) => {
-        if (part.startsWith('**') && part.endsWith('**')) return <strong key={i}>{part.slice(2, -2)}</strong>
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={i}>{part.slice(2, -2)}</strong>
+        }
+        const linkMatch = part.match(/^\[([^\]]+)\]\((\/[^)]+)\)$/)
+        if (linkMatch) {
+          return (
+            <a
+              key={i}
+              href={linkMatch[2]}
+              style={{
+                color: 'var(--terracotta-500)',
+                fontWeight: 600,
+                textDecoration: 'underline',
+                textDecorationColor: 'var(--terracotta-300)',
+                textUnderlineOffset: 3,
+              }}
+            >
+              {linkMatch[1]}
+            </a>
+          )
+        }
         return (
           <span key={i}>
             {part.split('\n').map((line, j, arr) => (
