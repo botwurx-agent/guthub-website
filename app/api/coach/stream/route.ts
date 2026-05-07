@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { buildCoachContext } from '@/lib/coach-context'
-import { AI_MODEL, TEMP } from '@/lib/ai-config'
+import { AI_MODEL } from '@/lib/ai-config'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -91,7 +91,6 @@ export async function POST(request: Request) {
   // Stream response
   const stream = await openai.chat.completions.create({
     model: AI_MODEL,
-    temperature: TEMP.chat,
     messages,
     stream: true,
     max_tokens: 2048,

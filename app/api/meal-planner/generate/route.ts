@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
-import { AI_MODEL, TEMP } from '@/lib/ai-config'
+import { AI_MODEL } from '@/lib/ai-config'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
@@ -74,7 +74,6 @@ Be specific with portions. Vary the meals across the week — no repeats.`
 
   const completion = await openai.chat.completions.create({
     model: AI_MODEL,
-    temperature: TEMP.meals,
     response_format: { type: 'json_object' },
     messages: [{ role: 'user', content: prompt }],
   })
