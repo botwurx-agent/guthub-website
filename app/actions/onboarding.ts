@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
+import { AI_MODEL, TEMP } from '@/lib/ai-config'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
@@ -126,8 +127,8 @@ Respond ONLY with JSON:
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      temperature: 0.1,
+      model: AI_MODEL,
+      temperature: TEMP.calculation,
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
     })
@@ -170,8 +171,8 @@ Respond ONLY with JSON: { "goal_weight": <integer in lbs> }`
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      temperature: 0.1,
+      model: AI_MODEL,
+      temperature: TEMP.calculation,
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
     })
