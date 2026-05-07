@@ -8,7 +8,6 @@ import { createClient } from '@/lib/supabase/client'
 
 const TOTAL_STEPS = 6
 
-// ─── Step definitions ──────────────────────────────────────────────────────
 type StepDef = {
   sidebarLabel: string
   eyebrow: string
@@ -31,55 +30,81 @@ const STEPS: StepDef[] = [
     sidebarLabel: 'Health & history',
     eyebrow: '02 — HEALTH & HISTORY',
     titleStart: 'Your ',
-    titleEm: 'body & health',
-    titleEnd: ' picture.',
-    subtitle: 'We use this to calculate your personalized targets and give you safer guidance.',
+    titleEm: 'health context',
+    titleEnd: '.',
+    subtitle: 'This stays private. We use it to make every suggestion safe and relevant.',
   },
   {
     sidebarLabel: 'How you eat',
     eyebrow: '03 — HOW YOU EAT',
-    titleStart: 'Tell us about your ',
-    titleEm: 'eating style',
-    titleEnd: '.',
-    subtitle: "We'll tune your macros and meal suggestions to match.",
+    titleStart: 'What does a ',
+    titleEm: 'typical day',
+    titleEnd: ' look like?',
+    subtitle: "No judgement. Just what's actually on your plate.",
   },
   {
     sidebarLabel: 'Goals',
     eyebrow: '04 — GOALS',
-    titleStart: 'What are you ',
-    titleEm: 'working toward',
+    titleStart: 'What do you want to ',
+    titleEm: 'change',
     titleEnd: '?',
-    subtitle: "We'll align your daily targets and coaching to your goal.",
+    subtitle: "Three things, max. We'll help you focus.",
   },
   {
     sidebarLabel: 'Lifestyle',
     eyebrow: '05 — LIFESTYLE',
-    titleStart: 'The full ',
-    titleEm: 'picture',
-    titleEnd: ' of how you live.',
-    subtitle: 'Sleep, stress, and hydration shape gut health more than people realize.',
+    titleStart: 'Sleep, energy, and ',
+    titleEm: 'stress',
+    titleEnd: '.',
+    subtitle: 'Your gut listens to all of these.',
   },
   {
     sidebarLabel: 'Final touches',
     eyebrow: '06 — FINAL TOUCHES',
-    titleStart: "You're ",
-    titleEm: 'all set',
-    titleEnd: '.',
-    subtitle: "Tap below and we'll calculate your personalized plan.",
+    titleStart: 'One last ',
+    titleEm: 'note',
+    titleEnd: ' before we begin.',
+    subtitle: 'Anything else that would help your coach understand you?',
   },
 ]
 
-const DIET_OPTIONS = [
-  { value: 'default', label: 'Balanced', desc: 'No restrictions — 40/30/30 macros' },
-  { value: 'keto', label: 'Keto', desc: 'High fat, very low carb (<20g net)' },
-  { value: 'carnivore', label: 'Carnivore', desc: 'Animal products only' },
-  { value: 'paleo', label: 'Paleo', desc: 'No grains, legumes, or dairy' },
-  { value: 'vegan', label: 'Vegan', desc: 'Zero animal products' },
-  { value: 'wfpb', label: 'Whole Food Plant-Based', desc: 'No added oils' },
-  { value: 'gluten_free', label: 'Gluten Free', desc: 'No wheat, barley, or rye' },
-  { value: 'low_fodmap', label: 'Low FODMAP', desc: 'For IBS / digestive sensitivity' },
-  { value: 'high_protein_low_carb', label: 'High Protein / Low Carb', desc: '≥35g protein, ≤25g carbs per meal' },
-  { value: 'intermittent_fasting', label: 'Intermittent Fasting', desc: 'Nutrient-dense meals, timed eating' },
+const CONDITION_OPTIONS = [
+  'IBS', "IBD / Crohn's", 'Acid reflux / GERD', 'Diabetes',
+  'High blood pressure', 'Thyroid condition', 'Autoimmune condition',
+  'Celiac disease', 'SIBO', 'Gastroparesis', 'None of these',
+]
+
+const ALLERGEN_OPTIONS = [
+  'Dairy', 'Gluten', 'Eggs', 'Soy', 'Tree nuts', 'Peanuts', 'Shellfish', 'Fish', 'Nightshades', 'Corn',
+]
+
+const EATING_STYLE_OPTIONS = [
+  { value: 'default', label: 'No restrictions' },
+  { value: 'mediterranean', label: 'Mediterranean' },
+  { value: 'low_fodmap', label: 'Low-FODMAP' },
+  { value: 'vegetarian', label: 'Vegetarian' },
+  { value: 'vegan', label: 'Vegan' },
+  { value: 'pescatarian', label: 'Pescatarian' },
+  { value: 'keto', label: 'Keto' },
+  { value: 'paleo', label: 'Paleo' },
+  { value: 'gluten_free', label: 'Gluten Free' },
+  { value: 'high_protein_low_carb', label: 'High Protein / Low Carb' },
+  { value: 'intermittent_fasting', label: 'Intermittent Fasting' },
+  { value: 'wfpb', label: 'Whole Food Plant-Based' },
+]
+
+const COOKING_OPTIONS = ['Almost every meal', 'Most meals', 'About half', 'A few times a week', 'Rarely']
+const EAT_OUT_OPTIONS = ['Rarely', '1–2 times a week', '3–4 times a week', '5+ times a week', 'Most meals']
+
+const GOAL_OPTIONS = [
+  { value: 'reduce_bloating', label: 'Reduce bloating' },
+  { value: 'better_digestion', label: 'Better digestion' },
+  { value: 'weight_loss', label: 'Weight loss' },
+  { value: 'steady_energy', label: 'More steady energy' },
+  { value: 'better_sleep', label: 'Better sleep' },
+  { value: 'identify_triggers', label: 'Identify trigger foods' },
+  { value: 'build_habits', label: 'Build healthy habits' },
+  { value: 'reduce_reflux', label: 'Reduce reflux' },
 ]
 
 const ACTIVITY_OPTIONS = [
@@ -87,46 +112,53 @@ const ACTIVITY_OPTIONS = [
   { value: 'light', label: 'Light', desc: '1–3 days/week' },
   { value: 'moderate', label: 'Moderate', desc: '3–5 days/week' },
   { value: 'active', label: 'Active', desc: '6–7 days/week' },
-  { value: 'very_active', label: 'Very Active', desc: 'Hard daily exercise or physical job' },
+  { value: 'very_active', label: 'Very Active', desc: 'Physical job or hard daily training' },
 ]
 
-const GOAL_OPTIONS = [
-  { value: 'weight_loss', label: 'Lose weight' },
-  { value: 'maintenance', label: 'Maintain weight' },
-  { value: 'muscle_gain', label: 'Build muscle' },
-  { value: 'gut_health', label: 'Improve gut health' },
-  { value: 'energy', label: 'More energy' },
-]
+const PRIOR_RD_OPTIONS = ['Yes, currently', 'Yes, in the past', 'No']
+const SLEEP_OPTIONS = ['Great', 'Pretty good', 'So-so', 'Poorly']
+const ENERGY_OPTIONS = ['High & steady', 'Steady but low', 'Up and down', 'Low most of the day']
 
-// ─── Main component ────────────────────────────────────────────────────────
 export default function OnboardingPage() {
   const [step, setStep] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [firstName, setFirstName] = useState('')
 
-  // Form state
+  // Step 1
   const [fullName, setFullName] = useState('')
   const [nickname, setNickname] = useState('')
   const [dob, setDob] = useState('')
   const [gender, setGender] = useState('')
+
+  // Step 2
   const [weightLbs, setWeightLbs] = useState('')
   const [heightFt, setHeightFt] = useState('')
   const [heightIn, setHeightIn] = useState('')
+  const [conditions, setConditions] = useState<string[]>([])
+  const [allergens, setAllergens] = useState<string[]>([])
   const [medications, setMedications] = useState('')
-  const [medicalConditions, setMedicalConditions] = useState('')
-  const [allergies, setAllergies] = useState('')
-  const [dietMode, setDietMode] = useState('default')
-  const [eatingStyle, setEatingStyle] = useState('')
-  const [primaryGoal, setPrimaryGoal] = useState('gut_health')
-  const [targetWeightLbs, setTargetWeightLbs] = useState('')
+
+  // Step 3
+  const [eatingStyle, setEatingStyle] = useState('default')
+  const [cookingFreq, setCookingFreq] = useState('')
+  const [eatOutFreq, setEatOutFreq] = useState('')
+  const [typicalDay, setTypicalDay] = useState('')
+
+  // Step 4
+  const [goals, setGoals] = useState<string[]>([])
+  const [specificConcerns, setSpecificConcerns] = useState('')
+  const [priorRd, setPriorRd] = useState('')
   const [activityLevel, setActivityLevel] = useState('moderate')
+  const [targetWeightLbs, setTargetWeightLbs] = useState('')
+
+  // Step 5
+  const [sleepQuality, setSleepQuality] = useState('')
   const [sleepHours, setSleepHours] = useState('')
-  const [stressLevel, setStressLevel] = useState('')
-  const [hydrationGlasses, setHydrationGlasses] = useState('')
+  const [energyLevel, setEnergyLevel] = useState('')
+  const [stressLevel, setStressLevel] = useState(3)
   const [additionalNotes, setAdditionalNotes] = useState('')
 
-  // Pre-fill name from auth metadata
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -155,9 +187,7 @@ export default function OnboardingPage() {
       if (!gender) return setError('Please select your gender.')
       startTransition(async () => {
         const res = await saveProfileStep(1, {
-          name: fullName,
-          dob,
-          gender,
+          name: fullName, dob, gender,
           health_profile: { nickname: nickname || null },
         })
         if (res?.error) setError(res.error)
@@ -176,9 +206,9 @@ export default function OnboardingPage() {
           height_cm: feetInToCm(ft, inches),
           health_profile: {
             nickname: nickname || null,
+            medical_conditions: conditions.join(', ') || null,
+            allergens: allergens.join(', ') || null,
             medications: medications || null,
-            medical_conditions: medicalConditions || null,
-            allergies: allergies || null,
           },
         })
         if (res?.error) setError(res.error)
@@ -188,13 +218,12 @@ export default function OnboardingPage() {
     } else if (step === 2) {
       startTransition(async () => {
         const res = await saveProfileStep(3, {
-          diet_mode: dietMode,
+          diet_mode: eatingStyle,
           health_profile: {
-            nickname: nickname || null,
-            medications: medications || null,
-            medical_conditions: medicalConditions || null,
-            allergies: allergies || null,
-            eating_style: eatingStyle || null,
+            eating_style: eatingStyle,
+            cooking_frequency: cookingFreq || null,
+            eating_out_frequency: eatOutFreq || null,
+            typical_day_meals: typicalDay || null,
           },
         })
         if (res?.error) setError(res.error)
@@ -205,14 +234,11 @@ export default function OnboardingPage() {
       startTransition(async () => {
         const res = await saveProfileStep(4, {
           health_profile: {
-            nickname: nickname || null,
-            medications: medications || null,
-            medical_conditions: medicalConditions || null,
-            allergies: allergies || null,
-            eating_style: eatingStyle || null,
-            primary_goal: primaryGoal,
-            target_weight_lbs: targetWeightLbs || null,
+            primary_goals: goals,
+            specific_concerns: specificConcerns || null,
+            has_worked_with_rd: priorRd || null,
             activity_level: activityLevel,
+            target_weight_lbs: targetWeightLbs || null,
           },
         })
         if (res?.error) setError(res.error)
@@ -223,17 +249,10 @@ export default function OnboardingPage() {
       startTransition(async () => {
         const res = await saveProfileStep(5, {
           health_profile: {
-            nickname: nickname || null,
-            medications: medications || null,
-            medical_conditions: medicalConditions || null,
-            allergies: allergies || null,
-            eating_style: eatingStyle || null,
-            primary_goal: primaryGoal,
-            target_weight_lbs: targetWeightLbs || null,
-            activity_level: activityLevel,
+            sleep_quality: sleepQuality || null,
             sleep_hours: sleepHours || null,
-            stress_level: stressLevel || null,
-            hydration_glasses: hydrationGlasses || null,
+            energy_level: energyLevel || null,
+            stress_level: stressLevel,
             additional_notes: additionalNotes || null,
           },
         })
@@ -266,20 +285,16 @@ export default function OnboardingPage() {
         display: 'flex', flexDirection: 'column',
         position: 'sticky', top: 0, height: '100vh',
       }}>
-        {/* Logo */}
         <div style={{ marginBottom: 40 }}>
-          <Image src="/logo-full.png" alt="GutHub" width={120} height={30} style={{ height: 30, width: 'auto', filter: 'brightness(0) invert(1)' }} />
+          <Image src="/logo-dark.png" alt="GutHub" width={120} height={30} style={{ height: 30, width: 'auto' }} />
         </div>
 
-        {/* Welcome */}
         <h2 style={{
           fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 400,
           color: 'var(--cream-100)', margin: '0 0 12px', lineHeight: 1.15,
           letterSpacing: '-0.02em',
         }}>
-          Welcome
-          {firstName && <>, <em style={{ fontStyle: 'italic', color: '#e8c870' }}>{firstName}</em></>}
-          .
+          Welcome{firstName && <>, <em style={{ fontStyle: 'italic', color: '#e8c870' }}>{firstName}</em></>}.
         </h2>
         <p style={{
           fontSize: 14.5, color: 'rgba(255,255,255,0.65)',
@@ -288,7 +303,6 @@ export default function OnboardingPage() {
           About 6 minutes. The more your coach knows now, the better it can help later.
         </p>
 
-        {/* Step list */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
           {STEPS.map((s, i) => {
             const isActive = i === step
@@ -322,7 +336,6 @@ export default function OnboardingPage() {
           })}
         </nav>
 
-        {/* Footer */}
         <div style={{
           display: 'flex', alignItems: 'flex-start', gap: 8,
           fontSize: 12, color: 'rgba(255,255,255,0.45)',
@@ -338,8 +351,8 @@ export default function OnboardingPage() {
         flex: 1, padding: '64px 80px',
         display: 'flex', flexDirection: 'column',
         maxWidth: 760, width: '100%',
+        overflowY: 'auto',
       }}>
-        {/* Eyebrow */}
         <div style={{
           fontSize: 12, fontWeight: 700, letterSpacing: '0.12em',
           color: 'var(--terracotta-500)', textTransform: 'uppercase',
@@ -348,7 +361,6 @@ export default function OnboardingPage() {
           {currentStep.eyebrow}
         </div>
 
-        {/* Title */}
         <h1 style={{
           fontFamily: 'var(--font-display)', fontSize: 40, fontWeight: 400,
           letterSpacing: '-0.02em', color: 'var(--ink-900)',
@@ -359,7 +371,6 @@ export default function OnboardingPage() {
           {currentStep.titleEnd}
         </h1>
 
-        {/* Subtitle */}
         <p style={{
           fontSize: 17, color: 'var(--ink-500)', lineHeight: 1.55,
           margin: '0 0 36px', maxWidth: 540,
@@ -367,17 +378,15 @@ export default function OnboardingPage() {
           {currentStep.subtitle}
         </p>
 
-        {/* Step content */}
         <div style={{ flex: 1 }}>
           {step === 0 && <StepAboutYou {...{ fullName, setFullName, nickname, setNickname, dob, setDob, gender, setGender }} />}
-          {step === 1 && <StepHealth {...{ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, medications, setMedications, medicalConditions, setMedicalConditions, allergies, setAllergies }} />}
-          {step === 2 && <StepEating {...{ dietMode, setDietMode, eatingStyle, setEatingStyle }} />}
-          {step === 3 && <StepGoals {...{ primaryGoal, setPrimaryGoal, targetWeightLbs, setTargetWeightLbs, activityLevel, setActivityLevel }} />}
-          {step === 4 && <StepLifestyle {...{ sleepHours, setSleepHours, stressLevel, setStressLevel, hydrationGlasses, setHydrationGlasses, additionalNotes, setAdditionalNotes }} />}
+          {step === 1 && <StepHealth {...{ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, conditions, setConditions, allergens, setAllergens, medications, setMedications }} />}
+          {step === 2 && <StepEating {...{ eatingStyle, setEatingStyle, cookingFreq, setCookingFreq, eatOutFreq, setEatOutFreq, typicalDay, setTypicalDay }} />}
+          {step === 3 && <StepGoals {...{ goals, setGoals, specificConcerns, setSpecificConcerns, priorRd, setPriorRd, activityLevel, setActivityLevel, targetWeightLbs, setTargetWeightLbs }} />}
+          {step === 4 && <StepLifestyle {...{ sleepQuality, setSleepQuality, sleepHours, setSleepHours, energyLevel, setEnergyLevel, stressLevel, setStressLevel, additionalNotes, setAdditionalNotes }} />}
           {step === 5 && <StepFinish isPending={isPending} />}
         </div>
 
-        {/* Error */}
         {error && (
           <div style={{
             marginTop: 16, padding: '12px 14px',
@@ -388,7 +397,6 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Footer nav */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           marginTop: 40, paddingTop: 32, borderTop: '1px solid var(--cream-200)',
@@ -425,7 +433,7 @@ export default function OnboardingPage() {
                 cursor: isPending ? 'not-allowed' : 'pointer',
                 opacity: isPending ? 0.7 : 1,
                 fontFamily: 'var(--font-body)',
-                transition: 'background 200ms, transform 200ms',
+                transition: 'background 200ms',
               }}
             >
               {isPending ? (
@@ -443,18 +451,9 @@ export default function OnboardingPage() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @media (max-width: 900px) {
-          .onb-sidebar {
-            position: relative !important;
-            width: 100% !important;
-            height: auto !important;
-            padding: 24px !important;
-          }
-          .onb-main {
-            padding: 32px 24px !important;
-          }
-          div:has(> .onb-sidebar) {
-            flex-direction: column !important;
-          }
+          .onb-sidebar { position: relative !important; width: 100% !important; height: auto !important; padding: 24px !important; }
+          .onb-main { padding: 32px 24px !important; }
+          div:has(> .onb-sidebar) { flex-direction: column !important; }
         }
       `}</style>
     </div>
@@ -473,7 +472,6 @@ function StepAboutYou({ fullName, setFullName, nickname, setNickname, dob, setDo
       <OField label="Full name" required>
         <OInput value={fullName} onChange={setFullName} placeholder="Alex Morgan" type="text" autoComplete="name" />
       </OField>
-
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <OField label="Date of birth" required>
           <OInput value={dob} onChange={setDob} placeholder="" type="date" autoComplete="bday" />
@@ -483,12 +481,11 @@ function StepAboutYou({ fullName, setFullName, nickname, setNickname, dob, setDo
             { value: '', label: 'Select…' },
             { value: 'male', label: 'Male' },
             { value: 'female', label: 'Female' },
-            { value: 'other', label: 'Other' },
+            { value: 'non_binary', label: 'Non-binary' },
             { value: 'prefer_not_to_say', label: 'Prefer not to say' },
           ]} />
         </OField>
       </div>
-
       <OField label="What should we call you?" hint="If different from your full name.">
         <OInput value={nickname} onChange={setNickname} placeholder="Alex" type="text" autoComplete="nickname" />
       </OField>
@@ -496,85 +493,112 @@ function StepAboutYou({ fullName, setFullName, nickname, setNickname, dob, setDo
   )
 }
 
-// ─── Step 2: Health & history ────────────────────────────────────────────
-function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, medications, setMedications, medicalConditions, setMedicalConditions, allergies, setAllergies }: {
+// ─── Step 2: Health & history ─────────────────────────────────────────────
+function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, conditions, setConditions, allergens, setAllergens, medications, setMedications }: {
   weightLbs: string; setWeightLbs: (v: string) => void
   heightFt: string; setHeightFt: (v: string) => void
   heightIn: string; setHeightIn: (v: string) => void
+  conditions: string[]; setConditions: (v: string[]) => void
+  allergens: string[]; setAllergens: (v: string[]) => void
   medications: string; setMedications: (v: string) => void
-  medicalConditions: string; setMedicalConditions: (v: string) => void
-  allergies: string; setAllergies: (v: string) => void
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 540 }}>
-      <OField label="Current weight (lbs)" required>
-        <OInput value={weightLbs} onChange={setWeightLbs} placeholder="165" type="number" />
-      </OField>
-      <OField label="Height" required>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <OInput value={heightFt} onChange={setHeightFt} placeholder="5" type="number" />
-            <span style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 4, display: 'block' }}>feet</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 580 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <OField label="Current weight (lbs)" required>
+          <OInput value={weightLbs} onChange={setWeightLbs} placeholder="165" type="number" />
+        </OField>
+        <OField label="Height" required>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <OInput value={heightFt} onChange={setHeightFt} placeholder="5" type="number" />
+              <span style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 3, display: 'block' }}>feet</span>
+            </div>
+            <div style={{ flex: 1 }}>
+              <OInput value={heightIn} onChange={setHeightIn} placeholder="8" type="number" />
+              <span style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 3, display: 'block' }}>inches</span>
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <OInput value={heightIn} onChange={setHeightIn} placeholder="8" type="number" />
-            <span style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 4, display: 'block' }}>inches</span>
-          </div>
-        </div>
+        </OField>
+      </div>
+
+      <OField label="Medical conditions" hint="Pick any that apply. You can add more later.">
+        <ChipGroup options={CONDITION_OPTIONS} value={conditions} onChange={setConditions} />
       </OField>
-      <OField label="Medical conditions" hint="Optional. e.g. IBS, GERD, diabetes…">
-        <OTextarea value={medicalConditions} onChange={setMedicalConditions} placeholder="" />
+
+      <OField label="Food allergies & sensitivities">
+        <ChipGroup options={ALLERGEN_OPTIONS} value={allergens} onChange={setAllergens} />
       </OField>
-      <OField label="Current medications" hint="Optional. e.g. Metformin, Omeprazole…">
-        <OTextarea value={medications} onChange={setMedications} placeholder="" />
-      </OField>
-      <OField label="Food allergies or intolerances" hint="Optional. e.g. Gluten, lactose, tree nuts…">
-        <OTextarea value={allergies} onChange={setAllergies} placeholder="" />
+
+      <OField label="Current medications & supplements" hint="Optional. Names and rough dose are enough.">
+        <OTextarea value={medications} onChange={setMedications}
+          placeholder="e.g., Omeprazole 20mg morning, Vitamin D 2000 IU, magnesium glycinate at night" />
       </OField>
     </div>
   )
 }
 
-// ─── Step 3: How you eat ────────────────────────────────────────────────
-function StepEating({ dietMode, setDietMode, eatingStyle, setEatingStyle }: {
-  dietMode: string; setDietMode: (v: string) => void
+// ─── Step 3: How you eat ──────────────────────────────────────────────────
+function StepEating({ eatingStyle, setEatingStyle, cookingFreq, setCookingFreq, eatOutFreq, setEatOutFreq, typicalDay, setTypicalDay }: {
   eatingStyle: string; setEatingStyle: (v: string) => void
+  cookingFreq: string; setCookingFreq: (v: string) => void
+  eatOutFreq: string; setEatOutFreq: (v: string) => void
+  typicalDay: string; setTypicalDay: (v: string) => void
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 600 }}>
-      <OField label="Diet preference">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {DIET_OPTIONS.map(d => (
-            <RadioCard key={d.value} label={d.label} desc={d.desc} selected={dietMode === d.value} onClick={() => setDietMode(d.value)} />
-          ))}
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 580 }}>
+      <OField label="Eating style">
+        <ChipGroup
+          options={EATING_STYLE_OPTIONS.map(o => o.label)}
+          value={eatingStyle ? [EATING_STYLE_OPTIONS.find(o => o.value === eatingStyle)?.label ?? eatingStyle] : []}
+          onChange={v => {
+            const last = v[v.length - 1]
+            const match = EATING_STYLE_OPTIONS.find(o => o.label === last)
+            setEatingStyle(match ? match.value : last ?? 'default')
+          }}
+          multi={false}
+        />
       </OField>
-      <OField label="How would you describe your eating?" hint="Optional.">
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {['3 meals/day', 'Grazer', 'Skip breakfast', 'Late dinners', 'Inconsistent', 'On the go'].map(s => (
-            <ChipButton key={s} label={s} selected={eatingStyle === s} onClick={() => setEatingStyle(eatingStyle === s ? '' : s)} />
-          ))}
-        </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <OField label="How often do you cook?">
+          <OSelect value={cookingFreq} onChange={setCookingFreq}
+            options={[{ value: '', label: 'Select…' }, ...COOKING_OPTIONS.map(o => ({ value: o, label: o }))]} />
+        </OField>
+        <OField label="How often do you eat out?">
+          <OSelect value={eatOutFreq} onChange={setEatOutFreq}
+            options={[{ value: '', label: 'Select…' }, ...EAT_OUT_OPTIONS.map(o => ({ value: o, label: o }))]} />
+        </OField>
+      </div>
+
+      <OField label="A typical day of meals" hint="Just a rough sketch — breakfast, lunch, dinner, snacks.">
+        <OTextarea value={typicalDay} onChange={setTypicalDay}
+          placeholder="e.g., Coffee + toast, salad with chicken at lunch, pasta or fish for dinner" />
       </OField>
     </div>
   )
 }
 
-// ─── Step 4: Goals ───────────────────────────────────────────────────────
-function StepGoals({ primaryGoal, setPrimaryGoal, targetWeightLbs, setTargetWeightLbs, activityLevel, setActivityLevel }: {
-  primaryGoal: string; setPrimaryGoal: (v: string) => void
-  targetWeightLbs: string; setTargetWeightLbs: (v: string) => void
+// ─── Step 4: Goals ────────────────────────────────────────────────────────
+function StepGoals({ goals, setGoals, specificConcerns, setSpecificConcerns, priorRd, setPriorRd, activityLevel, setActivityLevel, targetWeightLbs, setTargetWeightLbs }: {
+  goals: string[]; setGoals: (v: string[]) => void
+  specificConcerns: string; setSpecificConcerns: (v: string) => void
+  priorRd: string; setPriorRd: (v: string) => void
   activityLevel: string; setActivityLevel: (v: string) => void
+  targetWeightLbs: string; setTargetWeightLbs: (v: string) => void
 }) {
-  const showTargetWeight = primaryGoal === 'weight_loss' || primaryGoal === 'muscle_gain'
+  const showTargetWeight = goals.includes('weight_loss')
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 600 }}>
-      <OField label="Primary goal">
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {GOAL_OPTIONS.map(g => (
-            <ChipButton key={g.value} label={g.label} selected={primaryGoal === g.value} onClick={() => setPrimaryGoal(g.value)} />
-          ))}
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 580 }}>
+      <OField label="What do you want to work on?" hint="Pick up to 3.">
+        <ChipGroup
+          options={GOAL_OPTIONS.map(g => g.label)}
+          value={goals.map(v => GOAL_OPTIONS.find(g => g.value === v)?.label ?? v)}
+          onChange={labels => {
+            const values = labels.map(l => GOAL_OPTIONS.find(g => g.label === l)?.value ?? l)
+            if (values.length <= 3) setGoals(values)
+          }}
+        />
       </OField>
 
       {showTargetWeight && (
@@ -584,48 +608,90 @@ function StepGoals({ primaryGoal, setPrimaryGoal, targetWeightLbs, setTargetWeig
       )}
 
       <OField label="Activity level">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {ACTIVITY_OPTIONS.map(a => (
-            <RadioCard key={a.value} label={a.label} desc={a.desc} selected={activityLevel === a.value} onClick={() => setActivityLevel(a.value)} />
+            <button
+              key={a.value}
+              type="button"
+              onClick={() => setActivityLevel(a.value)}
+              style={{
+                padding: '10px 18px', borderRadius: 999, cursor: 'pointer',
+                border: `1.5px solid ${activityLevel === a.value ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
+                background: activityLevel === a.value ? 'var(--terracotta-50)' : '#fff',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                fontFamily: 'var(--font-body)', transition: 'all 160ms',
+              }}
+            >
+              <span style={{
+                fontSize: 13.5, fontWeight: activityLevel === a.value ? 600 : 500,
+                color: activityLevel === a.value ? 'var(--terracotta-600)' : 'var(--ink-700)',
+              }}>{a.label}</span>
+              <span style={{ fontSize: 11, color: 'var(--ink-400)', whiteSpace: 'nowrap' }}>{a.desc}</span>
+            </button>
           ))}
         </div>
+      </OField>
+
+      <OField label="Anything specific you'd like addressed?" hint="Optional.">
+        <OTextarea value={specificConcerns} onChange={setSpecificConcerns}
+          placeholder="e.g., I bloat after most meals and want to figure out which foods are causing it." />
+      </OField>
+
+      <OField label="Have you worked with a nutritionist or RD before?">
+        <ChipGroup options={PRIOR_RD_OPTIONS} value={priorRd ? [priorRd] : []} onChange={v => setPriorRd(v[v.length - 1] ?? '')} multi={false} />
       </OField>
     </div>
   )
 }
 
-// ─── Step 5: Lifestyle ───────────────────────────────────────────────────
-function StepLifestyle({ sleepHours, setSleepHours, stressLevel, setStressLevel, hydrationGlasses, setHydrationGlasses, additionalNotes, setAdditionalNotes }: {
+// ─── Step 5: Lifestyle ────────────────────────────────────────────────────
+function StepLifestyle({ sleepQuality, setSleepQuality, sleepHours, setSleepHours, energyLevel, setEnergyLevel, stressLevel, setStressLevel, additionalNotes, setAdditionalNotes }: {
+  sleepQuality: string; setSleepQuality: (v: string) => void
   sleepHours: string; setSleepHours: (v: string) => void
-  stressLevel: string; setStressLevel: (v: string) => void
-  hydrationGlasses: string; setHydrationGlasses: (v: string) => void
+  energyLevel: string; setEnergyLevel: (v: string) => void
+  stressLevel: number; setStressLevel: (v: number) => void
   additionalNotes: string; setAdditionalNotes: (v: string) => void
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 540 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 580 }}>
+      <OField label="How well do you sleep?">
+        <ChipGroup options={SLEEP_OPTIONS} value={sleepQuality ? [sleepQuality] : []} onChange={v => setSleepQuality(v[v.length - 1] ?? '')} multi={false} />
+      </OField>
+
+      {sleepQuality === 'Poorly' && (
         <OField label="Average sleep (hrs/night)">
-          <OInput value={sleepHours} onChange={setSleepHours} placeholder="7" type="number" />
+          <OInput value={sleepHours} onChange={setSleepHours} placeholder="5" type="number" />
         </OField>
-        <OField label="Water intake (glasses/day)">
-          <OInput value={hydrationGlasses} onChange={setHydrationGlasses} placeholder="8" type="number" />
-        </OField>
-      </div>
-      <OField label="Daily stress level">
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {['Low', 'Moderate', 'High', 'Very high'].map(s => (
-            <ChipButton key={s} label={s} selected={stressLevel === s.toLowerCase().replace(' ', '_')} onClick={() => setStressLevel(s.toLowerCase().replace(' ', '_'))} />
-          ))}
+      )}
+
+      <OField label="Average daily energy">
+        <ChipGroup options={ENERGY_OPTIONS} value={energyLevel ? [energyLevel] : []} onChange={v => setEnergyLevel(v[v.length - 1] ?? '')} multi={false} />
+      </OField>
+
+      <OField label="Stress level (typical week)">
+        <div style={{ paddingTop: 4 }}>
+          <input
+            type="range" min={1} max={10} value={stressLevel}
+            onChange={e => setStressLevel(Number(e.target.value))}
+            style={{ width: '100%', accentColor: 'var(--terracotta-400)' }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--ink-400)', marginTop: 6 }}>
+            <span>Low (1)</span>
+            <span style={{ fontWeight: 600, color: 'var(--terracotta-500)' }}>{stressLevel}</span>
+            <span>High (10)</span>
+          </div>
         </div>
       </OField>
-      <OField label="Anything else we should know?" hint="Optional. Past diets, recent changes, concerns…">
-        <OTextarea value={additionalNotes} onChange={setAdditionalNotes} placeholder="" />
+
+      <OField label="Anything else your coach should know?" hint="Optional. The more context, the more personalized the guidance.">
+        <OTextarea value={additionalNotes} onChange={setAdditionalNotes}
+          placeholder="e.g., I travel often, my partner is vegetarian, I really want to avoid medications if I can…" />
       </OField>
     </div>
   )
 }
 
-// ─── Step 6: Finish ──────────────────────────────────────────────────────
+// ─── Step 6: Finish ───────────────────────────────────────────────────────
 function StepFinish({ isPending }: { isPending: boolean }) {
   return (
     <div style={{ padding: '20px 0' }}>
@@ -736,43 +802,44 @@ function OTextarea({ value, onChange, placeholder }: { value: string; onChange: 
   )
 }
 
-function ChipButton({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
+function ChipGroup({ options, value, onChange, multi = true }: {
+  options: string[]
+  value: string[]
+  onChange: (v: string[]) => void
+  multi?: boolean
+}) {
+  const toggle = (o: string) => {
+    if (multi) {
+      onChange(value.includes(o) ? value.filter(x => x !== o) : [...value, o])
+    } else {
+      onChange(value.includes(o) ? [] : [o])
+    }
+  }
   return (
-    <button type="button" onClick={onClick} style={{
-      padding: '8px 16px', borderRadius: 999,
-      border: `1.5px solid ${selected ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
-      background: selected ? 'var(--terracotta-50)' : '#fff',
-      color: selected ? 'var(--terracotta-600)' : 'var(--ink-700)',
-      fontSize: 13.5, fontWeight: selected ? 600 : 400,
-      cursor: 'pointer', fontFamily: 'var(--font-body)',
-      transition: 'all 160ms',
-    }}>
-      {label}
-    </button>
-  )
-}
-
-function RadioCard({ label, desc, selected, onClick }: { label: string; desc: string; selected: boolean; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} style={{
-      padding: '12px 16px', borderRadius: 12, textAlign: 'left',
-      border: `1.5px solid ${selected ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
-      background: selected ? 'var(--terracotta-50)' : '#fff',
-      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
-      fontFamily: 'var(--font-body)', transition: 'all 160ms',
-    }}>
-      <div style={{
-        width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
-        border: `2px solid ${selected ? 'var(--terracotta-400)' : 'var(--ink-300)'}`,
-        background: selected ? 'var(--terracotta-400)' : '#fff',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        {selected && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff' }} />}
-      </div>
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-800)' }}>{label}</div>
-        <div style={{ fontSize: 12.5, color: 'var(--ink-500)', marginTop: 2 }}>{desc}</div>
-      </div>
-    </button>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {options.map(o => {
+        const sel = value.includes(o)
+        return (
+          <button
+            key={o}
+            type="button"
+            onClick={() => toggle(o)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '8px 16px', borderRadius: 999,
+              border: `1.5px solid ${sel ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
+              background: sel ? 'var(--terracotta-50)' : '#fff',
+              color: sel ? 'var(--terracotta-600)' : 'var(--ink-700)',
+              fontSize: 13.5, fontWeight: sel ? 600 : 400,
+              cursor: 'pointer', fontFamily: 'var(--font-body)',
+              transition: 'all 160ms',
+            }}
+          >
+            {sel && <Check size={12} strokeWidth={2.5} />}
+            {o}
+          </button>
+        )
+      })}
+    </div>
   )
 }
