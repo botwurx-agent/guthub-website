@@ -77,7 +77,7 @@ export async function signInWithGoogle() {
   })
 
   if (error) return { error: error.message }
-  if (data.url) redirect(data.url)
+  if (data.url) return { url: data.url }
 }
 
 export async function resetPassword(formData: FormData) {

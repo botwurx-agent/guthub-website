@@ -74,6 +74,7 @@ export default function AuthModal() {
     startTransition(async () => {
       const result = await signInWithGoogle();
       if (result?.error) setError(result.error as string);
+      else if (result?.url) window.location.href = result.url;
     });
   }
 
