@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GutHub — App prototype</title>
+<link rel="stylesheet" href="colors_and_type.css" />
+<link rel="stylesheet" href="app.css?v=2" />
+<style>
+  /* prototype-only: ensure the shell fills viewport with no body padding */
+  html, body, #root { height: 100%; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="components/Icon.jsx"></script>
+<script type="text/babel" src="components/MockData.jsx"></script>
+<script type="text/babel" src="components/AppShell.jsx"></script>
+<script type="text/babel" src="components/Onboarding.jsx"></script>
+<script type="text/babel" src="components/PageToday.jsx"></script>
+<script type="text/babel" src="components/PageLog.jsx"></script>
+<script type="text/babel" src="components/PagePlan.jsx"></script>
+<script type="text/babel" src="components/PageInsights.jsx"></script>
+<script type="text/babel" src="components/PageCoach.jsx"></script>
+<script type="text/babel" src="components/PageMisc.jsx"></script>
+
+<script type="text/babel">
+  const { useState, useEffect } = React;
+
+  function App() {
+    // First load: show Onboarding; after complete, enter app at Today.
+    const [screen, setScreen] = useState(() => {
+      return localStorage.getItem('gh_onboarded') ? 'app' : 'onboarding';
+    });
+    const [route, setRoute] = useState('today');
+    const [quickLog, setQuickLog] = useState(null); // null | 'meal' | 'symptom' | etc.
+
+    useEffect(() => {
+      // Listen for ?screen=app param or hash for quick jumps
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'onboarding') setScreen('onboarding');
+      else if (hash === 'app') setScreen('app');
+    }, []);
+
+    const completeOnboarding = () => {
+      localStorage.setItem('gh_onboarded', '1');
+      setScreen('app');
+      setRoute('today');
+    };
+
+    if (screen === 'onboarding') {
+      return <Onboarding onComplete={completeOnboarding} />;
+    }
+
+    // Route -> page
+    const openQuickLog = (kind) => setQuickLog(typeof kind === 'string' ? kind : 'meal');
+    let page;
+    switch (route) {
+      case 'today':     page = <PageToday setRoute={setRoute} onQuickLog={openQuickLog} onUploadLab={() => setRoute('insights')} />; break;
+      case 'log':       page = <PageLog onQuickLog={openQuickLog} />; break;
+      case 'plan':      page = <PagePlan />; break;
+      case 'insights':  page = <PageInsights />; break;
+      case 'coach':     page = <PageCoach />; break;
+      case 'community': page = <PageCommunity />; break;
+      case 'settings':  page = <PageSettings />; break;
+      case 'help':      page = <PageSettings />; break;
+      default:          page = <PageToday setRoute={setRoute} onQuickLog={openQuickLog} />;
+    }
+
+    return (
+      <>
+        <AppShell route={route} setRoute={setRoute} onQuickLog={openQuickLog} onRestart={() => { localStorage.removeItem('gh_onboarded'); setScreen('onboarding'); }}>
+          {page}
+        </AppShell>
+        {quickLog && <QuickLogModal kind={quickLog} onClose={() => setQuickLog(null)} />}
+      </>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,98 @@
+// Hero.jsx
+
+function Hero() {
+  return (
+    <section style={{
+      position: 'relative',
+      padding: '40px 32px 96px',
+      background: 'var(--cream-50)',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        maxWidth: 'var(--maxw-wide)', margin: '0 auto',
+        display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 80,
+        alignItems: 'center',
+      }}>
+        <div>
+          <Reveal delay={0} y={12}>
+            <Eyebrow>Your AI gut-health guide</Eyebrow>
+          </Reveal>
+          <Reveal delay={120} y={16} duration={800}>
+            <h1 style={{
+              marginTop: 20, marginBottom: 56, paddingBottom: 32,
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(2.75rem, 5.2vw, 4.25rem)',
+              lineHeight: 1.32,
+              letterSpacing: '-0.025em',
+              fontWeight: 400,
+              color: 'var(--ink-900)',
+            }}>
+              Nutrition guidance <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>you can actually talk to.</em>
+            </h1>
+          </Reveal>
+          <Reveal delay={260} y={12}>
+            <p style={{
+              fontSize: 19, lineHeight: 1.55, color: 'var(--ink-700)',
+              maxWidth: 520, marginBottom: 36,
+            }}>
+              Your personalized AI gut health assistant — ongoing support, clarity, and real-time feedback. So you're never stuck guessing, googling, or feeling alone.
+            </p>
+          </Reveal>
+          <Reveal delay={380} y={12}>
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 28 }}>
+              <Button variant="primary" size="lg"
+                onClick={() => window.dispatchEvent(new CustomEvent('open-auth', { detail: { mode: 'signup' } }))}>
+                Start your 2-day free trial
+              </Button>
+              <Button variant="secondary" size="lg" as="a" href="#how">
+                See how it works
+              </Button>
+            </div>
+          </Reveal>
+          <Reveal delay={500} y={10}>
+            <div style={{
+              display: 'flex', gap: 22, flexWrap: 'wrap', alignItems: 'center',
+              fontSize: 14, color: 'var(--ink-600)',
+            }}>
+              <TrustBullet icon="check-circle">Full access for 2 days</TrustBullet>
+              <TrustBullet icon="x-circle">Cancel anytime</TrustBullet>
+              <TrustBullet icon="stethoscope">Complements professional care</TrustBullet>
+            </div>
+          </Reveal>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
+          {/* Ambient breathing glow behind the chat */}
+          <div aria-hidden style={{
+            position: 'absolute',
+            width: 480, height: 480,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(224,124,89,0.22) 0%, rgba(224,124,89,0) 65%)',
+            animation: 'heroGlow 6s ease-in-out infinite',
+            pointerEvents: 'none',
+            zIndex: 0,
+          }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <ChatAnimation />
+          </div>
+        </div>
+      </div>
+      <style>{`
+        @keyframes heroGlow {
+          0%, 100% { transform: scale(1); opacity: 0.75; }
+          50% { transform: scale(1.08); opacity: 1; }
+        }
+      `}</style>
+    </section>
+  );
+}
+
+function TrustBullet({ icon, children }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <i data-lucide={icon} style={{ width: 15, height: 15, color: 'var(--forest-400)' }}></i>
+      {children}
+    </span>
+  );
+}
+
+window.Hero = Hero;

@@ -1,0 +1,1694 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Features — GutHub</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--cream-50); }
+  section { position: relative; }
+  @media (max-width: 960px) {
+    section [style*="grid-template-columns: 1fr 1fr"],
+    section [style*="grid-template-columns: repeat(3, 1fr)"],
+    section [style*="grid-template-columns: 380px 1fr"] {
+      grid-template-columns: 1fr !important;
+      gap: 40px !important;
+    }
+  }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+function FeaturesApp() {
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      if (!window.lucide) return;
+      const pending = document.querySelectorAll('[data-lucide]');
+      if (pending.length) window.lucide.createIcons();
+    }, 300);
+    return () => clearInterval(id);
+  }, []);
+  return <FeaturesPage />;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<FeaturesApp />);
+</script>
+
+<script type="text/babel">
+// ===== Button.jsx =====
+// Button.jsx — primary/secondary/dark/ghost variants. Pill-shaped.
+
+function Button({ variant = 'primary', size = 'md', as = 'button', href, children, icon, style: userStyle, ...rest }) {
+  const Tag = as === 'a' ? 'a' : 'button';
+  const sz = size === 'lg' ? { padding: '18px 28px', fontSize: 17 } :
+             size === 'sm' ? { padding: '10px 16px', fontSize: 14 } :
+                             { padding: '14px 22px', fontSize: 15 };
+  const base = {
+    fontFamily: 'var(--font-body)', fontWeight: 600, borderRadius: 999,
+    border: '1px solid transparent', cursor: 'pointer', lineHeight: 1,
+    transition: 'all 240ms var(--ease-out)', display: 'inline-flex',
+    alignItems: 'center', gap: 8, textDecoration: 'none', ...sz,
+  };
+  const variants = {
+    primary: { background: 'var(--terracotta-400)', color: '#fff' },
+    secondary: { background: 'transparent', borderColor: 'var(--ink-300)', color: 'var(--ink-900)' },
+    dark: { background: 'var(--forest-500)', color: 'var(--cream-100)' },
+    ghost: { background: 'transparent', color: 'var(--ink-900)' },
+    inverse: { background: 'var(--cream-50)', color: 'var(--forest-600)' },
+  };
+  const [hover, setHover] = React.useState(false);
+  const hov = hover ? {
+    primary: { background: 'var(--terracotta-500)', boxShadow: 'var(--shadow-md)' },
+    secondary: { background: 'var(--cream-100)', borderColor: 'var(--ink-900)' },
+    dark: { background: 'var(--forest-600)', boxShadow: 'var(--shadow-md)' },
+    ghost: { background: 'var(--cream-100)' },
+    inverse: { background: '#fff', boxShadow: 'var(--shadow-md)' },
+  }[variant] : {};
+  return (
+    <Tag href={href} style={{ ...base, ...variants[variant], ...hov, ...userStyle }}
+         onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} {...rest}>
+      {children}
+      {icon}
+    </Tag>
+  );
+}
+
+window.Button = Button;
+
+
+// ===== Badge.jsx =====
+// Badge.jsx — small pill labels
+
+function Badge({ tone = 'accent', dot = false, children }) {
+  const tones = {
+    accent: { bg: 'var(--terracotta-50)', fg: 'var(--terracotta-700)' },
+    dark: { bg: 'var(--forest-500)', fg: 'var(--cream-100)' },
+    soft: { bg: 'var(--cream-200)', fg: 'var(--ink-900)' },
+    outline: { bg: 'transparent', fg: 'var(--ink-700)', border: '1px solid var(--ink-300)' },
+  };
+  const t = tones[tone];
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '6px 12px', borderRadius: 999,
+      fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)',
+      lineHeight: 1, background: t.bg, color: t.fg, border: t.border || 'none',
+    }}>
+      {dot && <span style={{
+        width: 7, height: 7, borderRadius: '50%',
+        background: 'var(--forest-300)',
+        animation: 'pulse 1.6s infinite',
+      }} />}
+      {children}
+    </span>
+  );
+}
+
+function Eyebrow({ children, color }) {
+  return <div style={{
+    fontFamily: 'var(--font-body)', fontSize: 12, letterSpacing: '0.18em',
+    textTransform: 'uppercase', fontWeight: 700,
+    color: color || 'var(--terracotta-700)',
+  }}>{children}</div>;
+}
+
+window.Badge = Badge;
+window.Eyebrow = Eyebrow;
+
+
+// ===== MotionPrimitives.jsx =====
+// Lightweight, respects prefers-reduced-motion.
+
+// --- Reveal ---
+// Fades + lifts children into view when they enter the viewport.
+// Props: as, delay (ms), y (px lift), duration (ms), threshold
+function Reveal({ as = 'div', delay = 0, y = 16, duration = 700, threshold = 0.15, once = true, children, style, ...rest }) {
+  const Tag = as;
+  const ref = React.useRef(null);
+  const [shown, setShown] = React.useState(false);
+  const reduced = React.useRef(false);
+
+  React.useEffect(() => {
+    reduced.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced.current) { setShown(true); return; }
+    const el = ref.current;
+    if (!el) return;
+    // If element is already in viewport at mount, trigger on next frame (preserves animation, avoids observer race)
+    const rect = el.getBoundingClientRect();
+    const inView = rect.top < window.innerHeight && rect.bottom > 0;
+    if (inView) {
+      // Microtask: React commits the opacity:0 render first, then flips to shown
+      // (plays the fade-in). Fallback setTimeout in case microtask is skipped.
+      let cancelled = false;
+      Promise.resolve().then(() => { if (!cancelled) setShown(true); });
+      const t = setTimeout(() => { if (!cancelled) setShown(true); }, 50);
+      return () => { cancelled = true; clearTimeout(t); };
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          setShown(true);
+          if (once) io.unobserve(el);
+        } else if (!once) {
+          setShown(false);
+        }
+      });
+    }, { threshold, rootMargin: '0px 0px -40px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [threshold, once]);
+
+  const motionStyle = {
+    opacity: shown ? 1 : 0,
+    transform: shown ? 'translateY(0)' : `translateY(${y}px)`,
+    transition: `opacity ${duration}ms var(--ease-out) ${delay}ms, transform ${duration}ms var(--ease-out) ${delay}ms`,
+    willChange: 'opacity, transform',
+  };
+
+  return React.createElement(Tag, { ref, style: { ...motionStyle, ...(style || {}) }, ...rest }, children);
+}
+
+// --- RevealStagger ---
+// Animates children sequentially. Wrap a list-like container.
+function RevealStagger({ children, step = 80, initialDelay = 0, y = 14, duration = 650, style, ...rest }) {
+  return (
+    <div style={style} {...rest}>
+      {React.Children.map(children, (child, i) => (
+        <Reveal delay={initialDelay + i * step} y={y} duration={duration} style={{ display: 'contents' }}>
+          {child}
+        </Reveal>
+      ))}
+    </div>
+  );
+}
+
+// --- SectionDivider ---
+// Soft organic shape that peeks out of a section edge, marking a transition.
+// variants: 'leaf', 'splash', 'wave'
+function SectionDivider({ variant = 'leaf', color = 'var(--terracotta-300)', side = 'top', offset = -40 }) {
+  const paths = {
+    leaf: (
+      // Organic leaf/brushstroke
+      <svg viewBox="0 0 120 120" width="100" height="100" style={{ display: 'block', filter: 'drop-shadow(0 6px 16px rgba(219,111,86,0.25))' }}>
+        <path
+          d="M60 10 C 90 20, 112 50, 105 85 C 98 100, 80 110, 60 112 C 35 110, 18 95, 12 70 C 10 40, 30 15, 60 10 Z"
+          fill={color}
+          opacity="0.92"
+        />
+        <path
+          d="M60 18 C 62 50, 70 75, 85 100"
+          stroke="rgba(255,255,255,0.35)"
+          strokeWidth="1.5"
+          fill="none"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+    splash: (
+      <svg viewBox="0 0 140 100" width="140" height="100" style={{ display: 'block' }}>
+        <path
+          d="M10 70 C 20 40, 40 30, 60 45 C 75 55, 85 40, 100 50 C 115 55, 125 70, 120 85 C 100 92, 70 90, 50 85 C 25 80, 5 85, 10 70 Z"
+          fill={color}
+          opacity="0.85"
+        />
+      </svg>
+    ),
+    wave: (
+      <svg viewBox="0 0 200 40" width="200" height="40" style={{ display: 'block' }}>
+        <path
+          d="M0 20 Q 25 5, 50 20 T 100 20 T 150 20 T 200 20 V 40 H 0 Z"
+          fill={color}
+        />
+      </svg>
+    ),
+  };
+  const pos = side === 'top'
+    ? { top: offset, left: '50%', transform: 'translateX(-50%) rotate(-8deg)' }
+    : { bottom: offset, left: '50%', transform: 'translateX(-50%) rotate(172deg)' };
+  return (
+    <div aria-hidden style={{
+      position: 'absolute', ...pos, pointerEvents: 'none', zIndex: 3,
+    }}>
+      {paths[variant]}
+    </div>
+  );
+}
+
+Object.assign(window, { Reveal, RevealStagger, SectionDivider });
+
+// ===== Header.jsx =====
+// Header.jsx — sticky header with blurred cream background on scroll
+
+function Header() {
+  const [scrolled, setScrolled] = React.useState(false);
+  React.useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const navItems = [
+    { label: 'Product', href: 'features.html' },
+    { label: 'Pricing', href: 'pricing.html' },
+    { label: 'FAQ', href: 'index.html#faq' },
+    { label: 'About', href: 'about.html' },
+  ];
+
+  return (
+    <header style={{
+      position: 'sticky', top: 0, zIndex: 50,
+      background: scrolled ? 'rgba(253, 250, 243, 0.82)' : 'transparent',
+      backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
+      borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
+      transition: 'all 240ms var(--ease-out)',
+    }}>
+      <div style={{
+        maxWidth: 'var(--maxw-wide)', margin: '0 auto',
+        padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 32,
+      }}>
+        <a href="index.html" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <img src="../../assets/logo-full.png" alt="GutHub" style={{ height: 32 }} />
+        </a>
+        <nav style={{ display: 'flex', gap: 28, marginLeft: 16 }}>
+          {navItems.map(item => (
+            <a key={item.label} href={item.href} style={{
+              fontSize: 15, color: 'var(--ink-800)', textDecoration: 'none',
+              fontWeight: 500, fontFamily: 'var(--font-body)',
+              transition: 'color 120ms',
+            }}
+            onMouseEnter={e => e.target.style.color = 'var(--terracotta-500)'}
+            onMouseLeave={e => e.target.style.color = 'var(--ink-800)'}>
+              {item.label}
+            </a>
+          ))}
+        </nav>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
+          <a href="#" onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('open-auth', { detail: { mode: 'signin' } })); }} style={{
+            fontSize: 15, fontWeight: 500, color: 'var(--ink-800)',
+            textDecoration: 'none', fontFamily: 'var(--font-body)',
+          }}>Sign in</a>
+          <Button variant="primary" size="sm" onClick={() => window.dispatchEvent(new CustomEvent('open-auth', { detail: { mode: 'signup' } }))}>
+            Start free — 2 days
+          </Button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+window.Header = Header;
+
+
+// ===== Footer.jsx =====
+// Footer.jsx
+
+function Footer() {
+  const cols = [
+    { h: 'Product', links: ['How it works', 'Pricing', 'FAQ', 'Access App'] },
+    { h: 'Company', links: ['About', 'Press', 'Careers', 'Contact'] },
+    { h: 'Legal', links: ['Terms', 'Privacy', 'Cookie Policy', 'Data & security'] },
+  ];
+  return (
+    <footer style={{
+      background: 'var(--forest-500)', color: 'var(--cream-100)',
+      padding: '72px 32px 32px',
+    }}>
+      <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto' }}>
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 40,
+          paddingBottom: 48, borderBottom: '1px solid rgba(250,245,238,.16)',
+        }}>
+          <div>
+            <img src="../../assets/logo-full.png" alt="GutHub"
+                 style={{ height: 38, filter: 'brightness(0) invert(1)', marginBottom: 20 }} />
+            <p style={{ fontSize: 15, lineHeight: 1.55, color: 'rgba(250,245,238,.72)', maxWidth: 300 }}>
+              Personalized AI gut-health guidance for your family's wellbeing.
+            </p>
+          </div>
+          {cols.map(c => (
+            <div key={c.h}>
+              <div style={{
+                fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase',
+                fontWeight: 700, color: 'var(--terracotta-300)', marginBottom: 16,
+              }}>{c.h}</div>
+              {c.links.map(l => (
+                <a key={l} href="#" style={{
+                  display: 'block', padding: '6px 0', fontSize: 15,
+                  color: 'rgba(250,245,238,.88)', textDecoration: 'none',
+                }}>{l}</a>
+              ))}
+            </div>
+          ))}
+        </div>
+        <div style={{
+          paddingTop: 28, display: 'flex', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: 16, alignItems: 'center',
+          fontSize: 13, color: 'rgba(250,245,238,.55)',
+        }}>
+          <div>© 2026 Guthub. Designed to complement professional care.</div>
+          <div style={{ display: 'flex', gap: 18 }}>
+            {['twitter','instagram','linkedin','facebook'].map(s => (
+              <a key={s} href="#" style={{ color: 'rgba(250,245,238,.72)' }}>
+                <i data-lucide={s} style={{ width: 18, height: 18 }}></i>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+window.Footer = Footer;
+
+
+// ===== FinalCTA.jsx =====
+// FinalCTA.jsx — full-bleed terracotta for conversion climax
+
+function FinalCTA() {
+  return (
+    <section style={{
+      padding: '112px 32px',
+      background: 'var(--terracotta-400)',
+      textAlign: 'center',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* decorative soft sun */}
+      <div style={{
+        position: 'absolute', top: '-40%', left: '50%', transform: 'translateX(-50%)',
+        width: 900, height: 900, borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(255,220,200,.35) 0%, transparent 60%)',
+        pointerEvents: 'none',
+      }} />
+      <div style={{ maxWidth: 720, margin: '0 auto', position: 'relative' }}>
+        <h2 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 'clamp(2.25rem, 4vw, 3.5rem)',
+          lineHeight: 1.18, letterSpacing: '-0.022em', fontWeight: 400,
+          color: 'var(--cream-50)', marginBottom: 20, marginTop: 0,
+        }}>
+          Take the guesswork out of your gut.
+        </h2>
+        <p style={{ fontSize: 19, color: 'rgba(253,250,243,.88)', marginBottom: 36, lineHeight: 1.55 }}>
+          Join 1,000+ people rebuilding their relationship with food — with guidance that actually knows them.
+        </p>
+        <Button variant="inverse" size="lg"
+          onClick={() => window.dispatchEvent(new CustomEvent('open-auth', { detail: { mode: 'signup' } }))}>
+          Start your 2-day free trial
+        </Button>
+        <div style={{ marginTop: 18, fontSize: 14, color: 'rgba(253,250,243,.75)' }}>
+          Full access · Cancel anytime · $9.95/mo after trial
+        </div>
+      </div>
+    </section>
+  );
+}
+
+window.FinalCTA = FinalCTA;
+
+
+// ===== FeatureMocks.jsx =====
+// FeatureMocks.jsx — stylized visual placeholders for feature blocks (not real app UI)
+
+function MockFrame({ children, tilt = 0, accent }) {
+  return (
+    <div style={{
+      position: 'relative', aspectRatio: '4/3', width: '100%',
+      borderRadius: 'var(--radius-2xl)',
+      background: accent || 'linear-gradient(135deg, var(--cream-100) 0%, var(--cream-50) 100%)',
+      boxShadow: 'var(--shadow-xl)',
+      border: '1px solid var(--border)',
+      overflow: 'hidden', transform: `rotate(${tilt}deg)`,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// 1. Snap & know — phone viewfinder with meal + emerging macro card
+function MockSnap() {
+  return (
+    <div style={{ position: 'relative', paddingTop: 20, paddingBottom: 20 }}>
+      <MockFrame accent="linear-gradient(160deg, #2E4944 0%, #1F3532 100%)">
+        {/* simulated viewfinder */}
+        <div style={{
+          position: 'absolute', inset: 24, borderRadius: 24,
+          background: 'radial-gradient(ellipse at 50% 60%, #E8B27A 0%, #C8805A 45%, #8A4A38 100%)',
+          boxShadow: 'inset 0 0 80px rgba(0,0,0,0.3)',
+        }}>
+          {/* plate */}
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            width: '68%', aspectRatio: '1', borderRadius: '50%',
+            background: 'radial-gradient(circle at 30% 30%, #FFFFFF 0%, #F7E9D0 70%, #E8D5B5 100%)',
+            boxShadow: '0 14px 36px rgba(0,0,0,0.38), inset 0 -4px 10px rgba(0,0,0,0.08)',
+          }}>
+            {/* inner plate ring */}
+            <div style={{
+              position: 'absolute', inset: '7%', borderRadius: '50%',
+              border: '1px solid rgba(0,0,0,0.05)',
+            }} />
+            {/* chicken breast — top */}
+            <div style={{
+              position: 'absolute', top: '18%', left: '22%',
+              width: '36%', height: '32%',
+              background: 'radial-gradient(ellipse at 40% 30%, #E8C7A0 0%, #C89872 60%, #A67A54 100%)',
+              borderRadius: '52% 48% 60% 40% / 50% 55% 45% 50%',
+              boxShadow: '0 3px 6px rgba(0,0,0,0.15), inset -3px -3px 6px rgba(0,0,0,0.12)',
+              transform: 'rotate(-8deg)',
+            }}>
+              {/* grill marks */}
+              <div style={{ position: 'absolute', top: '30%', left: '20%', width: '60%', height: '2px', background: 'rgba(90,50,20,0.35)', borderRadius: 2, transform: 'rotate(-15deg)' }} />
+              <div style={{ position: 'absolute', top: '55%', left: '20%', width: '60%', height: '2px', background: 'rgba(90,50,20,0.35)', borderRadius: 2, transform: 'rotate(-15deg)' }} />
+            </div>
+            {/* rice — right */}
+            <div style={{
+              position: 'absolute', top: '20%', right: '14%',
+              width: '32%', height: '32%',
+              background: '#F5EEDE',
+              borderRadius: '48% 52% 45% 55% / 50%',
+              boxShadow: 'inset -2px -3px 6px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.08)',
+              overflow: 'hidden',
+            }}>
+              {/* rice grain texture */}
+              {Array.from({ length: 18 }).map((_, i) => {
+                const x = (i * 37) % 100;
+                const y = (i * 53) % 100;
+                const r = (i * 23) % 45 - 22;
+                return <div key={i} style={{
+                  position: 'absolute', left: `${x}%`, top: `${y}%`,
+                  width: 6, height: 2, background: '#fff', borderRadius: 2,
+                  transform: `rotate(${r}deg)`, opacity: 0.85,
+                }} />;
+              })}
+            </div>
+            {/* salad — bottom left (leafy greens) */}
+            <div style={{
+              position: 'absolute', bottom: '14%', left: '16%',
+              width: '32%', height: '28%',
+              borderRadius: '50% 55% 45% 55%',
+              overflow: 'hidden',
+            }}>
+              <div style={{ position: 'absolute', inset: 0, background: '#7FA88F', borderRadius: '50%' }} />
+              <div style={{ position: 'absolute', top: '10%', left: '20%', width: '36%', height: '40%', background: '#9BC0A8', borderRadius: '50% 60% 50% 60%', transform: 'rotate(-15deg)' }} />
+              <div style={{ position: 'absolute', top: '40%', left: '50%', width: '30%', height: '36%', background: '#6B927A', borderRadius: '60% 50% 60% 50%', transform: 'rotate(20deg)' }} />
+              <div style={{ position: 'absolute', top: '20%', right: '15%', width: '22%', height: '22%', background: '#C24D3B', borderRadius: '50%' }} />
+              <div style={{ position: 'absolute', bottom: '18%', left: '24%', width: '20%', height: '20%', background: '#C24D3B', borderRadius: '50%' }} />
+            </div>
+            {/* mixed veggies — bottom right */}
+            <div style={{
+              position: 'absolute', bottom: '14%', right: '14%',
+              width: '32%', height: '28%',
+            }}>
+              {/* broccoli */}
+              <div style={{ position: 'absolute', top: '10%', left: '8%', width: '40%', height: '50%', background: '#5A8A6E', borderRadius: '50% 50% 40% 40%' }}>
+                <div style={{ position: 'absolute', top: '20%', left: '20%', width: '25%', height: '25%', background: '#6FA181', borderRadius: '50%' }} />
+                <div style={{ position: 'absolute', top: '15%', right: '15%', width: '25%', height: '25%', background: '#6FA181', borderRadius: '50%' }} />
+              </div>
+              {/* carrot coins */}
+              <div style={{ position: 'absolute', top: '12%', right: '12%', width: '28%', height: '28%', background: '#E67E3E', borderRadius: '50%' }}>
+                <div style={{ position: 'absolute', inset: '25%', background: '#F09B5D', borderRadius: '50%' }} />
+              </div>
+              <div style={{ position: 'absolute', bottom: '14%', right: '28%', width: '26%', height: '26%', background: '#E67E3E', borderRadius: '50%' }}>
+                <div style={{ position: 'absolute', inset: '25%', background: '#F09B5D', borderRadius: '50%' }} />
+              </div>
+              {/* yellow pepper */}
+              <div style={{ position: 'absolute', bottom: '10%', left: '14%', width: '34%', height: '26%', background: '#E8C34A', borderRadius: '50% 30% 50% 30% / 50%', transform: 'rotate(-10deg)' }} />
+            </div>
+          </div>
+          {/* corner reticles */}
+          {[[8, 8, 'tl'], [8, 'r', 'tr'], ['b', 8, 'bl'], ['b', 'r', 'br']].map(([t, l, k]) => {
+            const pos = {};
+            if (t === 'b') pos.bottom = 14; else pos.top = 14;
+            if (l === 'r') pos.right = 14; else pos.left = 14;
+            return <div key={k} style={{ position: 'absolute', ...pos, width: 22, height: 22, borderColor: 'rgba(255,255,255,0.85)', borderStyle: 'solid', borderWidth: 0, ...(k.includes('t') ? { borderTopWidth: 2 } : { borderBottomWidth: 2 }), ...(k.includes('l') ? { borderLeftWidth: 2 } : { borderRightWidth: 2 }) }} />;
+          })}
+        </div>
+        {/* floating macro card */}
+        <div style={{
+          position: 'absolute', bottom: 32, right: 32,
+          background: '#fff', borderRadius: 16, padding: '14px 18px',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.35)',
+          minWidth: 180, transform: 'rotate(-3deg)',
+        }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--ink-500)', textTransform: 'uppercase', marginBottom: 6 }}>Detected</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--ink-900)', marginBottom: 10 }}>Chicken plate</div>
+          <div style={{ display: 'flex', gap: 10, fontSize: 11 }}>
+            <div><div style={{ color: 'var(--ink-500)' }}>kcal</div><div style={{ fontWeight: 700, color: 'var(--ink-900)' }}>548</div></div>
+            <div><div style={{ color: 'var(--ink-500)' }}>P</div><div style={{ fontWeight: 700, color: 'var(--forest-500)' }}>46g</div></div>
+            <div><div style={{ color: 'var(--ink-500)' }}>C</div><div style={{ fontWeight: 700, color: 'var(--terracotta-500)' }}>54g</div></div>
+            <div><div style={{ color: 'var(--ink-500)' }}>F</div><div style={{ fontWeight: 700, color: 'var(--ink-700)' }}>14g</div></div>
+          </div>
+        </div>
+      </MockFrame>
+    </div>
+  );
+}
+
+// 2. Chat — conversation bubbles
+function MockChat() {
+  return (
+    <div style={{ padding: '20px 0' }}>
+      <MockFrame>
+        <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 12, height: '100%', justifyContent: 'flex-end' }}>
+          <div style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--terracotta-400)', color: '#fff', padding: '12px 16px', borderRadius: '18px 18px 4px 18px', fontSize: 14, lineHeight: 1.5 }}>
+            Is oatmeal OK tomorrow? My stomach felt off yesterday.
+          </div>
+          <div style={{ alignSelf: 'flex-start', maxWidth: '85%', background: '#fff', color: 'var(--ink-800)', padding: '12px 16px', borderRadius: '18px 18px 18px 4px', fontSize: 14, lineHeight: 1.5, border: '1px solid var(--border)' }}>
+            Based on your FODMAP sensitivity, rolled oats should be fine at ½ cup. Skip the dried fruit — that was likely yesterday's trigger.
+          </div>
+          <div style={{ alignSelf: 'flex-start', display: 'flex', gap: 4, paddingLeft: 4, marginTop: -4 }}>
+            {[0, 1, 2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--ink-400)', opacity: 0.6 - i * 0.18 }} />)}
+          </div>
+        </div>
+      </MockFrame>
+    </div>
+  );
+}
+
+// 3. Goal tracker — progress ring + metrics
+function MockGoal() {
+  return (
+    <div style={{ padding: '20px 0' }}>
+      <MockFrame accent="linear-gradient(150deg, #FAF5EE 0%, #F4D0A2 100%)">
+        <div style={{ padding: 32, display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--ink-600)', textTransform: 'uppercase', marginBottom: 8 }}>This week</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, color: 'var(--ink-900)', marginBottom: 24, lineHeight: 1.2 }}>Down 2.1 lbs · on track</div>
+          <div style={{ display: 'flex', gap: 24, alignItems: 'center', flex: 1 }}>
+            {/* ring */}
+            <svg viewBox="0 0 120 120" style={{ width: 140, height: 140 }}>
+              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(42,61,58,0.12)" strokeWidth="12" />
+              <circle cx="60" cy="60" r="50" fill="none" stroke="var(--terracotta-500)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${2 * Math.PI * 50 * 0.72} ${2 * Math.PI * 50}`} transform="rotate(-90 60 60)" />
+              <text x="60" y="58" textAnchor="middle" fontFamily="Poppins" fontSize="22" fontWeight="400" fill="var(--ink-900)">72%</text>
+              <text x="60" y="76" textAnchor="middle" fontFamily="Poppins" fontSize="10" fill="var(--ink-600)" letterSpacing="1">TO GOAL</text>
+            </svg>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+              {[
+                ['Current', '168.4 lbs'],
+                ['Target', '158 lbs'],
+                ['Streak', '12 days'],
+              ].map(([k, v]) => (
+                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px dashed rgba(42,61,58,0.15)' }}>
+                  <span style={{ fontSize: 13, color: 'var(--ink-600)' }}>{k}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-900)' }}>{v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </MockFrame>
+    </div>
+  );
+}
+
+// 4. Meal planner — week grid
+function MockPlanner() {
+  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const colors = ['#7FA88F', '#E07C59', '#C4A97E', '#7FA88F', '#E07C59', '#C4A97E', '#7FA88F'];
+  return (
+    <div style={{ padding: '20px 0' }}>
+      <MockFrame>
+        <div style={{ padding: 28, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--ink-900)' }}>This week's plan</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-500)', padding: '4px 10px', borderRadius: 999, background: 'var(--cream-100)' }}>21 meals · gut-friendly</div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, flex: 1 }}>
+            {days.map((d, i) => (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-600)', textAlign: 'center', paddingBottom: 2 }}>{d}</div>
+                {[0, 1, 2].map(m => (
+                  <div key={m} style={{
+                    flex: 1, borderRadius: 8,
+                    background: colors[(i + m) % colors.length],
+                    opacity: 0.35 + m * 0.2,
+                    minHeight: 22,
+                  }} />
+                ))}
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 14, padding: '10px 12px', background: 'var(--cream-100)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, color: 'var(--ink-700)' }}>Grocery list ready</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--terracotta-500)' }}>42 items →</span>
+          </div>
+        </div>
+      </MockFrame>
+    </div>
+  );
+}
+
+// 5. Test report — lab values with flags
+function MockReports() {
+  const rows = [
+    ['Vitamin D', '18 ng/mL', 'low', '#E07C59'],
+    ['Ferritin', '42 ng/mL', 'ok', '#7FA88F'],
+    ['hs-CRP', '3.8 mg/L', 'high', '#E07C59'],
+    ['B12', '520 pg/mL', 'ok', '#7FA88F'],
+    ['Zonulin', '68 ng/mL', 'elevated', '#D9A84A'],
+  ];
+  return (
+    <div style={{ padding: '20px 0' }}>
+      <MockFrame>
+        <div style={{ padding: 28, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--ink-900)' }}>Lab panel</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Uploaded · 2 min ago</div>
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--ink-600)', marginBottom: 16 }}>3 of 12 markers out of range</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+            {rows.map(([name, val, flag, color]) => (
+              <div key={name} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 12px', background: 'var(--cream-50)', borderRadius: 8,
+              }}>
+                <div style={{ width: 6, height: 24, background: color, borderRadius: 3 }} />
+                <span style={{ fontSize: 13, color: 'var(--ink-800)', flex: 1 }}>{name}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>{val}</span>
+                <span style={{
+                  fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+                  padding: '3px 8px', borderRadius: 4, color, background: `${color}22`,
+                }}>{flag}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </MockFrame>
+    </div>
+  );
+}
+
+// 6. Health dashboard — multi-metric overview
+function MockDashboard() {
+  const bars = [35, 58, 42, 68, 75, 62, 82];
+  return (
+    <div style={{ padding: '20px 0' }}>
+      <MockFrame accent="linear-gradient(150deg, #2E4944 0%, #1F3532 100%)">
+        <div style={{ padding: 28, height: '100%', color: 'var(--cream-100)' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--terracotta-300)', marginBottom: 6 }}>Dashboard</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, marginBottom: 20 }}>30-day overview</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 20 }}>
+            {[
+              ['Weight', '-3.2', 'lbs'],
+              ['Adherence', '86', '%'],
+              ['Symptoms', '-48', '%'],
+            ].map(([k, v, u]) => (
+              <div key={k} style={{ padding: '12px 14px', background: 'rgba(250,245,238,0.06)', borderRadius: 10 }}>
+                <div style={{ fontSize: 10, color: 'rgba(250,245,238,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{k}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 22 }}>{v}<span style={{ fontSize: 12, color: 'rgba(250,245,238,0.6)', marginLeft: 2 }}>{u}</span></div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 60 }}>
+            {bars.map((h, i) => (
+              <div key={i} style={{ flex: 1, height: `${h}%`, background: 'var(--terracotta-400)', opacity: 0.55 + i * 0.06, borderRadius: '4px 4px 0 0' }} />
+            ))}
+          </div>
+          <div style={{ fontSize: 10, color: 'rgba(250,245,238,0.5)', marginTop: 8, textAlign: 'center', letterSpacing: '0.08em' }}>WEEKLY ENERGY · TRENDING UP</div>
+        </div>
+      </MockFrame>
+    </div>
+  );
+}
+
+Object.assign(window, { MockSnap, MockChat, MockGoal, MockPlanner, MockReports, MockDashboard });
+
+
+// ===== FeatureBlocks.jsx =====
+function FeatureBlocks() {
+  const features = [
+    {
+      id: 'snap',
+      eyebrow: 'Snap & know',
+      title: 'Photograph your plate. Get the full picture.',
+      body: 'Point your camera at any meal — packaged, home-cooked, or on the menu. Guthub returns calories, macros, and gut-health flags in under three seconds. No barcode, no form, no lookup.',
+      bullets: ['Real plates, real portions', 'Flags for FODMAPs, lactose, gluten, histamines', 'Works on leftovers and mixed bowls'],
+      mock: <MockSnap />,
+    },
+    {
+      id: 'chat',
+      eyebrow: 'AI chat assistant',
+      title: 'A nutritionist who remembers every bite.',
+      body: 'Ask anything in plain language. Your chat has full context on your intake, your history, and every meal you\'ve ever logged — so the advice actually applies to you.',
+      bullets: ['Context-aware from day one', 'Cites sources when it matters', 'Speaks plainly, not clinically'],
+      mock: <MockChat />,
+    },
+    {
+      id: 'goal',
+      eyebrow: 'Goal tracker',
+      title: 'Set the destination. We chart the route.',
+      body: 'Tell Guthub your target — a weight, a symptom to reduce, a reintroduction to test. It translates that into daily macro targets and gentle nudges, and shows you exactly how close you are.',
+      bullets: ['Weight, symptom, or habit goals', 'Adaptive daily macro targets', 'Weekly progress snapshots'],
+      mock: <MockGoal />,
+    },
+    {
+      id: 'planner',
+      eyebrow: 'Meal planner',
+      title: 'A week of meals that actually fit you.',
+      body: 'Your planner pulls from your intake — allergies, dislikes, cooking skill, budget — and builds a week of meals you\'ll actually eat. Grocery list auto-generated, ingredients checked against your gut flags.',
+      bullets: ['Generated from your intake profile', 'Swap any meal in one tap', 'Grocery list with store sections'],
+      mock: <MockPlanner />,
+    },
+    {
+      id: 'reports',
+      eyebrow: 'Test report analysis',
+      title: 'Upload the PDF. Skip the guesswork.',
+      body: 'Drop in your blood work, stool panel, or food-sensitivity report. Guthub extracts the biomarkers, flags what\'s out of range, and translates it into diet and lifestyle moves you can act on this week.',
+      bullets: ['Blood, stool, and sensitivity panels', 'Out-of-range flags in plain English', 'Action list tailored to your data'],
+      mock: <MockReports />,
+    },
+    {
+      id: 'dashboard',
+      eyebrow: 'Health dashboard',
+      title: 'Everything you\'re tracking, on one page.',
+      body: 'Weight, macros, symptom logs, energy, sleep, adherence — all in one view. Spot trends across weeks, not days. Share the whole picture with your doctor in one tap.',
+      bullets: ['Trends across weeks and months', 'Symptom + food correlation', 'One-tap doctor export'],
+      mock: <MockDashboard />,
+    },
+  ];
+
+  return (
+    <section style={{ padding: '0', background: 'var(--cream-50)' }}>
+      {features.map((f, i) => {
+        const isLast = i === features.length - 1;
+        const bg = isLast
+          ? 'var(--forest-500)'
+          : (i % 2 === 0 ? 'var(--cream-50)' : 'var(--cream-100)');
+        return (
+          <Reveal key={f.id} y={24} duration={800} threshold={0.12}>
+            <FeatureBlock feature={f} flip={i % 2 === 1} bg={bg} dark={isLast} />
+          </Reveal>
+        );
+      })}
+    </section>
+  );
+}
+
+function FeatureBlock({ feature, flip, bg, dark }) {
+  const textColor = dark ? 'var(--cream-100)' : 'var(--ink-900)';
+  const bodyColor = dark ? 'rgba(250,245,238,0.78)' : 'var(--ink-700)';
+  const bulletColor = dark ? 'rgba(250,245,238,0.88)' : 'var(--ink-800)';
+  const eyebrowColor = dark ? 'var(--terracotta-300)' : undefined;
+  const checkColor = dark ? 'var(--terracotta-300)' : 'var(--terracotta-500)';
+  return (
+    <div style={{ padding: '88px 32px', background: bg, position: 'relative', overflow: 'hidden' }}>
+      {dark && (
+        <div aria-hidden style={{
+          position: 'absolute', top: -180, right: -140, width: 520, height: 520,
+          background: 'radial-gradient(circle, rgba(224,124,89,0.2) 0%, rgba(224,124,89,0) 70%)',
+          pointerEvents: 'none',
+        }} />
+      )}
+      <div style={{
+        maxWidth: 'var(--maxw-page)', margin: '0 auto',
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 72, alignItems: 'center',
+        position: 'relative',
+      }}>
+        <div style={{ order: flip ? 2 : 1 }}>
+          <Eyebrow color={eyebrowColor}>{feature.eyebrow}</Eyebrow>
+          <h2 style={{
+            fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem, 3vw, 2.5rem)',
+            lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400,
+            marginTop: 16, marginBottom: 20, color: textColor,
+            textWrap: 'balance',
+          }}>
+            {feature.title}
+          </h2>
+          <p style={{ fontSize: 17, lineHeight: 1.6, color: bodyColor, marginBottom: 24 }}>
+            {feature.body}
+          </p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {feature.bullets.map(b => (
+              <li key={b} style={{
+                display: 'flex', gap: 12, alignItems: 'flex-start',
+                padding: '10px 0', fontSize: 15, color: bulletColor,
+              }}>
+                <i data-lucide="check" style={{ width: 18, height: 18, color: checkColor, flexShrink: 0, marginTop: 3 }}></i>
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div style={{ order: flip ? 1 : 2 }}>
+          {feature.mock}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+window.FeatureBlocks = FeatureBlocks;
+
+
+// ===== OnboardingFlowAnimation.jsx =====
+// OnboardingFlowAnimation.jsx — cinematic auto-playing sequence showing onboarding → features
+
+function OnboardingFlowAnimation() {
+  const [phase, setPhase] = React.useState(0);
+  // Phases:
+  // 0: form empty
+  // 1..6: form filling (one field per step)
+  // 7: form complete flash
+  // 8..13: lines drawing + cards activating (one per step)
+  // 14: all active — hold
+  // 15: reset
+  const TOTAL = 16;
+
+  const [visible, setVisible] = React.useState(false);
+  const ref = React.useRef(null);
+
+  React.useEffect(() => {
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) setVisible(true); });
+    }, { threshold: 0.3 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+
+  React.useEffect(() => {
+    if (!visible) return;
+    const durations = [600, 500, 500, 500, 500, 500, 500, 900, 650, 650, 650, 650, 650, 650, 2400, 400];
+    const t = setTimeout(() => setPhase(p => (p + 1) % TOTAL), durations[phase] || 600);
+    return () => clearTimeout(t);
+  }, [phase, visible]);
+
+  const formFields = [
+    { label: 'Name', value: 'Alex Morgan' },
+    { label: 'Goal', value: 'Reduce IBS symptoms' },
+    { label: 'Sensitivities', value: 'Gluten, lactose, onions' },
+    { label: 'Current weight', value: '172 lbs' },
+    { label: 'Target weight', value: '158 lbs' },
+    { label: 'Diet style', value: 'Mediterranean, pescatarian' },
+  ];
+
+  const features = [
+    { icon: 'camera', label: 'Snap & know', detail: 'Flags gluten & onions automatically' },
+    { icon: 'message-circle', label: 'AI chat', detail: 'Knows your IBS history from day 1' },
+    { icon: 'target', label: 'Goal tracker', detail: '158 lbs · daily macros set' },
+    { icon: 'calendar-days', label: 'Meal planner', detail: 'Mediterranean, pescatarian week' },
+    { icon: 'file-text', label: 'Test reports', detail: 'Ready when you upload' },
+    { icon: 'layout-dashboard', label: 'Dashboard', detail: 'Tracks symptoms vs meals' },
+  ];
+
+  const formComplete = phase >= 7;
+  const filledCount = Math.min(phase, 6);
+
+  return (
+    <section ref={ref} style={{
+      padding: '96px 32px 112px',
+      background: 'var(--cream-100)',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 56, maxWidth: 720, marginLeft: 'auto', marginRight: 'auto' }}>
+          <Eyebrow>How it all connects</Eyebrow>
+          <h2 style={{
+            fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.6vw, 2.75rem)',
+            lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400,
+            marginTop: 18, marginBottom: 18, color: 'var(--ink-900)',
+            textWrap: 'balance',
+          }}>
+            Your intake shapes <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>every tool.</em>
+          </h2>
+          <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--ink-700)' }}>
+            One thoughtful onboarding powers the entire system. Every feature is already tuned to you the first time you use it.
+          </p>
+        </div>
+
+        <div style={{
+          display: 'grid', gridTemplateColumns: '380px 1fr', gap: 0, alignItems: 'stretch',
+          minHeight: 520, position: 'relative',
+        }}>
+          {/* LEFT: Intake form */}
+          <div style={{
+            background: '#fff', borderRadius: 'var(--radius-2xl)',
+            border: '1px solid var(--border)', padding: 28,
+            boxShadow: 'var(--shadow-md)', position: 'relative', zIndex: 2,
+            display: 'flex', flexDirection: 'column',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: formComplete ? 'var(--forest-500)' : 'var(--terracotta-400)', transition: 'background 300ms' }} />
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-600)' }}>
+                {formComplete ? 'Intake complete' : 'Intake form'}
+              </div>
+            </div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-900)', marginBottom: 20 }}>
+              Tell Guthub about you
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+              {formFields.map((f, i) => {
+                const filled = i < filledCount;
+                const filling = i === filledCount - 1 && !formComplete;
+                return (
+                  <div key={f.label} style={{
+                    padding: '10px 12px', background: filled ? 'var(--cream-50)' : '#fff',
+                    border: `1px solid ${filled ? 'var(--forest-300, #7FA88F)' : 'var(--border)'}`,
+                    borderRadius: 10, transition: 'all 300ms var(--ease-out)',
+                  }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-500)', marginBottom: 4 }}>
+                      {f.label}
+                    </div>
+                    <div style={{
+                      fontSize: 14, color: filled ? 'var(--ink-900)' : 'var(--ink-400)',
+                      minHeight: 18, fontWeight: filled ? 500 : 400,
+                    }}>
+                      {filled ? f.value : (i === filledCount && !formComplete ? <span style={{ borderRight: '2px solid var(--terracotta-500)', paddingRight: 2, animation: 'blink 900ms steps(2) infinite' }}>{' '}</span> : '—')}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* complete flash */}
+            <div style={{
+              marginTop: 16, padding: '12px 14px', borderRadius: 10,
+              background: formComplete ? 'var(--forest-500)' : 'transparent',
+              color: formComplete ? 'var(--cream-100)' : 'transparent',
+              textAlign: 'center', fontSize: 13, fontWeight: 600,
+              transition: 'all 400ms var(--ease-out)',
+              opacity: formComplete ? 1 : 0,
+              transform: formComplete ? 'translateY(0)' : 'translateY(8px)',
+            }}>
+              ✓ Configuring your tools…
+            </div>
+          </div>
+
+          {/* MIDDLE: connector lines (SVG overlay) */}
+          <ConnectorLines phase={phase} />
+
+          {/* RIGHT: feature cards grid */}
+          <div style={{
+            position: 'relative', zIndex: 2,
+            display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14,
+            paddingLeft: 80,
+          }}>
+            {features.map((f, i) => {
+              const activated = phase >= 8 + i;
+              return (
+                <div key={f.label} style={{
+                  padding: 18,
+                  background: activated ? '#fff' : 'rgba(255,255,255,0.5)',
+                  border: `1px solid ${activated ? 'var(--terracotta-300, #EEB99A)' : 'var(--border)'}`,
+                  borderRadius: 14,
+                  boxShadow: activated ? '0 10px 25px -8px rgba(224,124,89,0.35)' : 'none',
+                  transform: activated ? 'translateX(0) scale(1)' : 'translateX(-6px) scale(0.98)',
+                  opacity: activated ? 1 : 0.5,
+                  transition: 'all 450ms var(--ease-out)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <div style={{
+                      width: 34, height: 34, borderRadius: 10,
+                      background: activated ? 'var(--terracotta-400)' : 'var(--ink-200, #E5DFD3)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'background 300ms',
+                    }}>
+                      <i data-lucide={f.icon} style={{
+                        width: 18, height: 18, color: activated ? '#fff' : 'var(--ink-500)',
+                      }}></i>
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, color: 'var(--ink-900)' }}>{f.label}</div>
+                  </div>
+                  <div style={{
+                    fontSize: 12, lineHeight: 1.5,
+                    color: activated ? 'var(--ink-700)' : 'var(--ink-400)',
+                    transition: 'color 300ms',
+                  }}>
+                    {activated ? f.detail : 'Waiting for intake…'}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes blink { 50% { border-color: transparent; } }
+      `}</style>
+    </section>
+  );
+}
+
+function ConnectorLines({ phase }) {
+  // SVG layer between form and cards. Lines activate phase 8..13 (one per card).
+  // Coordinates in a 0..100 viewBox; draw from left edge to right side card positions.
+  const endpoints = [
+    { x: 95, y: 12 },  // card 1 (top-left of grid)
+    { x: 95, y: 12 },  // card 2 (top-right)
+    { x: 95, y: 40 },
+    { x: 95, y: 40 },
+    { x: 95, y: 70 },
+    { x: 95, y: 70 },
+  ];
+
+  // Actually we want 6 distinct lines to 6 cards in 2x3 grid
+  const targets = [
+    { x: 55, y: 15 }, { x: 95, y: 15 },
+    { x: 55, y: 50 }, { x: 95, y: 50 },
+    { x: 55, y: 85 }, { x: 95, y: 85 },
+  ];
+
+  return (
+    <svg
+      viewBox="0 0 100 100" preserveAspectRatio="none"
+      style={{
+        position: 'absolute', left: 370, top: 0, bottom: 0, width: 'calc(100% - 370px)',
+        height: '100%', pointerEvents: 'none', zIndex: 1,
+      }}
+    >
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--terracotta-400)" />
+        </marker>
+      </defs>
+      {targets.map((t, i) => {
+        const active = phase >= 8 + i;
+        return (
+          <g key={i}>
+            <path
+              d={`M 0 50 C 20 50, 30 ${t.y}, ${t.x} ${t.y}`}
+              fill="none"
+              stroke="var(--terracotta-400)"
+              strokeWidth="0.45"
+              strokeLinecap="round"
+              strokeDasharray="200"
+              strokeDashoffset={active ? 0 : 200}
+              style={{ transition: 'stroke-dashoffset 600ms var(--ease-out)' }}
+              opacity={active ? 0.85 : 0.25}
+              vectorEffect="non-scaling-stroke"
+            />
+            {active && (
+              <circle cx={t.x} cy={t.y} r="1.2" fill="var(--terracotta-500)">
+                <animate attributeName="r" values="1.2;2.2;1.2" dur="1.4s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="1;0.3;1" dur="1.4s" repeatCount="indefinite" />
+              </circle>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+window.OnboardingFlowAnimation = OnboardingFlowAnimation;
+
+
+// ===== CrossPlatformShowcase.jsx =====
+function CrossPlatformShowcase() {
+  return (
+    <section style={{
+      padding: '112px 32px',
+      background: 'linear-gradient(180deg, var(--cream-50) 0%, var(--cream-100) 100%)',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      {/* ambient glow */}
+      <div aria-hidden style={{
+        position: 'absolute', top: '20%', left: '10%', width: 500, height: 500,
+        background: 'radial-gradient(circle, rgba(224,124,89,0.12) 0%, rgba(224,124,89,0) 70%)',
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{
+        maxWidth: 'var(--maxw-page)', margin: '0 auto', position: 'relative',
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center',
+      }}>
+        <Reveal>
+          <Eyebrow>Anywhere you are</Eyebrow>
+          <h2 style={{
+            fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.6vw, 2.75rem)',
+            lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400,
+            marginTop: 18, marginBottom: 20, color: 'var(--ink-900)',
+            textWrap: 'balance',
+          }}>
+            Works on the phone in your pocket. <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>Scales to the screen on your desk.</em>
+          </h2>
+          <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--ink-700)', marginBottom: 28 }}>
+            Snap a plate on your phone at lunch. Review the weekly trends from your laptop in the evening. Guthub syncs everything you log — instantly, silently, across every device.
+          </p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {[
+              'Real-time sync across web and mobile',
+              'Camera-first on phone, data-rich on desktop',
+              'Your history, everywhere you sign in',
+            ].map(b => (
+              <li key={b} style={{ display: 'flex', gap: 12, padding: '8px 0', fontSize: 15, color: 'var(--ink-800)' }}>
+                <i data-lucide="check" style={{ width: 18, height: 18, color: 'var(--terracotta-500)', flexShrink: 0, marginTop: 3 }}></i>
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+
+        <Reveal delay={150} y={24}>
+          <SplitScreenMock />
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+function SplitScreenMock() {
+  return (
+    <div style={{ position: 'relative', aspectRatio: '1/1', width: '100%' }}>
+      {/* desktop laptop */}
+      <div style={{
+        position: 'absolute', top: '8%', right: '0%', width: '92%',
+        transform: 'perspective(1200px) rotateY(-8deg) rotateX(4deg)',
+        transformStyle: 'preserve-3d',
+      }}>
+        <LaptopMock />
+      </div>
+      {/* phone floats on top-left */}
+      <div style={{
+        position: 'absolute', bottom: '2%', left: '0%', width: '32%',
+        transform: 'perspective(1200px) rotateY(6deg) rotateX(-2deg)',
+        zIndex: 2,
+        animation: 'floatPhone 6s ease-in-out infinite',
+      }}>
+        <PhoneMock />
+      </div>
+      <style>{`
+        @keyframes floatPhone {
+          0%, 100% { transform: perspective(1200px) rotateY(6deg) rotateX(-2deg) translateY(0); }
+          50% { transform: perspective(1200px) rotateY(6deg) rotateX(-2deg) translateY(-12px); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function LaptopMock() {
+  return (
+    <div>
+      {/* screen */}
+      <div style={{
+        aspectRatio: '16/10', background: 'var(--forest-500)',
+        borderRadius: '14px 14px 4px 4px',
+        padding: 8, border: '1px solid var(--ink-900)',
+        boxShadow: '0 30px 60px -20px rgba(42,61,58,0.4)',
+      }}>
+        <div style={{
+          width: '100%', height: '100%', background: 'var(--cream-50)',
+          borderRadius: 6, padding: 20, display: 'flex', flexDirection: 'column', gap: 12,
+          overflow: 'hidden',
+        }}>
+          {/* header strip */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
+            <div style={{ width: 20, height: 20, borderRadius: 6, background: 'var(--terracotta-400)' }} />
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 12, color: 'var(--ink-900)' }}>Guthub</div>
+            <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+              {['Dashboard', 'Meals', 'Chat'].map(t => <div key={t} style={{ fontSize: 9, color: 'var(--ink-600)', padding: '3px 8px', borderRadius: 999, background: t === 'Dashboard' ? 'var(--cream-100)' : 'transparent' }}>{t}</div>)}
+            </div>
+          </div>
+          {/* dashboard area */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            {[
+              ['Weight', '168.4', 'lbs', 'var(--forest-500)'],
+              ['Today', '1,842', 'kcal', 'var(--terracotta-500)'],
+              ['Streak', '12', 'days', 'var(--ink-800)'],
+            ].map(([k, v, u, c]) => (
+              <div key={k} style={{ padding: '8px 10px', background: '#fff', borderRadius: 6, border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: 8, color: 'var(--ink-600)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>{k}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, color: c }}>{v}<span style={{ fontSize: 8, color: 'var(--ink-500)', marginLeft: 2 }}>{u}</span></div>
+              </div>
+            ))}
+          </div>
+          {/* chart */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: 3, padding: 8, background: '#fff', borderRadius: 6, border: '1px solid var(--border)' }}>
+            {[40, 55, 48, 62, 58, 72, 68, 78, 70, 82, 75, 88, 84, 90].map((h, i) => (
+              <div key={i} style={{ flex: 1, height: `${h}%`, background: 'var(--terracotta-400)', opacity: 0.5 + i * 0.03, borderRadius: '2px 2px 0 0' }} />
+            ))}
+          </div>
+        </div>
+      </div>
+      {/* laptop base */}
+      <div style={{
+        width: '112%', marginLeft: '-6%', height: 10,
+        background: 'linear-gradient(180deg, #9CA3A0 0%, #6B7572 100%)',
+        borderRadius: '0 0 10px 10px',
+        boxShadow: '0 6px 10px rgba(0,0,0,0.15)',
+      }}>
+        <div style={{ width: 60, height: 4, margin: '0 auto', background: '#4A5250', borderRadius: '0 0 6px 6px' }} />
+      </div>
+    </div>
+  );
+}
+
+function PhoneMock() {
+  return (
+    <div style={{
+      aspectRatio: '9/19.5', background: '#1A1A1A',
+      borderRadius: 28, padding: 6,
+      boxShadow: '0 20px 40px -10px rgba(42,61,58,0.45)',
+      border: '1px solid #2A2A2A',
+    }}>
+      <div style={{
+        width: '100%', height: '100%', background: 'var(--forest-500)',
+        borderRadius: 22, overflow: 'hidden', position: 'relative',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        {/* notch */}
+        <div style={{
+          position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)',
+          width: '30%', height: 12, background: '#1A1A1A', borderRadius: 10, zIndex: 2,
+        }} />
+        {/* content */}
+        <div style={{ padding: '36px 14px 14px', color: 'var(--cream-100)', flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--terracotta-300)', marginBottom: 4 }}>Snap</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, marginBottom: 10, lineHeight: 1.2 }}>Today's plate</div>
+
+          <div style={{
+            aspectRatio: '1', borderRadius: 10,
+            background: 'radial-gradient(ellipse at 50% 55%, #E8B27A 0%, #C8805A 60%, #8A4A38 100%)',
+            marginBottom: 10, position: 'relative',
+          }}>
+            <div style={{ position: 'absolute', top: '28%', left: '50%', transform: 'translateX(-50%)', width: '62%', aspectRatio: '1', borderRadius: '50%', background: '#F7E9D0' }}>
+              <div style={{ position: 'absolute', top: '20%', left: '20%', width: '32%', height: '28%', borderRadius: '50%', background: '#7FA88F' }} />
+              <div style={{ position: 'absolute', top: '22%', right: '18%', width: '28%', height: '26%', borderRadius: '50%', background: '#E07C59' }} />
+            </div>
+          </div>
+
+          <div style={{ padding: 8, background: 'rgba(250,245,238,0.08)', borderRadius: 8 }}>
+            <div style={{ fontSize: 8, color: 'var(--terracotta-300)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>Detected</div>
+            <div style={{ fontSize: 11, color: 'var(--cream-100)', marginBottom: 6 }}>Grain bowl</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {[['612', 'kcal'], ['28g', 'P'], ['72g', 'C'], ['18g', 'F']].map(([v, l]) => (
+                <div key={l} style={{ fontSize: 8, color: 'rgba(250,245,238,0.7)' }}>
+                  <div style={{ color: 'var(--cream-100)', fontWeight: 600, fontSize: 9 }}>{v}</div>
+                  {l}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'center', paddingTop: 10 }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--terracotta-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--cream-100)' }}>
+              <i data-lucide="camera" style={{ width: 18, height: 18, color: '#fff' }}></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+window.CrossPlatformShowcase = CrossPlatformShowcase;
+
+
+// ===== ComingSoon.jsx =====
+function ComingSoon() {
+  const items = [
+    {
+      icon: 'sparkles',
+      title: 'GutTalk AI Companion',
+      body: 'An always-on voice layer. Ask your gut-health guide anything, hands-free, while you cook or shop.',
+    },
+    {
+      icon: 'bell',
+      title: 'MicroBiome Pulse Alerts',
+      body: 'Gentle nudges when your logs suggest a flare is building — before it hits.',
+    },
+    {
+      icon: 'activity',
+      title: 'BioSync Wearable Integration',
+      body: 'Pull sleep, HRV, and steps from your wearable so Guthub can connect the dots with what you eat.',
+    },
+    {
+      icon: 'chef-hat',
+      title: 'NutriChef AI',
+      body: 'A personal AI chef that builds recipes around what\'s in your pantry and friendly to your gut.',
+    },
+    {
+      icon: 'users',
+      title: 'GutHealth Community',
+      body: 'A quiet, moderated space to share wins, swap meals, and learn from people on the same journey.',
+    },
+    {
+      icon: 'line-chart',
+      title: 'MicroBiome Forecast™',
+      body: 'Predictive trends for your gut — where you\'re headed, and what nudges the curve.',
+    },
+  ];
+
+  return (
+    <section style={{
+      padding: '112px 32px',
+      background: 'var(--cream-100)',
+    }}>
+      <div style={{ maxWidth: 'var(--maxw-page)', margin: '0 auto' }}>
+        <Reveal style={{ textAlign: 'center', marginBottom: 56, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto' }}>
+          <Eyebrow>On the horizon</Eyebrow>
+          <h2 style={{
+            fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.6vw, 2.75rem)',
+            lineHeight: 1.2, letterSpacing: '-0.02em', fontWeight: 400,
+            marginTop: 18, marginBottom: 16, color: 'var(--ink-900)',
+            textWrap: 'balance',
+          }}>
+            What's <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>coming next.</em>
+          </h2>
+          <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--ink-700)' }}>
+            Six features we're building next. Your feedback shapes the order.
+          </p>
+        </Reveal>
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20,
+        }}>
+          {items.map((it, i) => (
+            <Reveal key={it.title} delay={i * 70} y={16}>
+              <div style={{
+                background: '#fff', borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border)', padding: 24,
+                position: 'relative', height: '100%',
+                transition: 'transform 240ms var(--ease-out), box-shadow 240ms',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+              >
+                <div style={{
+                  position: 'absolute', top: 16, right: 16,
+                  fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
+                  color: 'var(--forest-500)', padding: '3px 8px', borderRadius: 999,
+                  background: 'var(--cream-50)', border: '1px solid var(--border)',
+                }}>Soon</div>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 10,
+                  background: 'var(--terracotta-50, #FAE6D9)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  marginBottom: 16,
+                }}>
+                  <i data-lucide={it.icon} style={{ width: 20, height: 20, color: 'var(--terracotta-500)' }}></i>
+                </div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--ink-900)', marginBottom: 8, lineHeight: 1.3, paddingRight: 40 }}>
+                  {it.title}
+                </div>
+                <div style={{ fontSize: 14, color: 'var(--ink-700)', lineHeight: 1.55 }}>
+                  {it.body}
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+window.ComingSoon = ComingSoon;
+
+
+// ===== FeaturesPage.jsx =====
+function FeaturesPage() {
+  return (
+    <div data-screen-label="GutHub Features">
+      <Header />
+      <FeaturesHero />
+      <OnboardingFlowAnimation />
+      <FeatureBlocks />
+      <CrossPlatformShowcase />
+      <ComingSoon />
+      <FinalCTA />
+      <Footer />
+      <AuthModal />
+    </div>
+  );
+}
+
+function FeaturesHero() {
+  return (
+    <section style={{
+      padding: '96px 32px 40px',
+      background: 'var(--cream-50)',
+      textAlign: 'center',
+    }}>
+      <Reveal style={{ maxWidth: 820, margin: '0 auto' }}>
+        <Eyebrow>Features</Eyebrow>
+        <h1 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 'clamp(2.5rem, 5.2vw, 4.25rem)',
+          lineHeight: 1.15, letterSpacing: '-0.025em', fontWeight: 400,
+          marginTop: 20, marginBottom: 24, color: 'var(--ink-900)',
+          textWrap: 'balance',
+        }}>
+          Everything you need, <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>all connected.</em>
+        </h1>
+        <p style={{
+          fontSize: 20, lineHeight: 1.55, color: 'var(--ink-700)',
+          maxWidth: 640, margin: '0 auto',
+        }}>
+          Your intake is the seed. From there, every Guthub tool learns who you are and works together — no settings to tweak, no profiles to maintain.
+        </p>
+      </Reveal>
+    </section>
+  );
+}
+
+window.FeaturesPage = FeaturesPage;
+
+
+// ===== AuthModal.jsx =====
+// AuthModal.jsx — sign-up / sign-in modal
+// Opens via window.dispatchEvent(new CustomEvent('open-auth', { detail: { mode: 'signup' | 'signin' } }))
+
+function AuthModal() {
+  const [open, setOpen] = React.useState(false);
+  const [mode, setMode] = React.useState('signup');
+
+  React.useEffect(() => {
+    const onOpen = (e) => {
+      setMode((e.detail && e.detail.mode) || 'signup');
+      setOpen(true);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('open-auth', onOpen);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('open-auth', onOpen);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
+  if (!open) return null;
+
+  const isSignup = mode === 'signup';
+
+  return (
+    <div
+      onClick={() => setOpen(false)}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(31, 45, 42, 0.55)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 24,
+        animation: 'authFadeIn 200ms var(--ease-out)',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'var(--cream-50)',
+          width: '100%', maxWidth: 440,
+          borderRadius: 'var(--radius-2xl)',
+          boxShadow: '0 40px 80px -20px rgba(31, 45, 42, 0.5)',
+          overflow: 'hidden',
+          animation: 'authPopIn 280ms var(--ease-out)',
+          position: 'relative',
+        }}
+      >
+        {/* close button */}
+        <button
+          onClick={() => setOpen(false)}
+          aria-label="Close"
+          style={{
+            position: 'absolute', top: 16, right: 16,
+            width: 34, height: 34, borderRadius: '50%',
+            border: 'none', background: 'transparent', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--ink-600)', zIndex: 2,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--cream-100)'; e.currentTarget.style.color = 'var(--ink-900)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-600)'; }}
+        >
+          <i data-lucide="x" style={{ width: 18, height: 18 }}></i>
+        </button>
+
+        <div style={{ padding: '36px 36px 28px' }}>
+          {/* logo */}
+          <img src="../../assets/logo-full.png" alt="GutHub" style={{ height: 26, marginBottom: 20 }} />
+
+          {/* title */}
+          <h2 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 26, fontWeight: 400, lineHeight: 1.22,
+            letterSpacing: '-0.02em', color: 'var(--ink-900)',
+            margin: '0 0 8px',
+          }}>
+            {isSignup ? <>Start your <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>2-day free trial</em></> : <>Welcome back.</>}
+          </h2>
+          <p style={{ fontSize: 14.5, color: 'var(--ink-600)', margin: '0 0 24px', lineHeight: 1.5 }}>
+            {isSignup
+              ? 'Full access to every feature. Cancel anytime.'
+              : 'Sign in to continue your journey.'}
+          </p>
+
+          {/* Google button */}
+          <GoogleButton label={isSignup ? 'Continue with Google' : 'Sign in with Google'} />
+
+          {/* divider */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            margin: '20px 0', fontSize: 12, color: 'var(--ink-500)',
+            textTransform: 'uppercase', letterSpacing: '0.1em',
+          }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+            <span>{isSignup ? 'or sign up with email' : 'or with email'}</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          </div>
+
+          {/* form fields */}
+          <form onSubmit={e => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {isSignup && (
+              <Field label="Name" type="text" placeholder="Alex Morgan" autoComplete="name" />
+            )}
+            <Field label="Email" type="email" placeholder="you@example.com" autoComplete="email" />
+            <Field
+              label="Password"
+              type="password"
+              placeholder={isSignup ? 'At least 8 characters' : 'Your password'}
+              autoComplete={isSignup ? 'new-password' : 'current-password'}
+              extra={!isSignup && (
+                <a href="#" onClick={e => e.preventDefault()} style={{
+                  fontSize: 12, color: 'var(--terracotta-500)', textDecoration: 'none', fontWeight: 500,
+                }}>Forgot?</a>
+              )}
+            />
+
+            <button type="submit" style={{
+              marginTop: 8,
+              padding: '14px 20px',
+              background: 'var(--terracotta-400)', color: '#fff',
+              border: 'none', borderRadius: 999, cursor: 'pointer',
+              fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600,
+              transition: 'background 200ms, box-shadow 200ms',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--terracotta-500)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--terracotta-400)'; e.currentTarget.style.boxShadow = 'none'; }}
+            >
+              {isSignup ? 'Create account · Start 2-day trial' : 'Sign in'}
+            </button>
+          </form>
+
+          {/* toggle link */}
+          <div style={{
+            textAlign: 'center', marginTop: 20, fontSize: 14, color: 'var(--ink-600)',
+          }}>
+            {isSignup ? 'Already have an account? ' : 'New to Guthub? '}
+            <a href="#" onClick={e => { e.preventDefault(); setMode(isSignup ? 'signin' : 'signup'); }}
+              style={{ color: 'var(--terracotta-500)', textDecoration: 'none', fontWeight: 600 }}>
+              {isSignup ? 'Sign in' : 'Create an account'}
+            </a>
+          </div>
+        </div>
+
+        {/* footer */}
+        {isSignup && (
+          <div style={{
+            padding: '14px 36px', background: 'var(--cream-100)',
+            borderTop: '1px solid var(--border)',
+            fontSize: 12, color: 'var(--ink-600)', lineHeight: 1.5, textAlign: 'center',
+          }}>
+            By continuing you agree to our <a href="#" style={{ color: 'var(--ink-800)', fontWeight: 500 }}>Terms</a> and <a href="#" style={{ color: 'var(--ink-800)', fontWeight: 500 }}>Privacy Policy</a>.
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes authFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes authPopIn {
+          from { opacity: 0; transform: translateY(16px) scale(0.96); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function Field({ label, type, placeholder, autoComplete, extra }) {
+  const [focus, setFocus] = React.useState(false);
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', letterSpacing: '0.02em' }}>
+          {label}
+        </span>
+        {extra}
+      </div>
+      <input
+        type={type}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        onFocus={() => setFocus(true)}
+        onBlur={() => setFocus(false)}
+        style={{
+          padding: '12px 14px',
+          background: '#fff',
+          border: `1px solid ${focus ? 'var(--terracotta-400)' : 'var(--border)'}`,
+          borderRadius: 10,
+          fontSize: 15, fontFamily: 'var(--font-body)',
+          color: 'var(--ink-900)',
+          outline: 'none',
+          transition: 'border-color 160ms, box-shadow 160ms',
+          boxShadow: focus ? '0 0 0 3px rgba(224,124,89,0.15)' : 'none',
+        }}
+      />
+    </label>
+  );
+}
+
+function GoogleButton({ label }) {
+  return (
+    <button
+      style={{
+        width: '100%', padding: '12px 18px',
+        background: '#fff', border: '1px solid var(--border)',
+        borderRadius: 999, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+        fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600,
+        color: 'var(--ink-900)',
+        transition: 'background 160ms, border-color 160ms, box-shadow 160ms',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'var(--cream-100)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.boxShadow = 'none'; }}
+    >
+      <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+        <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+        <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+        <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+      </svg>
+      {label}
+    </button>
+  );
+}
+
+window.AuthModal = AuthModal;
+</script>
+</body>
+</html>
