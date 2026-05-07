@@ -1,168 +1,176 @@
 'use client'
 
-import { useState } from 'react'
-import { Heart, MessageCircle, Share2, Search, Edit3, Pin, Calendar, Users, ChevronRight } from 'lucide-react'
+import { useState, useOptimistic, useTransition } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { Heart, MessageCircle, Share2, Search, Edit3, Pin, Calendar, Users, ChevronRight, Send } from 'lucide-react'
 
-type Post = {
-  id: number
-  author: string
-  avatar: string
-  avatarBg: string
-  avatarColor: string
-  time: string
+export type Post = {
+  id: string
+  user_id: string
   title: string
   body: string
-  likes: number
-  comments: number
   tag: string
-  pinned?: boolean
-  tab: string[]
+  pinned: boolean
+  like_count: number
+  comment_count: number
+  created_at: string
+  profiles: { name: string | null }[] | null
 }
 
-const POSTS: Post[] = [
-  {
-    id: 1,
-    author: 'Maria K.',
-    avatar: 'M',
-    avatarBg: '#d1fae5',
-    avatarColor: '#065f46',
-    time: '2h',
-    title: 'Three months on GutHub: the trigger I never suspected',
-    body: 'I\'d been convinced gluten was the problem for years. Turns out my bloating correlated almost perfectly with raw cruciferous veg — which I was eating three times a week for "health." The Coach spotted it in 9 days.',
-    likes: 142,
-    comments: 38,
-    tag: 'Success story',
-    tab: ['following', 'success'],
-  },
-  {
-    id: 2,
-    author: 'Dr. Hannah L.',
-    avatar: 'H',
-    avatarBg: '#fef3c7',
-    avatarColor: '#92400e',
-    time: '1d',
-    title: 'Reflux 101: the small changes that actually matter',
-    body: 'The most effective interventions for nocturnal reflux, ranked by the evidence. Hint: none of them are fancy supplements.',
-    likes: 89,
-    comments: 12,
-    tag: 'Expert AMA',
-    pinned: true,
-    tab: ['following', 'ama'],
-  },
-  {
-    id: 3,
-    author: 'James R.',
-    avatar: 'J',
-    avatarBg: '#ede9fe',
-    avatarColor: '#4c1d95',
-    time: '2d',
-    title: 'Down 18 lb in 60 days without tracking calories',
-    body: 'All I did was follow my meal plan and log meals. The weight came off without me obsessing about it.',
-    likes: 76,
-    comments: 22,
-    tag: 'Success story',
-    tab: ['following', 'success'],
-  },
-  {
-    id: 4,
-    author: 'Priya S.',
-    avatar: 'P',
-    avatarBg: '#fce7f3',
-    avatarColor: '#831843',
-    time: '3d',
-    title: 'My low-FODMAP grocery haul (with photos)',
-    body: 'Trader Joe\'s and Whole Foods run. Sharing in case it helps someone who\'s just starting out.',
-    likes: 54,
-    comments: 16,
-    tag: 'Tips & tricks',
-    tab: ['following', 'tips'],
-  },
-  {
-    id: 5,
-    author: 'Carlos M.',
-    avatar: 'C',
-    avatarBg: '#dbeafe',
-    avatarColor: '#1e3a5f',
-    time: '4d',
-    title: 'Managing IBS-D with a demanding travel schedule',
-    body: 'I fly almost every week for work. Here\'s the system I built with my GutHub coach that finally keeps flares under control on the road.',
-    likes: 63,
-    comments: 29,
-    tag: 'IBS support',
-    tab: ['following', 'ibs'],
-  },
-  {
-    id: 6,
-    author: 'Dr. Yuki T.',
-    avatar: 'Y',
-    avatarBg: '#fef9c3',
-    avatarColor: '#713f12',
-    time: '5d',
-    title: 'The gut-brain axis: what the latest research actually says',
-    body: 'There\'s a lot of noise around "gut feelings." I\'ll walk through three recent RCTs and what they mean for daily practice.',
-    likes: 112,
-    comments: 8,
-    tag: 'Expert AMA',
-    tab: ['ama'],
-  },
-  {
-    id: 7,
-    author: 'Leila N.',
-    avatar: 'L',
-    avatarBg: '#d1fae5',
-    avatarColor: '#065f46',
-    time: '6d',
-    title: '5 low-FODMAP breakfast ideas that actually taste good',
-    body: 'Overnight oats, egg muffins, and three others I meal-prep every Sunday. Saves my week every time.',
-    likes: 47,
-    comments: 11,
-    tag: 'Tips & tricks',
-    tab: ['tips'],
-  },
-]
+type Group = {
+  id: string
+  name: string
+  description: string | null
+  member_count: number
+}
 
 const TABS = [
-  { id: 'following',  label: 'Following' },
-  { id: 'success',    label: 'Success stories' },
-  { id: 'ama',        label: 'Expert AMAs' },
-  { id: 'tips',       label: 'Tips & tricks' },
-  { id: 'ibs',        label: 'IBS support' },
+  { id: 'all',     label: 'All posts' },
+  { id: 'success', label: 'Success stories' },
+  { id: 'ama',     label: 'Expert AMAs' },
+  { id: 'tips',    label: 'Tips & tricks' },
+  { id: 'ibs',     label: 'IBS support' },
 ]
 
-const SUGGESTED_GROUPS = [
-  { name: 'Low-FODMAP kitchen',  members: '3,240' },
-  { name: 'Reflux recovery',     members: '1,890' },
-  { name: 'Midlife metabolism',  members: '2,104' },
-  { name: 'SIBO survivors',      members: '876' },
-]
+const TAG_OPTIONS = ['Success story', 'Expert AMA', 'Tips & tricks', 'IBS support', 'Question', 'General']
+
+const TAG_TAB_MAP: Record<string, string> = {
+  'Success story': 'success',
+  'Expert AMA':    'ama',
+  'Tips & tricks': 'tips',
+  'IBS support':   'ibs',
+}
 
 const TAG_COLORS: Record<string, { bg: string; color: string; border: string }> = {
   'Success story': { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
   'Expert AMA':    { bg: '#fffbeb', color: '#92400e', border: '#fde68a' },
   'Tips & tricks': { bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' },
   'IBS support':   { bg: '#fdf4ff', color: '#7e22ce', border: '#e9d5ff' },
+  'Question':      { bg: '#fff7ed', color: '#9a3412', border: '#fed7aa' },
+  'General':       { bg: 'var(--cream-100)', color: 'var(--ink-600)', border: 'var(--cream-200)' },
 }
 
-export default function CommunityClient({ userName }: { userName: string | null }) {
-  const [activeTab, setActiveTab] = useState('following')
-  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set())
-  const [joinedGroups, setJoinedGroups] = useState<Set<string>>(new Set())
+function timeAgo(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  if (diffMins < 60) return `${diffMins}m`
+  const diffHours = Math.floor(diffMins / 60)
+  if (diffHours < 24) return `${diffHours}h`
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays < 7) return `${diffDays}d`
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function avatarColor(name: string): { bg: string; color: string } {
+  const colors = [
+    { bg: '#d1fae5', color: '#065f46' },
+    { bg: '#fef3c7', color: '#92400e' },
+    { bg: '#ede9fe', color: '#4c1d95' },
+    { bg: '#fce7f3', color: '#831843' },
+    { bg: '#dbeafe', color: '#1e3a5f' },
+    { bg: '#fef9c3', color: '#713f12' },
+  ]
+  const idx = name.charCodeAt(0) % colors.length
+  return colors[idx]
+}
+
+export default function CommunityClient({
+  initialPosts,
+  likedPostIds,
+  groups,
+  joinedGroupIds,
+  userId,
+  userName,
+}: {
+  initialPosts: Post[]
+  likedPostIds: string[]
+  groups: Group[]
+  joinedGroupIds: string[]
+  userId: string
+  userName: string | null
+}) {
+  const supabase = createClient()
+  const [, startTransition] = useTransition()
+
+  const [posts, setPosts] = useState<Post[]>(initialPosts)
+  const [liked, setLiked] = useState<Set<string>>(new Set(likedPostIds))
+  const [joined, setJoined] = useState<Set<string>>(new Set(joinedGroupIds))
+  const [activeTab, setActiveTab] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
 
-  const filteredPosts = POSTS.filter(p => {
-    const matchesTab = p.tab.includes(activeTab)
-    const matchesSearch = !searchQuery || p.title.toLowerCase().includes(searchQuery.toLowerCase()) || p.body.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesTab && matchesSearch
+  // Share modal state
+  const [newTitle, setNewTitle] = useState('')
+  const [newBody, setNewBody] = useState('')
+  const [newTag, setNewTag] = useState('General')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  const filteredPosts = posts.filter(p => {
+    if (activeTab !== 'all') {
+      const expectedTab = TAG_TAB_MAP[p.tag]
+      if (expectedTab !== activeTab) return false
+    }
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      return p.title.toLowerCase().includes(q) || p.body.toLowerCase().includes(q)
+    }
+    return true
   })
 
-  function toggleLike(id: number) {
-    setLikedPosts(prev => {
+  async function toggleLike(postId: string) {
+    const isLiked = liked.has(postId)
+    // Optimistic update
+    setLiked(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      isLiked ? next.delete(postId) : next.add(postId)
       return next
     })
+    setPosts(prev => prev.map(p =>
+      p.id === postId ? { ...p, like_count: p.like_count + (isLiked ? -1 : 1) } : p
+    ))
+    if (isLiked) {
+      await supabase.from('community_post_likes').delete().match({ post_id: postId, user_id: userId })
+    } else {
+      await supabase.from('community_post_likes').insert({ post_id: postId, user_id: userId })
+    }
+  }
+
+  async function toggleGroup(groupId: string) {
+    const isJoined = joined.has(groupId)
+    setJoined(prev => {
+      const next = new Set(prev)
+      isJoined ? next.delete(groupId) : next.add(groupId)
+      return next
+    })
+    if (isJoined) {
+      await supabase.from('community_group_members').delete().match({ group_id: groupId, user_id: userId })
+    } else {
+      await supabase.from('community_group_members').insert({ group_id: groupId, user_id: userId })
+    }
+  }
+
+  async function submitPost() {
+    if (!newTitle.trim() || !newBody.trim()) return
+    setSubmitting(true)
+    const { data: inserted, error } = await supabase
+      .from('community_posts')
+      .insert({ user_id: userId, title: newTitle.trim(), body: newBody.trim(), tag: newTag })
+      .select('id, user_id, title, body, tag, pinned, like_count, comment_count, created_at, profiles!community_posts_user_id_fkey(name)')
+      .single()
+    setSubmitting(false)
+    if (!error && inserted) {
+      setPosts(prev => [inserted as unknown as Post, ...prev])
+      setSubmitted(true)
+      setTimeout(() => {
+        setShowShareModal(false)
+        setSubmitted(false)
+        setNewTitle('')
+        setNewBody('')
+        setNewTag('General')
+      }, 1800)
+    }
   }
 
   return (
@@ -232,12 +240,29 @@ export default function CommunityClient({ userName }: { userName: string | null 
           {/* Posts */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {filteredPosts.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--ink-400)', fontSize: 14 }}>
-                No posts found{searchQuery ? ` for "${searchQuery}"` : ''}.
+              <div style={{ textAlign: 'center', padding: '56px 24px', background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16 }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>🌱</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>
+                  {searchQuery ? `No posts found for "${searchQuery}"` : 'No posts yet'}
+                </div>
+                <p style={{ fontSize: 14, color: 'var(--ink-400)', margin: '0 0 20px' }}>
+                  {searchQuery ? 'Try a different search.' : 'Be the first to share your story with the community.'}
+                </p>
+                {!searchQuery && (
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    style={{ padding: '10px 20px', borderRadius: 9, border: 'none', background: 'var(--terracotta-500)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Share your story
+                  </button>
+                )}
               </div>
             ) : filteredPosts.map(post => {
-              const tagStyle = TAG_COLORS[post.tag] ?? { bg: 'var(--cream-100)', color: 'var(--ink-600)', border: 'var(--cream-200)' }
-              const liked = likedPosts.has(post.id)
+              const tagStyle = TAG_COLORS[post.tag] ?? TAG_COLORS['General']
+              const isLiked = liked.has(post.id)
+              const profileArr = post.profiles as { name: string | null }[] | null
+              const authorName = profileArr?.[0]?.name ?? 'GutHub member'
+              const av = avatarColor(authorName)
               return (
                 <div
                   key={post.id}
@@ -245,17 +270,16 @@ export default function CommunityClient({ userName }: { userName: string | null 
                     background: post.pinned ? 'var(--terracotta-50)' : '#fff',
                     border: `1px solid ${post.pinned ? 'var(--terracotta-300)' : 'var(--cream-200)'}`,
                     borderRadius: 16, padding: '20px 22px',
-                    transition: 'box-shadow 160ms',
                   }}
                 >
                   {/* Post header */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 12, background: post.avatarBg, color: post.avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 500, flexShrink: 0 }}>
-                      {post.avatar}
+                    <div style={{ width: 42, height: 42, borderRadius: 12, background: av.bg, color: av.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 500, flexShrink: 0 }}>
+                      {authorName.charAt(0).toUpperCase()}
                     </div>
                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-800)' }}>{post.author}</span>
-                      <span style={{ fontSize: 12, color: 'var(--ink-400)' }}>· {post.time}</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-800)' }}>{authorName}</span>
+                      <span style={{ fontSize: 12, color: 'var(--ink-400)' }}>· {timeAgo(post.created_at)}</span>
                       {post.pinned && (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: 999, padding: '2px 8px' }}>
                           <Pin size={10} /> Pinned
@@ -267,7 +291,6 @@ export default function CommunityClient({ userName }: { userName: string | null 
                     </div>
                   </div>
 
-                  {/* Post body */}
                   <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 400, letterSpacing: '-0.01em', margin: '0 0 8px', lineHeight: 1.25, color: 'var(--ink-900)' }}>
                     {post.title}
                   </h3>
@@ -279,16 +302,17 @@ export default function CommunityClient({ userName }: { userName: string | null 
                   <div style={{ display: 'flex', gap: 4 }}>
                     <button
                       onClick={() => toggleLike(post.id)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, border: 'none', background: liked ? '#fef2f2' : 'var(--cream-50)', color: liked ? '#dc2626' : 'var(--ink-500)', fontSize: 13, fontWeight: liked ? 600 : 400, cursor: 'pointer', transition: 'all 120ms' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, border: 'none', background: isLiked ? '#fef2f2' : 'var(--cream-50)', color: isLiked ? '#dc2626' : 'var(--ink-500)', fontSize: 13, fontWeight: isLiked ? 600 : 400, cursor: 'pointer', transition: 'all 120ms' }}
                     >
-                      <Heart size={14} fill={liked ? '#dc2626' : 'none'} /> {post.likes + (liked ? 1 : 0)}
+                      <Heart size={14} fill={isLiked ? '#dc2626' : 'none'} /> {post.like_count}
                     </button>
                     <button
                       style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, border: 'none', background: 'var(--cream-50)', color: 'var(--ink-500)', fontSize: 13, cursor: 'pointer' }}
                     >
-                      <MessageCircle size={14} /> {post.comments}
+                      <MessageCircle size={14} /> {post.comment_count}
                     </button>
                     <button
+                      onClick={() => navigator.clipboard?.writeText(window.location.href).then(() => {}).catch(() => {})}
                       style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, border: 'none', background: 'var(--cream-50)', color: 'var(--ink-500)', fontSize: 13, cursor: 'pointer' }}
                     >
                       <Share2 size={14} /> Share
@@ -303,7 +327,7 @@ export default function CommunityClient({ userName }: { userName: string | null 
         {/* Right sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'sticky', top: 80 }}>
           {/* Live event */}
-          <div style={{ background: 'var(--cream-100)', border: '1px solid var(--cream-200)', borderRadius: 16, padding: '20px 20px' }}>
+          <div style={{ background: 'var(--cream-100)', border: '1px solid var(--cream-200)', borderRadius: 16, padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
               <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ef4444' }}>Live right now</span>
@@ -320,37 +344,39 @@ export default function CommunityClient({ userName }: { userName: string | null 
           </div>
 
           {/* Suggested groups */}
-          <div style={{ background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: '20px 20px' }}>
-            <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: 'var(--ink-800)' }}>Suggested for you</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {SUGGESTED_GROUPS.map(g => (
-                <div key={g.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-800)', marginBottom: 2 }}>{g.name}</div>
-                    <div style={{ fontSize: 12, color: 'var(--ink-400)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <Users size={11} /> {g.members} members
+          {groups.length > 0 && (
+            <div style={{ background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: '20px' }}>
+              <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700, color: 'var(--ink-800)' }}>Suggested for you</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {groups.map(g => (
+                  <div key={g.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-800)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--ink-400)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Users size={11} /> {g.member_count.toLocaleString()} members
+                      </div>
                     </div>
+                    <button
+                      onClick={() => toggleGroup(g.id)}
+                      style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid ${joined.has(g.id) ? 'var(--forest-400)' : 'var(--cream-200)'}`, background: joined.has(g.id) ? 'var(--forest-50)' : '#fff', color: joined.has(g.id) ? 'var(--forest-600)' : 'var(--ink-600)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 120ms', flexShrink: 0 }}
+                    >
+                      {joined.has(g.id) ? 'Joined' : 'Join'}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setJoinedGroups(prev => { const n = new Set(prev); n.has(g.name) ? n.delete(g.name) : n.add(g.name); return n })}
-                    style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid ${joinedGroups.has(g.name) ? 'var(--forest-400)' : 'var(--cream-200)'}`, background: joinedGroups.has(g.name) ? 'var(--forest-50)' : '#fff', color: joinedGroups.has(g.name) ? 'var(--forest-600)' : 'var(--ink-600)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 120ms' }}
-                  >
-                    {joinedGroups.has(g.name) ? 'Joined' : 'Join'}
-                  </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Community guidelines */}
-          <div style={{ background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: '20px 20px' }}>
+          <div style={{ background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: '20px' }}>
             <h3 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 700, color: 'var(--ink-800)' }}>Community guidelines</h3>
             <p style={{ fontSize: 13, color: 'var(--ink-400)', lineHeight: 1.65, margin: 0 }}>
               Kind, specific, evidence-based. No supplement pitches. Every AMA is moderated by a licensed clinician.
             </p>
           </div>
 
-          {/* My profile in community */}
+          {/* User card */}
           {userName && (
             <div style={{ background: 'var(--forest-500)', borderRadius: 16, padding: '18px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -364,7 +390,7 @@ export default function CommunityClient({ userName }: { userName: string | null 
               </div>
               <button
                 onClick={() => setShowShareModal(true)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: 500, cursor: 'pointer', boxSizing: 'border-box' }}
               >
                 Share your story <ChevronRight size={14} />
               </button>
@@ -380,51 +406,78 @@ export default function CommunityClient({ userName }: { userName: string | null 
           onClick={e => { if (e.target === e.currentTarget) setShowShareModal(false) }}
         >
           <div style={{ background: '#fff', borderRadius: 20, padding: '32px', maxWidth: 520, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 400, margin: '0 0 6px', color: 'var(--ink-900)' }}>
-              Share your story
-            </h2>
-            <p style={{ fontSize: 14, color: 'var(--ink-400)', margin: '0 0 22px', lineHeight: 1.5 }}>
-              Community posts are moderated before appearing. Be specific — the more detail you share, the more helpful it is for others.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-400)', display: 'block', marginBottom: 6 }}>Title</label>
-                <input
-                  placeholder="What's your story about?"
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: 9, border: '1px solid var(--cream-200)', fontSize: 15, color: 'var(--ink-800)', boxSizing: 'border-box', outline: 'none' }}
-                />
+            {submitted ? (
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <div style={{ fontSize: 40, marginBottom: 14 }}>🌿</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink-900)', marginBottom: 8 }}>Story shared!</div>
+                <p style={{ fontSize: 14, color: 'var(--ink-400)', margin: 0 }}>Your post is now live in the community.</p>
               </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-400)', display: 'block', marginBottom: 6 }}>Your story</label>
-                <textarea
-                  placeholder="Share your experience, what you tried, what worked…"
-                  rows={5}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: 9, border: '1px solid var(--cream-200)', fontSize: 15, color: 'var(--ink-800)', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'var(--font-body)', outline: 'none' }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-400)', display: 'block', marginBottom: 8 }}>Tag</label>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {['Success story', 'Tips & tricks', 'IBS support', 'Question'].map(t => (
-                    <button key={t} style={{ padding: '6px 13px', borderRadius: 8, border: '1px solid var(--cream-200)', background: 'var(--cream-50)', fontSize: 13, color: 'var(--ink-600)', cursor: 'pointer' }}>{t}</button>
-                  ))}
+            ) : (
+              <>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 400, margin: '0 0 6px', color: 'var(--ink-900)' }}>
+                  Share your story
+                </h2>
+                <p style={{ fontSize: 14, color: 'var(--ink-400)', margin: '0 0 22px', lineHeight: 1.5 }}>
+                  Be specific — the more detail you share, the more helpful it is for others.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-400)', display: 'block', marginBottom: 6 }}>Title</label>
+                    <input
+                      value={newTitle}
+                      onChange={e => setNewTitle(e.target.value)}
+                      placeholder="What's your story about?"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 9, border: '1px solid var(--cream-200)', fontSize: 15, color: 'var(--ink-800)', boxSizing: 'border-box', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-400)', display: 'block', marginBottom: 6 }}>Your story</label>
+                    <textarea
+                      value={newBody}
+                      onChange={e => setNewBody(e.target.value)}
+                      placeholder="Share your experience, what you tried, what worked…"
+                      rows={5}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 9, border: '1px solid var(--cream-200)', fontSize: 15, color: 'var(--ink-800)', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'var(--font-body)', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-400)', display: 'block', marginBottom: 8 }}>Tag</label>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {TAG_OPTIONS.map(t => (
+                        <button
+                          key={t}
+                          onClick={() => setNewTag(t)}
+                          style={{
+                            padding: '6px 13px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
+                            border: `1px solid ${newTag === t ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
+                            background: newTag === t ? 'var(--terracotta-50)' : 'var(--cream-50)',
+                            color: newTag === t ? 'var(--terracotta-600)' : 'var(--ink-600)',
+                            fontWeight: newTag === t ? 600 : 400,
+                          }}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-              <button
-                onClick={() => setShowShareModal(false)}
-                style={{ flex: 1, padding: '11px', borderRadius: 9, border: '1px solid var(--cream-200)', background: '#fff', fontSize: 14, fontWeight: 600, color: 'var(--ink-600)', cursor: 'pointer' }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => { alert('Your story has been submitted for moderation. Thank you!'); setShowShareModal(false) }}
-                style={{ flex: 2, padding: '11px', borderRadius: 9, border: 'none', background: 'var(--terracotta-500)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
-              >
-                Submit for review
-              </button>
-            </div>
+                <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
+                  <button
+                    onClick={() => setShowShareModal(false)}
+                    style={{ flex: 1, padding: '11px', borderRadius: 9, border: '1px solid var(--cream-200)', background: '#fff', fontSize: 14, fontWeight: 600, color: 'var(--ink-600)', cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={submitPost}
+                    disabled={submitting || !newTitle.trim() || !newBody.trim()}
+                    style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '11px', borderRadius: 9, border: 'none', background: (!newTitle.trim() || !newBody.trim()) ? 'var(--cream-200)' : 'var(--terracotta-500)', color: (!newTitle.trim() || !newBody.trim()) ? 'var(--ink-400)' : '#fff', fontSize: 14, fontWeight: 600, cursor: (!newTitle.trim() || !newBody.trim()) ? 'not-allowed' : 'pointer', transition: 'background 150ms' }}
+                  >
+                    <Send size={14} /> {submitting ? 'Posting…' : 'Post to community'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
