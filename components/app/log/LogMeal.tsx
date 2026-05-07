@@ -24,6 +24,7 @@ export default function LogMeal({ onSuccess }: { onSuccess: () => void }) {
     if (!mealName.trim()) return
     setAnalyzing(true)
     setAnalyzed(false)
+    setError(null)
     try {
       const res = await fetch('/api/meal-macros', {
         method: 'POST',
@@ -39,7 +40,11 @@ export default function LogMeal({ onSuccess }: { onSuccess: () => void }) {
           fat:      String(data.fat_g     || ''),
         })
         setAnalyzed(true)
+      } else {
+        setError('AI estimate failed — please fill in macros manually.')
       }
+    } catch {
+      setError('AI estimate failed — please fill in macros manually.')
     } finally {
       setAnalyzing(false)
     }

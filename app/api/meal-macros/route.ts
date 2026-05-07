@@ -14,12 +14,10 @@ export async function POST(req: NextRequest) {
 
   const completion = await openai.chat.completions.create({
     model: AI_MODEL,
-    temperature: 0.2,
-    response_format: { type: 'json_object' },
     messages: [
       {
         role: 'system',
-        content: 'You are a registered dietitian estimating meal nutrition. Respond only with a JSON object containing these keys: calories (kcal, integer), protein_g (grams, integer), carbs_g (grams, integer), fat_g (grams, integer). Be realistic — use standard portion sizes if not specified.',
+        content: 'You are a registered dietitian estimating meal nutrition. Respond with ONLY a raw JSON object — no markdown, no explanation. Keys: calories (kcal integer), protein_g (grams integer), carbs_g (grams integer), fat_g (grams integer). Use standard portion sizes if not specified.',
       },
       {
         role: 'user',
@@ -28,7 +26,7 @@ export async function POST(req: NextRequest) {
     ],
   })
 
-  const raw = completion.choices[0].message.content ?? '{}'
+  const raw = (completion.choices[0].message.content ?? '{}').replace(/```json|```/g, '').trim()
   const parsed = JSON.parse(raw)
 
   return NextResponse.json({
