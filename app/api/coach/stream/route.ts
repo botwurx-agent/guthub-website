@@ -93,7 +93,6 @@ export async function POST(request: Request) {
     model: AI_MODEL,
     messages,
     stream: true,
-    max_tokens: 2048,
   })
 
   let fullResponse = ''
