@@ -48,68 +48,180 @@ function PricingHero() {
 }
 
 function PricingCard() {
+  const router = useRouter();
+  const [loading, setLoading] = useState<string | null>(null);
+
+  async function startCheckout(plan: string) {
+    // If not logged in, open signup modal first
+    // After signup, they'll be redirected back here
+    setLoading(plan);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      });
+      if (res.status === 401) {
+        // Not logged in — open auth modal
+        openAuth('signup');
+        setLoading(null);
+        return;
+      }
+      const data = await res.json();
+      if (data.error) { alert(data.error); setLoading(null); return; }
+      if (data.url) window.location.href = data.url;
+    } catch {
+      setLoading(null);
+    }
+  }
+
+  const plans = [
+    {
+      key: 'founding',
+      badge: '🔥 Only 200 spots',
+      badgeColor: 'var(--terracotta-600)',
+      badgeBg: 'var(--terracotta-50)',
+      name: 'Founding Member',
+      price: '$13',
+      originalPrice: '$25',
+      period: '/mo',
+      tagline: 'Locked in for life. Never increases.',
+      highlight: true,
+    },
+    {
+      key: 'launch',
+      badge: 'Limited time',
+      badgeColor: 'var(--forest-500)',
+      badgeBg: 'var(--forest-50)',
+      name: 'Launch',
+      price: '$20',
+      originalPrice: null,
+      period: '/mo',
+      tagline: 'Available while in early access.',
+      highlight: false,
+    },
+    {
+      key: 'standard',
+      badge: 'Standard',
+      badgeColor: 'var(--ink-600)',
+      badgeBg: 'var(--ink-100)',
+      name: 'Standard',
+      price: '$25',
+      originalPrice: null,
+      period: '/mo',
+      tagline: 'Full access, no commitment.',
+      highlight: false,
+    },
+  ];
+
   return (
-    <section className="section-pad" style={{ padding: '32px 32px 96px', background: 'var(--cream-50)', position: 'relative', overflow: 'hidden' }}>
+    <section style={{ padding: '32px 32px 96px', background: 'var(--cream-50)', position: 'relative', overflow: 'hidden' }}>
       <div aria-hidden style={{
         position: 'absolute', top: -60, left: '50%', transform: 'translateX(-50%)',
-        width: 720, height: 420,
-        background: 'radial-gradient(ellipse, rgba(224,124,89,0.14) 0%, rgba(224,124,89,0) 65%)',
+        width: 900, height: 420,
+        background: 'radial-gradient(ellipse, rgba(224,124,89,0.12) 0%, rgba(224,124,89,0) 65%)',
         pointerEvents: 'none',
       }} />
-      <Reveal y={24} duration={800} style={{
-        maxWidth: 560, margin: '0 auto',
-        background: '#fff', borderRadius: 'var(--radius-2xl)',
-        border: '1px solid var(--border)',
-        boxShadow: '0 30px 60px -20px rgba(42,61,58,0.25), 0 15px 30px -10px rgba(224,124,89,0.18)',
-        overflow: 'hidden', position: 'relative',
-      }}>
-        <div style={{
-          padding: '12px 28px',
-          background: 'linear-gradient(90deg, var(--forest-500) 0%, var(--forest-600) 100%)',
-          color: 'var(--cream-100)', textAlign: 'center',
-          fontSize: 13, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-        }}>
-          <Sparkles size={14} color="var(--terracotta-300)" />
-          Founding member price · 50% off forever
-        </div>
-        <div style={{ padding: '40px 40px 32px', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, color: 'var(--ink-900)', marginBottom: 8 }}>
-            Guthub membership
-          </div>
-          <div style={{ fontSize: 15, color: 'var(--ink-600)', marginBottom: 28 }}>
-            Your always-available AI gut-health guide.
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 14, marginBottom: 4, flexWrap: 'wrap' }}>
-            <span style={{
-              fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 400,
-              color: 'var(--ink-500)', letterSpacing: '-0.02em', lineHeight: 1.1,
-              textDecoration: 'line-through', textDecorationColor: 'var(--terracotta-500)',
-              textDecorationThickness: '2px',
-            }}>$19.95</span>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 64, fontWeight: 400, color: 'var(--ink-900)', letterSpacing: '-0.025em', lineHeight: 1.1 }}>$9.95</span>
-            <span style={{ fontSize: 18, color: 'var(--ink-600)', lineHeight: 1.1 }}>/month</span>
-          </div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999, background: 'var(--terracotta-50)', color: 'var(--terracotta-600)', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginTop: 10, marginBottom: 14 }}>
-            <Star size={12} /> Founding member · locked in for life
-          </div>
-          <div style={{ fontSize: 14, color: 'var(--ink-500)', marginBottom: 28 }}>
-            Billed monthly after your 2-day free trial · Cancel anytime
-          </div>
-          <Button variant="primary" size="lg" style={{ width: '100%', justifyContent: 'center' }} onClick={() => openAuth('signup')}>
-            Start your 2-day free trial
-          </Button>
-          <div style={{ marginTop: 14, fontSize: 13, color: 'var(--ink-500)', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <ShieldCheck size={14} /> Secure checkout
-            </span>
-            <span>·</span>
-            <span>Cancel in two taps</span>
-            <span>·</span>
-            <span>No hidden fees</span>
-          </div>
-        </div>
-      </Reveal>
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: 20, maxWidth: 960, margin: '0 auto',
+      }} className="pricing-grid">
+        {plans.map((plan) => (
+          <Reveal key={plan.key} y={20} duration={700} style={{ display: 'flex' }}>
+            <div style={{
+              flex: 1, display: 'flex', flexDirection: 'column',
+              background: '#fff', borderRadius: 'var(--radius-2xl)',
+              border: `1.5px solid ${plan.highlight ? 'var(--terracotta-300)' : 'var(--border)'}`,
+              boxShadow: plan.highlight
+                ? '0 20px 50px -12px rgba(42,61,58,0.2), 0 8px 20px -6px rgba(224,124,89,0.2)'
+                : '0 4px 16px rgba(31,45,42,0.06)',
+              overflow: 'hidden',
+              transform: plan.highlight ? 'translateY(-8px)' : 'none',
+            }}>
+              {plan.highlight && (
+                <div style={{
+                  padding: '10px 20px', textAlign: 'center',
+                  background: 'linear-gradient(90deg, var(--forest-500), var(--forest-600))',
+                  color: 'var(--cream-100)', fontSize: 12, fontWeight: 700,
+                  letterSpacing: '0.1em', textTransform: 'uppercase',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}>
+                  <Sparkles size={12} color="var(--terracotta-300)" />
+                  Most popular · 50% off forever
+                </div>
+              )}
+              <div style={{ padding: '28px 28px 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '4px 10px', borderRadius: 999,
+                  background: plan.badgeBg, color: plan.badgeColor,
+                  fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
+                  textTransform: 'uppercase', marginBottom: 16, alignSelf: 'flex-start',
+                }}>
+                  {plan.key === 'founding' && <Star size={10} />}
+                  {plan.badge}
+                </div>
+
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 400, color: 'var(--ink-900)', marginBottom: 4 }}>
+                  {plan.name}
+                </div>
+                <div style={{ fontSize: 13.5, color: 'var(--ink-500)', marginBottom: 20, lineHeight: 1.4 }}>
+                  {plan.tagline}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
+                  {plan.originalPrice && (
+                    <span style={{
+                      fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-400)',
+                      textDecoration: 'line-through', textDecorationColor: 'var(--terracotta-400)',
+                    }}>{plan.originalPrice}</span>
+                  )}
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 48, fontWeight: 400, color: 'var(--ink-900)', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                    {plan.price}
+                  </span>
+                  <span style={{ fontSize: 15, color: 'var(--ink-500)' }}>{plan.period}</span>
+                </div>
+
+                <div style={{ fontSize: 12.5, color: 'var(--ink-500)', marginBottom: 24 }}>
+                  7-day free trial · Cancel anytime
+                </div>
+
+                <div style={{ marginTop: 'auto' }}>
+                  <button
+                    onClick={() => startCheckout(plan.key)}
+                    disabled={loading === plan.key}
+                    style={{
+                      width: '100%', padding: '13px 20px', borderRadius: 999, border: 'none',
+                      background: plan.highlight ? 'var(--terracotta-400)' : 'var(--forest-500)',
+                      color: '#fff', fontSize: 15, fontWeight: 600,
+                      cursor: loading === plan.key ? 'not-allowed' : 'pointer',
+                      fontFamily: 'var(--font-body)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      opacity: loading === plan.key ? 0.7 : 1,
+                      transition: 'opacity 200ms',
+                    }}
+                  >
+                    {loading === plan.key
+                      ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Loading…</>
+                      : 'Start free trial'
+                    }
+                  </button>
+                  <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, color: 'var(--ink-400)' }}>
+                    <ShieldCheck size={12} /> Secure checkout
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .pricing-grid { grid-template-columns: 1fr !important; max-width: 420px !important; }
+        }
+      `}</style>
     </section>
   );
 }
