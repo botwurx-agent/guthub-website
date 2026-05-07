@@ -59,7 +59,7 @@ export default function Header() {
             Sign in
           </button>
           <Button variant="primary" size="sm" onClick={() => openAuth('signup')}>
-            <span className="header-cta-full">Start free — 2 days</span>
+            <span className="header-cta-full">Start free — 7 days</span>
             <span className="header-cta-short" style={{ display: 'none' }}>Start free</span>
           </Button>
           <button
@@ -134,7 +134,7 @@ export default function Header() {
             borderTop: '1px solid var(--border)',
           }}>
             <Button variant="primary" size="lg" onClick={() => { setMenuOpen(false); openAuth('signup'); }}>
-              Start your 2-day free trial
+              Start your 7-day free trial
             </Button>
             <button
               onClick={() => { setMenuOpen(false); openAuth('signin'); }}

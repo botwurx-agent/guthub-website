@@ -39,7 +39,7 @@ export default function Hero() {
           <Reveal delay={380} y={12}>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 28 }}>
               <Button variant="primary" size="lg" onClick={() => openAuth('signup')}>
-                Start your 2-day free trial
+                Start your 7-day free trial
               </Button>
               <Button variant="secondary" size="lg" as="a" href="#how">
                 See how it works
@@ -48,7 +48,7 @@ export default function Hero() {
           </Reveal>
           <Reveal delay={500} y={10}>
             <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', alignItems: 'center', fontSize: 14, color: 'var(--ink-600)' }}>
-              <TrustBullet Icon={CheckCircle}>Full access for 2 days</TrustBullet>
+              <TrustBullet Icon={CheckCircle}>Full access for 7 days</TrustBullet>
               <TrustBullet Icon={XCircle}>Cancel anytime</TrustBullet>
               <TrustBullet Icon={Stethoscope}>Complements professional care</TrustBullet>
             </div>

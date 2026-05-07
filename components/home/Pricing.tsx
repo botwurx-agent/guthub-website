@@ -22,10 +22,10 @@ export default function Pricing() {
         <Reveal>
           <Eyebrow color="var(--terracotta-300)">Simple pricing</Eyebrow>
           <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, marginBottom: 20, color: 'var(--cream-100)' }}>
-            Start with <em style={{ fontStyle: 'italic' }}>2 days free.</em> Keep what works.
+            Start with <em style={{ fontStyle: 'italic' }}>7 days free.</em> Keep what works.
           </h2>
           <p style={{ fontSize: 18, lineHeight: 1.6, color: 'rgba(250,245,238,.72)', marginBottom: 48 }}>
-            Full access for 2 days. Cancel anytime — no long-term commitments, no questions.
+            Full access for 7 days. Cancel anytime — no long-term commitments, no questions.
           </p>
         </Reveal>
 
@@ -39,14 +39,14 @@ export default function Pricing() {
             maxWidth: 520, margin: '0 auto',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-              <Badge tone="accent">2-day free trial</Badge>
+              <Badge tone="accent">7-day free trial</Badge>
               <Badge tone="soft">Full access</Badge>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 4 }}>
               <span style={{ fontFamily: 'var(--font-display)', fontSize: 64, fontWeight: 400, color: 'var(--ink-900)', letterSpacing: '-0.025em', lineHeight: 1 }}>$9.95</span>
               <span style={{ fontSize: 17, color: 'var(--ink-600)' }}>/month</span>
             </div>
-            <div style={{ fontSize: 14, color: 'var(--ink-500)', marginBottom: 28 }}>Month-to-month · Billed after your 2-day trial</div>
+            <div style={{ fontSize: 14, color: 'var(--ink-500)', marginBottom: 28 }}>Month-to-month · Billed after your 7-day trial</div>
             {features.map(f => (
               <div key={f} style={{ display: 'flex', gap: 10, padding: '10px 0', borderTop: '1px solid var(--ink-100)' }}>
                 <Check size={20} color="var(--forest-400)" style={{ flexShrink: 0, marginTop: 2 }} />
@@ -55,11 +55,11 @@ export default function Pricing() {
             ))}
             <div style={{ marginTop: 28 }}>
               <Button variant="primary" size="lg" style={{ width: '100%', justifyContent: 'center' }} onClick={() => openAuth('signup')}>
-                Start your 2-day free trial
+                Start your 7-day free trial
               </Button>
             </div>
             <div style={{ marginTop: 16, fontSize: 13, color: 'var(--ink-500)', textAlign: 'center' }}>
-              No credit card for the first 2 days · Cancel anytime · Secure checkout
+              No credit card for the first 7 days · Cancel anytime · Secure checkout
             </div>
           </div>
         </Reveal>

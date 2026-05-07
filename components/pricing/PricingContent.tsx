@@ -37,7 +37,7 @@ function PricingHero() {
           lineHeight: 1.18, letterSpacing: '-0.025em', fontWeight: 400,
           marginTop: 20, marginBottom: 24, color: 'var(--ink-900)',
         }}>
-          Try it free for 2 days. <em style={{ fontStyle: 'italic' }}>Keep it if it works.</em>
+          Try it free for 7 days. <em style={{ fontStyle: 'italic' }}>Keep it if it works.</em>
         </h1>
         <p style={{ fontSize: 20, lineHeight: 1.55, color: 'var(--ink-700)', maxWidth: 620, margin: '0 auto' }}>
           One plan. Month-to-month. Cancel anytime. Everything you need to understand your gut — chat, photo macros, meal planning, and goal tracking.
@@ -281,12 +281,12 @@ function IncludedCard({ f, featured }: { f: typeof includedFeatures[0]; featured
 }
 
 const faqItems = [
-  { q: 'How does the 2-day free trial work?', a: 'Sign up and get full access to every feature for 2 days. No limits, no lite version. If you cancel before the trial ends, you won\'t be charged — ever.' },
+  { q: 'How does the 7-day free trial work?', a: 'Sign up and get full access to every feature for 7 days. No limits, no lite version. If you cancel before the trial ends, you won\'t be charged — ever.' },
   { q: 'Do I need a credit card to start?', a: 'Yes — we ask for a card up front so your access is uninterrupted if you decide to stay. You can remove it instantly from your account if you cancel.' },
   { q: 'What if I cancel?', a: 'Cancel anytime from your account in two taps. You keep access until the end of the period you\'ve paid for. We don\'t store your card after cancellation.' },
   { q: 'Is there a long-term contract?', a: 'No. Guthub is month-to-month. There are no annual commitments and no early termination fees.' },
   { q: 'Will the price change?', a: 'Your price is locked in as long as your subscription is continuous. If we ever raise prices for new members, your rate stays the same.' },
-  { q: 'Do you offer refunds?', a: 'Your 2-day free trial is the refund — we want you to try everything before you pay. Once billed, we don\'t offer mid-cycle refunds, but you can cancel to prevent the next charge.' },
+  { q: 'Do you offer refunds?', a: 'Your 7-day free trial is the refund — we want you to try everything before you pay. Once billed, we don\'t offer mid-cycle refunds, but you can cancel to prevent the next charge.' },
 ];
 
 function PricingFAQ() {

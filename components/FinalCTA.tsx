@@ -25,7 +25,7 @@ export default function FinalCTA() {
           Join 1,000+ people rebuilding their relationship with food — with guidance that actually knows them.
         </p>
         <Button variant="inverse" size="lg" onClick={() => openAuth('signup')}>
-          Start your 2-day free trial
+          Start your 7-day free trial
         </Button>
         <div style={{ marginTop: 18, fontSize: 14, color: 'rgba(253,250,243,.75)' }}>
           Full access · Cancel anytime · $9.95/mo after trial
