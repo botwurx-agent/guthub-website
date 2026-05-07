@@ -7,6 +7,7 @@ import {
   Camera, Sparkles, TrendingDown, TrendingUp,
 } from 'lucide-react'
 import LogMeal from '@/components/app/log/LogMeal'
+import LogMealPhoto from '@/components/app/log/LogMealPhoto'
 import LogSymptom from '@/components/app/log/LogSymptom'
 import LogBM from '@/components/app/log/LogBM'
 import LogWater from '@/components/app/log/LogWater'
@@ -15,7 +16,7 @@ import LogNote from '@/components/app/log/LogNote'
 import type { TimelineDay, WeekStats } from './page'
 
 type FilterId = 'all' | 'meal' | 'symptom' | 'weight' | 'note'
-type FormId = 'meal' | 'symptom' | 'bm' | 'water' | 'weight' | 'note'
+type FormId = 'meal' | 'photo-meal' | 'symptom' | 'bm' | 'water' | 'weight' | 'note'
 
 const FILTER_TABS: { id: FilterId; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -256,7 +257,7 @@ export default function LogPageClient({
                 {activeForm ? (
                   (() => {
                     const labels: Record<FormId, string> = {
-                      meal: 'Log a meal', symptom: 'Log a symptom', bm: 'Log bowel movement',
+                      meal: 'Log a meal', 'photo-meal': 'Photo meal', symptom: 'Log a symptom', bm: 'Log bowel movement',
                       water: 'Log water', weight: 'Log weight', note: 'Add a note',
                     }
                     return labels[activeForm]
@@ -273,7 +274,7 @@ export default function LogPageClient({
 
             {!activeForm ? (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <QuickAddTile icon={Camera} label="Photo meal" onClick={() => setActiveForm('meal')} color="#DB6F56" />
+                <QuickAddTile icon={Camera} label="Photo meal" onClick={() => setActiveForm('photo-meal')} color="#DB6F56" />
                 <QuickAddTile icon={Utensils} label="Type meal" onClick={() => setActiveForm('meal')} color="#DB6F56" />
                 <QuickAddTile icon={Frown} label="Symptom" onClick={() => setActiveForm('symptom')} color="#C98A1E" />
                 <QuickAddTile icon={Scale} label="Weight" onClick={() => setActiveForm('weight')} color="#9D978A" />
@@ -282,7 +283,8 @@ export default function LogPageClient({
               </div>
             ) : (
               <div>
-                {activeForm === 'meal'    && <LogMeal onSuccess={handleSuccess} />}
+                {activeForm === 'meal'       && <LogMeal onSuccess={handleSuccess} />}
+                {activeForm === 'photo-meal' && <LogMealPhoto onSuccess={handleSuccess} />}
                 {activeForm === 'symptom' && <LogSymptom onSuccess={handleSuccess} />}
                 {activeForm === 'bm'      && <LogBM onSuccess={handleSuccess} />}
                 {activeForm === 'water'   && <LogWater userId={userId} today={today} currentGlasses={waterGlasses} onSuccess={handleSuccess} />}
