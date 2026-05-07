@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { AI_MODEL } from '@/lib/ai-config'
 
+export const runtime = 'edge'
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 export async function POST(req: NextRequest) {
@@ -17,11 +19,11 @@ export async function POST(req: NextRequest) {
     messages: [
       {
         role: 'system',
-        content: 'You are a registered dietitian estimating meal nutrition. Respond with ONLY a raw JSON object — no markdown, no explanation. Keys: calories (kcal integer), protein_g (grams integer), carbs_g (grams integer), fat_g (grams integer). Use standard portion sizes if not specified.',
+        content: 'Respond with ONLY a JSON object, no markdown. Keys: calories, protein_g, carbs_g, fat_g (all integers).',
       },
       {
         role: 'user',
-        content: `Estimate the macros for this meal:\n${mealName}${ingredientText}`,
+        content: `Macros for: ${mealName}${ingredientText}`,
       },
     ],
   })
