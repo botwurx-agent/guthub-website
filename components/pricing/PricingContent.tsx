@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Sparkles, Star, ShieldCheck, MessageCircle, Camera, CalendarDays, Target, TrendingUp, Stethoscope, Plus, Minus } from 'lucide-react';
+import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { Sparkles, Star, ShieldCheck, MessageCircle, Camera, CalendarDays, Target, TrendingUp, Stethoscope, Plus, Minus, Loader2 } from 'lucide-react';
 import { Button, Eyebrow, Reveal } from '../ui';
 import { openAuth } from '../AuthModal';
 
