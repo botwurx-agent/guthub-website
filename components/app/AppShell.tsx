@@ -3,12 +3,21 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Home, List, UtensilsCrossed, BarChart3, Sparkles,
   Users, Settings, HelpCircle, Plus, Bell, Search, RotateCcw,
+  Info, Zap, Clock, AlertTriangle, X, CheckCheck,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+
+type Notif = {
+  id: string
+  message: string
+  type: 'info' | 'insight' | 'reminder' | 'alert'
+  read: boolean
+  created_at: string
+}
 
 type NavItem = { href: string; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; badge?: string }
 
@@ -180,28 +189,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <Plus size={14} strokeWidth={2.4} /> Quick log
             </Link>
 
-            <button
-              title="Notifications"
-              style={{
-                width: 38, height: 38, borderRadius: 999,
-                border: '1px solid var(--ink-200)',
-                background: 'var(--bg-elev)',
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: 'var(--ink-700)', position: 'relative',
-                transition: 'all 160ms var(--ease-out)',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--cream-100)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-elev)' }}
-            >
-              <Bell size={18} strokeWidth={1.8} />
-              <span style={{
-                position: 'absolute', top: 8, right: 8,
-                width: 8, height: 8,
-                background: 'var(--terracotta-400)',
-                border: '2px solid var(--bg-elev)',
-                borderRadius: '50%',
-              }} />
-            </button>
+            <NotificationsBell />
 
             <Link href="/settings" style={{
               width: 38, height: 38, borderRadius: '50%',
@@ -239,6 +227,235 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           .app-topbar-search { display: none !important; }
         }
       `}</style>
+    </div>
+  )
+}
+
+const NOTIF_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
+  info:     Info,
+  insight:  Zap,
+  reminder: Clock,
+  alert:    AlertTriangle,
+}
+const NOTIF_COLORS: Record<string, { icon: string; bg: string; border: string }> = {
+  info:     { icon: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
+  insight:  { icon: 'var(--terracotta-500)', bg: 'var(--terracotta-50)', border: 'var(--terracotta-200)' },
+  reminder: { icon: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+  alert:    { icon: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
+}
+
+function timeAgoShort(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
+
+function NotificationsBell() {
+  const supabase = createClient()
+  const [open, setOpen] = useState(false)
+  const [notifs, setNotifs] = useState<Notif[]>([])
+  const [loaded, setLoaded] = useState(false)
+  const [hasUnread, setHasUnread] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  // Check for unread on mount
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      const { count } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false)
+      setHasUnread((count ?? 0) > 0)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    function handle(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [open])
+
+  const load = useCallback(async () => {
+    if (loaded) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    // Fetch stored notifications
+    const { data: stored } = await supabase
+      .from('notifications')
+      .select('id, message, type, read, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    // Derive smart notifications from other tables if inbox is empty
+    const derived: Omit<Notif, 'id'>[] = []
+    const today = new Date().toISOString().split('T')[0]
+
+    const [
+      { data: profile },
+      { data: todayMeals },
+      { data: recentPlan },
+      { data: recentInsight },
+    ] = await Promise.all([
+      supabase.from('profiles').select('trial_ends_at, subscription_status, name').eq('id', user.id).single(),
+      supabase.from('meal_logs').select('id').gte('logged_at', today + 'T00:00:00').eq('user_id', user.id).limit(1),
+      supabase.from('meal_plan_slots').select('created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1),
+      supabase.from('insights').select('created_at, insight_text').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1),
+    ])
+
+    // Trial ending alert
+    if (profile?.subscription_status === 'trialing' && profile.trial_ends_at) {
+      const daysLeft = Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / 86400000)
+      if (daysLeft <= 3 && daysLeft >= 0) {
+        derived.push({ message: `Your free trial ends in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}. Add a payment method to keep access.`, type: 'alert', read: false, created_at: new Date().toISOString() })
+      }
+    }
+
+    // No meal logged today nudge
+    if (todayMeals?.length === 0) {
+      derived.push({ message: `You haven't logged a meal yet today. Tap "Quick log" to add one.`, type: 'reminder', read: false, created_at: new Date().toISOString() })
+    }
+
+    // Recent meal plan
+    if (recentPlan?.[0]) {
+      const planAge = Date.now() - new Date(recentPlan[0].created_at).getTime()
+      if (planAge < 7 * 86400000) {
+        derived.push({ message: 'Your personalized meal plan is ready. Check the Plan tab to see your week.', type: 'info', read: false, created_at: recentPlan[0].created_at })
+      }
+    }
+
+    // Recent insight
+    if (recentInsight?.[0]) {
+      const insightAge = Date.now() - new Date(recentInsight[0].created_at).getTime()
+      if (insightAge < 7 * 86400000) {
+        derived.push({ message: recentInsight[0].insight_text ?? 'New insight available — check your Insights tab.', type: 'insight', read: false, created_at: recentInsight[0].created_at })
+      }
+    }
+
+    // Merge: stored first, then derived if inbox empty
+    const merged: Notif[] = [
+      ...(stored ?? []) as Notif[],
+      ...(stored?.length ? [] : derived.map((d, i) => ({ ...d, id: `derived-${i}` }))),
+    ]
+
+    setNotifs(merged)
+    setLoaded(true)
+    setHasUnread(merged.some(n => !n.read))
+  }, [loaded, supabase])
+
+  async function handleOpen() {
+    const next = !open
+    setOpen(next)
+    if (next) load()
+  }
+
+  async function markAllRead() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false)
+    setNotifs(prev => prev.map(n => ({ ...n, read: true })))
+    setHasUnread(false)
+  }
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative' }}>
+      <button
+        title="Notifications"
+        onClick={handleOpen}
+        style={{
+          width: 38, height: 38, borderRadius: 999,
+          border: '1px solid var(--ink-200)',
+          background: open ? 'var(--cream-100)' : 'var(--bg-elev)',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', color: 'var(--ink-700)', position: 'relative',
+          transition: 'all 160ms var(--ease-out)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--cream-100)' }}
+        onMouseLeave={e => { if (!open) e.currentTarget.style.background = 'var(--bg-elev)' }}
+      >
+        <Bell size={18} strokeWidth={1.8} />
+        {hasUnread && (
+          <span style={{
+            position: 'absolute', top: 8, right: 8,
+            width: 8, height: 8,
+            background: 'var(--terracotta-400)',
+            border: '2px solid var(--bg-elev)',
+            borderRadius: '50%',
+          }} />
+        )}
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+          width: 360, background: '#fff',
+          border: '1px solid var(--cream-200)',
+          borderRadius: 16,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+          zIndex: 200,
+          overflow: 'hidden',
+        }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid var(--cream-100)' }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-900)' }}>Notifications</span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {notifs.some(n => !n.read) && (
+                <button
+                  onClick={markAllRead}
+                  title="Mark all read"
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 7, border: 'none', background: 'var(--cream-100)', fontSize: 12, fontWeight: 600, color: 'var(--ink-500)', cursor: 'pointer' }}
+                >
+                  <CheckCheck size={13} /> Mark all read
+                </button>
+              )}
+              <button onClick={() => setOpen(false)} style={{ width: 28, height: 28, borderRadius: 8, border: 'none', background: 'var(--cream-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--ink-500)' }}>
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* List */}
+          <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+            {!loaded ? (
+              <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: 'var(--ink-400)' }}>Loading…</div>
+            ) : notifs.length === 0 ? (
+              <div style={{ padding: '40px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>🔔</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 4 }}>You&apos;re all caught up</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-400)' }}>We&apos;ll notify you when something needs your attention.</div>
+              </div>
+            ) : notifs.map(n => {
+              const Icon = NOTIF_ICONS[n.type] ?? Info
+              const colors = NOTIF_COLORS[n.type] ?? NOTIF_COLORS.info
+              return (
+                <div key={n.id} style={{ display: 'flex', gap: 12, padding: '14px 16px', borderBottom: '1px solid var(--cream-50)', background: n.read ? '#fff' : 'var(--cream-50)', transition: 'background 150ms' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 9, background: colors.bg, border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                    <Icon size={15} color={colors.icon} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: '0 0 4px', fontSize: 13, color: 'var(--ink-800)', lineHeight: 1.5, fontWeight: n.read ? 400 : 600 }}>{n.message}</p>
+                    <span style={{ fontSize: 11, color: 'var(--ink-400)' }}>{timeAgoShort(n.created_at)}</span>
+                  </div>
+                  {!n.read && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--terracotta-400)', flexShrink: 0, marginTop: 6 }} />}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
