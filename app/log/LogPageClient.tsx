@@ -168,7 +168,7 @@ export default function LogPageClient({
             Your timeline
           </div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 400, color: 'var(--ink-900)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
-            Everything in one <em>thread</em>.
+            Everything in one <em style={{ color: 'var(--terracotta-500)' }}>thread</em>.
           </h1>
           <p style={{ fontSize: 14, color: 'var(--ink-500)', margin: 0 }}>
             Meals, symptoms, weight, and notes — together so patterns are easy to spot.
