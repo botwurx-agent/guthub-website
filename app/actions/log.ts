@@ -45,6 +45,9 @@ export async function logSymptom(formData: FormData) {
   const symptomType = formData.get('symptom_type') as string
   const severity = parseInt(formData.get('severity') as string)
   const notes = (formData.get('notes') as string) || null
+  const suspectedTriggerMealId = (formData.get('suspected_trigger_meal_id') as string) || null
+  const onsetMinutesRaw = formData.get('onset_minutes')
+  const onsetMinutes = onsetMinutesRaw ? parseInt(onsetMinutesRaw as string) : null
 
   if (!symptomType) return { error: 'Please select a symptom type.' }
   if (!severity || severity < 1 || severity > 10) return { error: 'Please select a severity.' }
@@ -52,6 +55,8 @@ export async function logSymptom(formData: FormData) {
   const { error } = await supabase.from('symptom_logs').insert({
     user_id: user.id, log_date: getToday(),
     symptom_type: symptomType, severity, notes,
+    suspected_trigger_meal_id: suspectedTriggerMealId,
+    onset_minutes: onsetMinutes,
   })
 
   if (error) return { error: error.message }

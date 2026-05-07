@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
+import { Utensils } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import { logSymptom } from '@/app/actions/log'
 import { SuccessBanner, ErrorBanner, Field, Textarea, SubmitBtn } from './shared'
 
@@ -10,18 +12,47 @@ const SYMPTOMS = [
   'Brain fog', 'Skin flare-up', 'Other',
 ]
 
+const ONSET_OPTIONS = [
+  { label: 'Just now',  minutes: 0 },
+  { label: '~30 min',   minutes: 30 },
+  { label: '~1 hour',   minutes: 60 },
+  { label: '2+ hours',  minutes: 120 },
+]
+
+type MealLog = { id: string; meal_name: string; meal_type: string; logged_at: string }
+
+function formatMealTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+}
+
 export default function LogSymptom({ onSuccess }: { onSuccess: () => void }) {
-  const [selected, setSelected] = useState<string | null>(null)
-  const [severity, setSeverity] = useState<number | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [done, setDone] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const [selected, setSelected]         = useState<string | null>(null)
+  const [severity, setSeverity]         = useState<number | null>(null)
+  const [triggerId, setTriggerId]       = useState<string | null>(null)
+  const [onsetMinutes, setOnsetMinutes] = useState<number | null>(null)
+  const [todayMeals, setTodayMeals]     = useState<MealLog[]>([])
+  const [error, setError]               = useState<string | null>(null)
+  const [done, setDone]                 = useState(false)
+  const [isPending, startTransition]    = useTransition()
+
+  useEffect(() => {
+    const supabase = createClient()
+    const today = new Date().toISOString().split('T')[0]
+    supabase
+      .from('meal_logs')
+      .select('id, meal_name, meal_type, logged_at')
+      .eq('log_date', today)
+      .order('logged_at', { ascending: true })
+      .then(({ data }) => setTodayMeals(data ?? []))
+  }, [])
 
   function handle(formData: FormData) {
     if (!selected) return setError('Please select a symptom.')
     if (!severity) return setError('Please select a severity.')
     formData.set('symptom_type', selected.toLowerCase().replace(/[\s/]+/g, '_'))
     formData.set('severity', String(severity))
+    if (triggerId) formData.set('suspected_trigger_meal_id', triggerId)
+    if (onsetMinutes !== null) formData.set('onset_minutes', String(onsetMinutes))
     setError(null)
     startTransition(async () => {
       const res = await logSymptom(formData)
@@ -32,19 +63,22 @@ export default function LogSymptom({ onSuccess }: { onSuccess: () => void }) {
 
   if (done) return <SuccessBanner message="Symptom logged!" />
 
+  const chip = (active: boolean, color: 'terracotta' | 'forest' = 'terracotta'): React.CSSProperties => ({
+    padding: '7px 14px', borderRadius: 999, fontSize: 13, cursor: 'pointer',
+    fontFamily: 'var(--font-body)', transition: 'all 160ms',
+    border: `1.5px solid ${active ? `var(--${color}-400)` : 'var(--border)'}`,
+    background: active ? `var(--${color}-50)` : '#fff',
+    color: active ? `var(--${color}-${color === 'forest' ? '700' : '600'})` : 'var(--ink-600)',
+    fontWeight: active ? 600 : 400,
+  })
+
   return (
     <form action={handle} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
       <Field label="Symptom" required>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {SYMPTOMS.map(s => (
-            <button key={s} type="button" onClick={() => setSelected(s)} style={{
-              padding: '7px 14px', borderRadius: 999,
-              border: `1.5px solid ${selected === s ? 'var(--terracotta-400)' : 'var(--border)'}`,
-              background: selected === s ? 'var(--terracotta-50)' : '#fff',
-              color: selected === s ? 'var(--terracotta-600)' : 'var(--ink-600)',
-              fontSize: 13, fontWeight: selected === s ? 600 : 400,
-              cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'all 160ms',
-            }}>{s}</button>
+            <button key={s} type="button" onClick={() => setSelected(s)} style={chip(selected === s)}>{s}</button>
           ))}
         </div>
       </Field>
@@ -68,8 +102,71 @@ export default function LogSymptom({ onSuccess }: { onSuccess: () => void }) {
         </div>
       </Field>
 
-      <Field label="Notes (optional)">
-        <Textarea name="notes" placeholder="Any context — what you ate, time of day…" rows={3} />
+      {/* Meal trigger */}
+      <Field label="What did you eat before this?">
+        {todayMeals.length === 0 ? (
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-400)', fontStyle: 'italic' }}>
+            No meals logged today yet —{' '}
+            <a href="/log" style={{ color: 'var(--terracotta-500)', textDecoration: 'none', fontWeight: 600 }}>
+              log a meal first
+            </a>{' '}
+            to link it here.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {todayMeals.map(meal => {
+              const active = triggerId === meal.id
+              return (
+                <button
+                  key={meal.id}
+                  type="button"
+                  onClick={() => { setTriggerId(active ? null : meal.id); if (active) setOnsetMinutes(null) }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    padding: '8px 14px', borderRadius: 10, fontSize: 13,
+                    cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'all 160ms',
+                    border: `1.5px solid ${active ? 'var(--forest-400)' : 'var(--border)'}`,
+                    background: active ? 'var(--forest-50)' : '#fff',
+                    color: active ? 'var(--forest-700)' : 'var(--ink-600)',
+                    fontWeight: active ? 600 : 400,
+                  }}
+                >
+                  <Utensils size={13} />
+                  <span>{meal.meal_name}</span>
+                  <span style={{ fontSize: 11, color: active ? 'var(--forest-500)' : 'var(--ink-400)', marginLeft: 2 }}>
+                    {formatMealTime(meal.logged_at)}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </Field>
+
+      {/* Onset — only shown once a meal is selected */}
+      {triggerId && (
+        <Field label="How long after eating did this start?">
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {ONSET_OPTIONS.map(opt => (
+              <button
+                key={opt.minutes}
+                type="button"
+                onClick={() => setOnsetMinutes(onsetMinutes === opt.minutes ? null : opt.minutes)}
+                style={chip(onsetMinutes === opt.minutes)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </Field>
+      )}
+
+      <Field label="Other context (optional)">
+        <Textarea
+          name="notes"
+          placeholder="Stress levels, sleep quality, medications, anything else relevant…"
+          rows={3}
+        />
       </Field>
 
       {error && <ErrorBanner message={error} />}
