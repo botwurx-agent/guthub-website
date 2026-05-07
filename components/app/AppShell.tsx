@@ -2,15 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, BookOpen, MessageCircle, Lightbulb, FlaskConical, Settings } from 'lucide-react'
+import { LayoutDashboard, BookOpen, MessageCircle, Lightbulb, UtensilsCrossed, Settings } from 'lucide-react'
 
 const NAV = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/log',       label: 'Log',       icon: BookOpen },
-  { href: '/coach',     label: 'Coach',     icon: MessageCircle },
-  { href: '/insights',  label: 'Insights',  icon: Lightbulb },
-  { href: '/reports',   label: 'Reports',   icon: FlaskConical },
-  { href: '/settings',  label: 'Settings',  icon: Settings },
+  { href: '/dashboard',    label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/log',          label: 'Log',        icon: BookOpen },
+  { href: '/coach',        label: 'Coach',      icon: MessageCircle },
+  { href: '/insights',     label: 'Insights',   icon: Lightbulb },
+  { href: '/meal-planner', label: 'Meals',      icon: UtensilsCrossed },
+  { href: '/settings',     label: 'Settings',   icon: Settings },
 ]
 
 export default function AppShell({ children }: { children: React.ReactNode }) {

@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const pathname = request.nextUrl.pathname
-  const protectedPaths = ['/dashboard', '/log', '/coach', '/insights', '/reports', '/settings']
+  const protectedPaths = ['/dashboard', '/log', '/coach', '/insights', '/meal-planner', '/settings']
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
 
   // 1. Not logged in → sign in
