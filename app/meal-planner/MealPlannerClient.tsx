@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { ChevronLeft, ChevronRight, RefreshCw, Check, Sparkles, UtensilsCrossed, ShoppingCart, Settings, Copy } from 'lucide-react'
 
@@ -230,10 +230,6 @@ export default function MealPlannerClient() {
   const [regeneratingSlot, setRegeneratingSlot] = useState<string | null>(null)
   const [acceptingSlot, setAcceptingSlot] = useState<string | null>(null)
   const [activeDay, setActiveDay] = useState(0)
-  // Set activeDay to today's weekday after mount (avoids SSR/hydration TZ mismatch)
-  useEffect(() => {
-    setActiveDay((new Date().getDay() + 6) % 7)
-  }, [])
   const [activeMeal, setActiveMeal] = useState<'breakfast' | 'lunch' | 'dinner'>('dinner')
   const [planDays, setPlanDays] = useState<1 | 3 | 7>(7)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -257,9 +253,15 @@ export default function MealPlannerClient() {
     setLoading(false)
   }, [weekStart])
 
+  const initializedRef = useRef(false)
   useEffect(() => {
     fetchSlots()
-    setActiveDay(0)
+    if (!initializedRef.current) {
+      setActiveDay((new Date().getDay() + 6) % 7)
+      initializedRef.current = true
+    } else {
+      setActiveDay(0)
+    }
   }, [fetchSlots])
 
   useEffect(() => {
