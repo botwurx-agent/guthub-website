@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from 'react'
-import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown, Pencil, Trash2, Check, CalendarPlus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown, Pencil, Trash2, Check, CalendarPlus, ChevronLeft, ChevronRight, Mic } from 'lucide-react'
 import { startNewThread, getThreadMessages, renameThread, deleteThread, savePlanFromCoach } from '@/app/actions/coach'
 
 type Message = {
@@ -71,14 +71,55 @@ export default function CoachClient({
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [listening, setListening] = useState(false)
+  const [voiceSupported, setVoiceSupported] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, streamingText])
+
+  // Set up Web Speech API for voice input
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SR) return
+    setVoiceSupported(true)
+    const rec = new SR()
+    rec.continuous = true
+    rec.interimResults = false
+    rec.lang = 'en-US'
+    rec.onstart = () => setListening(true)
+    rec.onend = () => setListening(false)
+    rec.onerror = () => setListening(false)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rec.onresult = (e: any) => {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          const t = e.results[i][0].transcript.trim()
+          if (t) setInput(prev => (prev ? prev + ' ' + t : t))
+        }
+      }
+    }
+    recognitionRef.current = rec
+    return () => { try { rec.stop() } catch { /* noop */ } }
+  }, [])
+
+  function toggleVoice() {
+    const rec = recognitionRef.current
+    if (!rec) return
+    if (listening) {
+      try { rec.stop() } catch { /* noop */ }
+    } else {
+      try { rec.start(); inputRef.current?.focus() } catch { /* noop */ }
+    }
+  }
 
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -391,6 +432,24 @@ export default function CoachClient({
               }}>
                 <Paperclip size={16} />
               </button>
+              {voiceSupported && (
+                <button
+                  onClick={toggleVoice}
+                  disabled={streaming}
+                  title={listening ? 'Stop recording' : 'Voice input'}
+                  style={{
+                    width: 36, height: 36, borderRadius: 10, border: 'none',
+                    background: listening ? 'var(--terracotta-400)' : 'var(--cream-100)',
+                    cursor: streaming ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: listening ? '#fff' : 'var(--ink-500)',
+                    transition: 'all 160ms',
+                    animation: listening ? 'micPulse 1.4s ease-in-out infinite' : undefined,
+                  }}
+                >
+                  <Mic size={16} />
+                </button>
+              )}
               <button onClick={() => send()} disabled={streaming || (!input.trim() && !image)} style={{
                 width: 36, height: 36, borderRadius: 10, border: 'none',
                 background: (streaming || (!input.trim() && !image)) ? 'var(--ink-200)' : 'var(--terracotta-400)',
