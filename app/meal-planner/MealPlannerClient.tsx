@@ -374,7 +374,7 @@ export default function MealPlannerClient() {
     <div className="app-page-content" style={{ padding: '32px 28px', maxWidth: 1100, margin: '0 auto' }}>
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <div className="plan-page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
             <span style={{
               fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em',
@@ -392,7 +392,7 @@ export default function MealPlannerClient() {
               Built from your eating style, dietary needs, and macro targets. Swap anything you don&apos;t like.
             </p>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flexShrink: 0 }}>
+          <div className="plan-page-header-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flexShrink: 0 }}>
             {/* Day count selector */}
             <div style={{ display: 'flex', background: 'var(--cream-100)', border: '1px solid var(--cream-200)', borderRadius: 10, padding: 3, gap: 2 }}>
               {([1, 3, 7] as const).map(d => (
@@ -478,7 +478,7 @@ export default function MealPlannerClient() {
 
             {/* Week strip card */}
             <div style={{ background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div className="plan-week-strip-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                 <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink-800)' }}>This week&apos;s plan</h3>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button

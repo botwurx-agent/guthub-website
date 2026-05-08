@@ -143,7 +143,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* ─── MAIN ─────────────────────────────────────────────────────── */}
-      <main style={{ display: 'flex', flexDirection: 'column', minWidth: 0, background: 'var(--cream-50)' }}>
+      <main style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflowX: 'hidden', background: 'var(--cream-50)' }}>
 
         {/* Top bar */}
         <header style={{

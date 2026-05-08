@@ -287,11 +287,15 @@ button { font-family: var(--font-body); }
  * All page content grids stack to single column.
  * ─────────────────────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* Prevent any element from causing horizontal page scroll */
-  body { overflow-x: hidden; }
+  /* Prevent any element from causing horizontal page scroll (html needed for iOS Safari) */
+  html, body { overflow-x: hidden; }
 
-  /* Global: reduce padding and add bottom clearance for bottom nav */
-  .app-page-content { padding: 20px 16px 80px !important; }
+  /* Global: reduce padding, add bottom clearance, clip overflow */
+  .app-page-content {
+    padding: 20px 16px 80px !important;
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
 
   /* ── Log page ── */
   .log-main-grid   { grid-template-columns: 1fr !important; }
@@ -300,7 +304,12 @@ button { font-family: var(--font-body); }
 
   /* ── Plan page ── */
   .plan-main-grid  { grid-template-columns: 1fr !important; }
-  .plan-week-wrap  { width: 100% !important; min-width: 0 !important; }
+  /* Page header: stack vertically so right-side controls don't overflow */
+  .plan-page-header { flex-direction: column !important; align-items: flex-start !important; }
+  .plan-page-header-actions { flex-direction: row !important; flex-wrap: wrap !important; width: 100% !important; }
+  /* Week strip card header: allow wrapping so nav doesn't overflow narrow screens */
+  .plan-week-strip-header { flex-wrap: wrap !important; gap: 8px !important; }
+  .plan-week-wrap  { width: 100% !important; min-width: 0 !important; overflow: hidden !important; }
   .plan-week-grid  {
     min-width: 0 !important;
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
