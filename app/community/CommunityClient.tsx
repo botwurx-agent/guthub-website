@@ -2,7 +2,8 @@
 
 import { useState, useOptimistic, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Heart, MessageCircle, Share2, Search, Edit3, Pin, Calendar, Users, ChevronRight, Send } from 'lucide-react'
+import { Search, Edit3, Calendar, Users, ChevronRight, Send } from 'lucide-react'
+import PostCard from './PostCard'
 
 export type Post = {
   id: string
@@ -39,39 +40,6 @@ const TAG_TAB_MAP: Record<string, string> = {
   'Expert AMA':    'ama',
   'Tips & tricks': 'tips',
   'IBS support':   'ibs',
-}
-
-const TAG_COLORS: Record<string, { bg: string; color: string; border: string }> = {
-  'Success story': { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
-  'Expert AMA':    { bg: '#fffbeb', color: '#92400e', border: '#fde68a' },
-  'Tips & tricks': { bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' },
-  'IBS support':   { bg: '#fdf4ff', color: '#7e22ce', border: '#e9d5ff' },
-  'Question':      { bg: '#fff7ed', color: '#9a3412', border: '#fed7aa' },
-  'General':       { bg: 'var(--cream-100)', color: 'var(--ink-600)', border: 'var(--cream-200)' },
-}
-
-function timeAgo(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  if (diffMins < 60) return `${diffMins}m`
-  const diffHours = Math.floor(diffMins / 60)
-  if (diffHours < 24) return `${diffHours}h`
-  const diffDays = Math.floor(diffHours / 24)
-  if (diffDays < 7) return `${diffDays}d`
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function avatarColor(name: string): { bg: string; color: string } {
-  const colors = [
-    { bg: '#d1fae5', color: '#065f46' },
-    { bg: '#fef3c7', color: '#92400e' },
-    { bg: '#ede9fe', color: '#4c1d95' },
-    { bg: '#fce7f3', color: '#831843' },
-    { bg: '#dbeafe', color: '#1e3a5f' },
-    { bg: '#fef9c3', color: '#713f12' },
-  ]
-  const idx = name.charCodeAt(0) % colors.length
-  return colors[idx]
 }
 
 export default function CommunityClient({
@@ -261,70 +229,19 @@ export default function CommunityClient({
                   </button>
                 )}
               </div>
-            ) : filteredPosts.map(post => {
-              const tagStyle = TAG_COLORS[post.tag] ?? TAG_COLORS['General']
-              const isLiked = liked.has(post.id)
-              const profileArr = post.profiles as { name: string | null }[] | null
-              const authorName = profileArr?.[0]?.name ?? 'GutHub member'
-              const av = avatarColor(authorName)
-              return (
-                <div
-                  key={post.id}
-                  style={{
-                    background: post.pinned ? 'var(--terracotta-50)' : '#fff',
-                    border: `1px solid ${post.pinned ? 'var(--terracotta-300)' : 'var(--cream-200)'}`,
-                    borderRadius: 16, padding: '20px 22px',
-                  }}
-                >
-                  {/* Post header */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 12, background: av.bg, color: av.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 500, flexShrink: 0 }}>
-                      {authorName.charAt(0).toUpperCase()}
-                    </div>
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-800)' }}>{authorName}</span>
-                      <span style={{ fontSize: 12, color: 'var(--ink-400)' }}>· {timeAgo(post.created_at)}</span>
-                      {post.pinned && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: 999, padding: '2px 8px' }}>
-                          <Pin size={10} /> Pinned
-                        </span>
-                      )}
-                      <span style={{ fontSize: 11, fontWeight: 700, background: tagStyle.bg, color: tagStyle.color, border: `1px solid ${tagStyle.border}`, borderRadius: 999, padding: '2px 9px' }}>
-                        {post.tag}
-                      </span>
-                    </div>
-                  </div>
-
-                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 400, letterSpacing: '-0.01em', margin: '0 0 8px', lineHeight: 1.25, color: 'var(--ink-900)' }}>
-                    {post.title}
-                  </h3>
-                  <p style={{ fontSize: 15, lineHeight: 1.65, margin: '0 0 16px', color: 'var(--ink-500)' }}>
-                    {post.body}
-                  </p>
-
-                  {/* Actions */}
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <button
-                      onClick={() => toggleLike(post.id)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, border: 'none', background: isLiked ? '#fef2f2' : 'var(--cream-50)', color: isLiked ? '#dc2626' : 'var(--ink-500)', fontSize: 13, fontWeight: isLiked ? 600 : 400, cursor: 'pointer', transition: 'all 120ms' }}
-                    >
-                      <Heart size={14} fill={isLiked ? '#dc2626' : 'none'} /> {post.like_count}
-                    </button>
-                    <button
-                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, border: 'none', background: 'var(--cream-50)', color: 'var(--ink-500)', fontSize: 13, cursor: 'pointer' }}
-                    >
-                      <MessageCircle size={14} /> {post.comment_count}
-                    </button>
-                    <button
-                      onClick={() => navigator.clipboard?.writeText(window.location.href).then(() => {}).catch(() => {})}
-                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, border: 'none', background: 'var(--cream-50)', color: 'var(--ink-500)', fontSize: 13, cursor: 'pointer' }}
-                    >
-                      <Share2 size={14} /> Share
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
+            ) : filteredPosts.map(post => (
+              <PostCard
+                key={post.id}
+                post={post}
+                isLiked={liked.has(post.id)}
+                currentUserId={userId}
+                currentUserName={userName}
+                supabase={supabase}
+                onLike={() => toggleLike(post.id)}
+                onUpdate={updated => setPosts(prev => prev.map(p => p.id === updated.id ? updated : p))}
+                onDelete={() => setPosts(prev => prev.filter(p => p.id !== post.id))}
+              />
+            ))}
           </div>
         </div>
 
