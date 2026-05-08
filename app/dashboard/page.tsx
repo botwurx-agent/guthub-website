@@ -136,7 +136,7 @@ export default async function DashboardPage() {
               <Link href="/log" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 999, background: 'var(--cream-50)', color: 'var(--forest-600)', fontSize: 13.5, fontWeight: 600, textDecoration: 'none', fontFamily: 'var(--font-body)' }}>
                 Log a meal
               </Link>
-              <Link href="/coach" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 999, border: '1px solid rgba(250,245,238,0.3)', color: 'var(--cream-100)', fontSize: 13.5, fontWeight: 500, textDecoration: 'none', fontFamily: 'var(--font-body)' }}>
+              <Link href={todaySymptoms.length > 0 ? '/coach?autostart=symptoms' : '/coach'} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 999, border: '1px solid rgba(250,245,238,0.3)', color: 'var(--cream-100)', fontSize: 13.5, fontWeight: 500, textDecoration: 'none', fontFamily: 'var(--font-body)' }}>
                 Talk it through with Coach
               </Link>
             </div>

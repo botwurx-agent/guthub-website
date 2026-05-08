@@ -1,5 +1,6 @@
-import { getOrCreateThread, getThreadMessages, getThreadList } from '@/app/actions/coach'
+import { getOrCreateThread, getThreadMessages, getThreadList, startNewThread } from '@/app/actions/coach'
 import { createClient } from '@/lib/supabase/server'
+import { getUserTimezone, todayInTz } from '@/lib/timezone'
 import CoachClient from './CoachClient'
 
 function buildWelcomeMessage(profile: Record<string, unknown> | null, firstName: string): string {
@@ -35,18 +36,48 @@ function buildWelcomeMessage(profile: Record<string, unknown> | null, firstName:
   return `Hi ${displayName}! ${contextLine}${concernLine} I have your full health profile and logs in front of me, so every answer I give you will be personalized to *you*, not generic advice. What would you like to work on today?`.trim()
 }
 
-export default async function CoachPage() {
+export default async function CoachPage({ searchParams }: { searchParams: Promise<{ autostart?: string }> }) {
+  const { autostart } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const firstName = (user?.user_metadata?.full_name ?? user?.email ?? '').split(' ')[0] || 'there'
 
+  const doAutostart = autostart === 'symptoms' && !!user
+
   const [thread, threads, profileRes] = await Promise.all([
-    getOrCreateThread(),
+    doAutostart ? startNewThread() : getOrCreateThread(),
     getThreadList(),
     supabase.from('profiles').select('health_profile').eq('id', user?.id ?? '').single(),
   ])
   const messages = thread ? await getThreadMessages(thread.id) : []
   const welcomeMessage = buildWelcomeMessage(profileRes.data, firstName)
+
+  let autostartMessage: string | undefined
+  if (doAutostart) {
+    const tz = await getUserTimezone()
+    const today = todayInTz(tz)
+    const [{ data: symptoms }, { data: meals }] = await Promise.all([
+      supabase.from('symptom_logs').select('symptom_type, severity, notes').eq('user_id', user!.id).eq('log_date', today).order('logged_at'),
+      supabase.from('meal_logs').select('meal_name, meal_type, calories').eq('user_id', user!.id).eq('log_date', today).order('logged_at'),
+    ])
+
+    const symptomLines = (symptoms ?? []).map(s =>
+      `- ${s.symptom_type.replace(/_/g, ' ')} (severity ${s.severity}/10)${s.notes ? `: "${s.notes}"` : ''}`
+    ).join('\n')
+    const mealLines = (meals ?? []).map(m =>
+      `- ${m.meal_name}${m.calories ? ` (${Math.round(m.calories)} kcal)` : ''}`
+    ).join('\n')
+
+    autostartMessage = `I've been having some symptoms today and want to understand what might be triggering them. Here's what I logged:
+
+**Symptoms today:**
+${symptomLines || '- (none logged yet)'}
+
+**Meals today:**
+${mealLines || '- (none logged yet)'}
+
+Can you analyze this and help me identify any patterns or potential food triggers? What should I pay attention to for the rest of the day?`
+  }
 
   return (
     <CoachClient
@@ -55,6 +86,7 @@ export default async function CoachPage() {
       initialThreads={threads}
       firstName={firstName}
       welcomeMessage={welcomeMessage}
+      autostartMessage={autostartMessage}
     />
   )
 }

@@ -47,13 +47,14 @@ function relativeTime(iso: string) {
 }
 
 export default function CoachClient({
-  initialThreadId, initialMessages, initialThreads, firstName, welcomeMessage,
+  initialThreadId, initialMessages, initialThreads, firstName, welcomeMessage, autostartMessage,
 }: {
   initialThreadId: string | null
   initialMessages: Message[]
   initialThreads: Thread[]
   firstName: string
   welcomeMessage: string
+  autostartMessage?: string
 }) {
   const [threadId, setThreadId] = useState<string | null>(initialThreadId)
   const [messages, setMessages] = useState<Message[]>(initialMessages)
@@ -89,6 +90,15 @@ export default function CoachClient({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, streamingText])
+
+  // Auto-send when arriving from dashboard with a pre-built prompt
+  const autostartFired = useRef(false)
+  useEffect(() => {
+    if (!autostartMessage || autostartFired.current || streaming) return
+    autostartFired.current = true
+    send(autostartMessage)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Set up Web Speech API for voice input
   useEffect(() => {
