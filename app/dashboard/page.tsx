@@ -26,6 +26,7 @@ export default async function DashboardPage() {
     { data: mealLogs },
     { data: gutScoreHistory },
     { data: recentLogDates },
+    { data: tonightSlot },
   ] = await Promise.all([
     supabase.from('profiles').select('name, weight_kg, health_profile').eq('id', user.id).single(),
     supabase.from('macro_targets').select('*').eq('user_id', user.id).order('target_date', { ascending: false }).limit(1).single(),
@@ -36,6 +37,7 @@ export default async function DashboardPage() {
     supabase.from('meal_logs').select('id, meal_name, meal_type, calories, protein_g, carbs_g, fat_g, logged_at').eq('user_id', user.id).eq('log_date', today).order('logged_at', { ascending: true }),
     supabase.from('gut_scores').select('score, score_date').eq('user_id', user.id).order('score_date', { ascending: false }).limit(8),
     supabase.from('meal_logs').select('log_date').eq('user_id', user.id).order('log_date', { ascending: false }).limit(30),
+    supabase.from('meal_plan_slots').select('meal_name, calories, protein_g, carbs_g, fat_g, accepted').eq('user_id', user.id).eq('plan_date', today).eq('meal_type', 'dinner').maybeSingle(),
   ])
 
   // Gut score
@@ -179,35 +181,59 @@ export default async function DashboardPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
               <div>
                 <h3 style={cardTitleStyle}>Tonight&apos;s suggested dinner</h3>
-                <div style={{ fontSize: 13, color: 'var(--ink-500)', marginTop: 3 }}>Picked for your dietary profile</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-500)', marginTop: 3 }}>
+                  {tonightSlot ? 'From your meal plan' : 'Picked for your dietary profile'}
+                </div>
               </div>
               <Link href="/meal-planner" style={ghostBtnStyle}>See week plan</Link>
             </div>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-              <div style={{
-                width: 88, height: 88, borderRadius: 12, flexShrink: 0,
-                background: 'linear-gradient(135deg, var(--forest-300), var(--forest-400))',
-              }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--terracotta-500)', marginBottom: 5 }}>Dinner</div>
-                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 400, margin: '0 0 10px', color: 'var(--ink-900)', lineHeight: 1.3 }}>
-                  Baked salmon with roasted sweet potato
-                </h4>
-                <div style={{ display: 'flex', gap: 14, fontSize: 13, color: 'var(--ink-500)', flexWrap: 'wrap' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={13} /> 30 min</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Flame size={13} /> 520 kcal</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Leaf size={13} /> Anti-inflammatory</span>
+            {tonightSlot ? (
+              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                <div style={{
+                  width: 88, height: 88, borderRadius: 12, flexShrink: 0,
+                  background: 'linear-gradient(135deg, var(--forest-300), var(--forest-400))',
+                }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--terracotta-500)', marginBottom: 5 }}>
+                    Dinner{tonightSlot.accepted ? ' · ✓ accepted' : ''}
+                  </div>
+                  <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 400, margin: '0 0 10px', color: 'var(--ink-900)', lineHeight: 1.3 }}>
+                    {tonightSlot.meal_name}
+                  </h4>
+                  <div style={{ display: 'flex', gap: 14, fontSize: 13, color: 'var(--ink-500)', flexWrap: 'wrap' }}>
+                    {tonightSlot.calories && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Flame size={13} /> {Math.round(tonightSlot.calories)} kcal</span>}
+                    {tonightSlot.protein_g && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Leaf size={13} /> {Math.round(tonightSlot.protein_g)}g protein</span>}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+                  <Link href="/meal-planner" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 999, background: 'var(--terracotta-400)', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
+                    View plan
+                  </Link>
+                  <Link href="/meal-planner" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 999, border: '1px solid var(--cream-200)', color: 'var(--ink-700)', fontSize: 13, fontWeight: 500, textDecoration: 'none', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
+                    <RefreshCw size={13} /> Swap
+                  </Link>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
-                <Link href="/meal-planner" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 999, background: 'var(--terracotta-400)', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
-                  Cook this
-                </Link>
-                <Link href="/meal-planner" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 999, border: '1px solid var(--cream-200)', color: 'var(--ink-700)', fontSize: 13, fontWeight: 500, textDecoration: 'none', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
-                  <RefreshCw size={13} /> Swap
+            ) : (
+              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                <div style={{
+                  width: 88, height: 88, borderRadius: 12, flexShrink: 0,
+                  background: 'linear-gradient(135deg, var(--forest-300), var(--forest-400))',
+                }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--terracotta-500)', marginBottom: 5 }}>Dinner</div>
+                  <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 400, margin: '0 0 10px', color: 'var(--ink-900)', lineHeight: 1.3 }}>
+                    No dinner planned yet
+                  </h4>
+                  <div style={{ fontSize: 13, color: 'var(--ink-400)', lineHeight: 1.5 }}>
+                    Generate a meal plan to get tonight&apos;s dinner suggestion.
+                  </div>
+                </div>
+                <Link href="/meal-planner" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 999, background: 'var(--terracotta-400)', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  Generate plan
                 </Link>
               </div>
-            </div>
+            )}
           </DCard>
         </div>
 

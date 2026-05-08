@@ -43,8 +43,8 @@ export async function buildCoachContext(supabase: SupabaseClient, userId: string
     supabase.from('water_logs').select('amount_ml, log_date').eq('user_id', userId).gte('log_date', fourteenDaysAgo).order('log_date', { ascending: false }).limit(14),
     supabase.from('supplement_logs').select('name, dose, with_food, log_date, notes').eq('user_id', userId).gte('log_date', fourteenDaysAgo).order('log_date', { ascending: false }).limit(20),
     supabase.from('meal_plan_slots')
-      .select('day_label, slot_label, meal_name, calories, protein_g, carbs_g, fat_g, accepted')
-      .eq('user_id', userId).eq('plan_week_start', today).order('day_label').limit(21),
+      .select('plan_date, meal_type, meal_name, calories, protein_g, carbs_g, fat_g, accepted')
+      .eq('user_id', userId).gte('plan_date', today).lte('plan_date', new Date(Date.now() + 6 * 86400000).toISOString().split('T')[0]).order('plan_date').order('meal_type').limit(21),
     supabase.from('historical_summaries').select('summary_text').eq('user_id', userId).order('summary_date', { ascending: false }).limit(1).single(),
   ])
 
@@ -182,7 +182,7 @@ ${notesSummary}`
   // ── Meal plan (current week) ──────────────────────────────────────────────
   const planSection = mealPlan?.length
     ? `## CURRENT MEAL PLAN (this week)\n` + mealPlan.map(s =>
-        `${s.day_label} ${s.slot_label}: ${s.meal_name}${s.calories ? ` (${Math.round(s.calories)} kcal)` : ''}${s.accepted ? ' ✓ accepted' : ''}`
+        `${s.plan_date} ${s.meal_type}: ${s.meal_name}${s.calories ? ` (${Math.round(s.calories)} kcal)` : ''}${s.accepted ? ' ✓ accepted' : ''}`
       ).join('\n')
     : ''
 
