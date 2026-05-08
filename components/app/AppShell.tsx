@@ -155,6 +155,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           WebkitBackdropFilter: 'blur(10px)',
           position: 'sticky', top: 0, zIndex: 10,
         }} className="app-topbar">
+          {/* Mobile logo — hidden on desktop, shown on mobile in place of search */}
+          <Link href="/dashboard" className="app-topbar-logo" style={{ display: 'none', alignItems: 'center' }}>
+            <Image src="/logo-full.png" alt="GutHub" width={110} height={28} style={{ height: 28, width: 'auto' }} priority />
+          </Link>
+
           {/* Search */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
@@ -245,6 +250,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           }
           .app-sidebar { display: none !important; }
           .app-topbar { padding: 0 16px !important; }
+          .app-topbar-logo { display: flex !important; }
           .app-topbar-search { display: none !important; }
           .app-bottom-nav {
             display: flex !important;
