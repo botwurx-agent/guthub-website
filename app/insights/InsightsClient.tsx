@@ -89,40 +89,45 @@ export default function InsightsClient() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
 
-    const [
-      { data: scores },
-      { data: wts },
-      { data: syms },
-      { data: corrs },
-      { data: ins },
-      { data: labs },
-      { data: meals },
-      { data: water },
-      { data: macTarget },
-    ] = await Promise.all([
-      supabase.from('gut_scores').select('score_date, score').gte('score_date', since).order('score_date'),
-      supabase.from('weight_logs').select('log_date, weight_kg').gte('log_date', since).order('log_date'),
-      supabase.from('symptom_logs').select('symptom_type, severity, log_date').gte('log_date', since),
-      supabase.from('correlations').select('*').order('correlation_score', { ascending: false }),
-      supabase.from('insights').select('*').eq('dismissed', false).order('created_at', { ascending: false }).limit(10),
-      user ? supabase.from('lab_reports').select('id, filename, report_date, analysis_summary, storage_path').eq('user_id', user.id).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
-      supabase.from('meal_logs').select('protein_g, calories').gte('log_date', since),
-      supabase.from('water_logs').select('amount_ml').gte('log_date', since),
-      supabase.from('macro_targets').select('protein_g, total_calories').eq('user_id', user?.id ?? '').order('target_date', { ascending: false }).limit(1).single(),
-    ])
+      const [
+        { data: scores },
+        { data: wts },
+        { data: syms },
+        { data: corrs },
+        { data: ins },
+        { data: labs },
+        { data: meals },
+        { data: water },
+        { data: macTarget },
+      ] = await Promise.all([
+        supabase.from('gut_scores').select('score_date, score').gte('score_date', since).order('score_date'),
+        supabase.from('weight_logs').select('log_date, weight_kg').gte('log_date', since).order('log_date'),
+        supabase.from('symptom_logs').select('symptom_type, severity, log_date').gte('log_date', since),
+        supabase.from('correlations').select('*').order('correlation_score', { ascending: false }),
+        supabase.from('insights').select('*').eq('dismissed', false).order('created_at', { ascending: false }).limit(10),
+        user ? supabase.from('lab_reports').select('id, filename, report_date, analysis_summary, storage_path').eq('user_id', user.id).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
+        supabase.from('meal_logs').select('protein_g, calories').gte('log_date', since),
+        supabase.from('water_logs').select('amount_ml').gte('log_date', since),
+        supabase.from('macro_targets').select('protein_g, total_calories').eq('user_id', user?.id ?? '').order('target_date', { ascending: false }).limit(1).single(),
+      ])
 
-    setGutScores(scores ?? [])
-    setWeights(wts ?? [])
-    setSymptoms(syms ?? [])
-    setCorrelations(corrs ?? [])
-    setInsights(ins ?? [])
-    setLabReports((labs ?? []) as LabReport[])
-    setMealStats(meals ?? [])
-    setWaterTotal((water ?? []).reduce((sum, w) => sum + Number(w.amount_ml ?? 0), 0))
-    if (macTarget) setMacroTarget(macTarget as MacroTarget)
-    setLoading(false)
+      setGutScores(scores ?? [])
+      setWeights(wts ?? [])
+      setSymptoms(syms ?? [])
+      setCorrelations(corrs ?? [])
+      setInsights(ins ?? [])
+      setLabReports((labs ?? []) as LabReport[])
+      setMealStats(meals ?? [])
+      setWaterTotal((water ?? []).reduce((sum, w) => sum + Number(w.amount_ml ?? 0), 0))
+      if (macTarget) setMacroTarget(macTarget as MacroTarget)
+    } catch {
+      // network/auth error — still stop the spinner
+    } finally {
+      setLoading(false)
+    }
   }, [since])
 
   useEffect(() => { fetchAll() }, [fetchAll])
