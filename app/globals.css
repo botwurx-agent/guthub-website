@@ -287,6 +287,9 @@ button { font-family: var(--font-body); }
  * All page content grids stack to single column.
  * ─────────────────────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
+  /* Prevent any element from causing horizontal page scroll */
+  body { overflow-x: hidden; }
+
   /* Global: reduce padding and add bottom clearance for bottom nav */
   .app-page-content { padding: 20px 16px 80px !important; }
 
@@ -297,9 +300,11 @@ button { font-family: var(--font-body); }
 
   /* ── Plan page ── */
   .plan-main-grid  { grid-template-columns: 1fr !important; }
-  .plan-week-wrap  { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
-  .plan-week-grid  { min-width: 560px !important; }
+  .plan-week-wrap  { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; width: 100% !important; }
+  .plan-week-grid  { min-width: 0 !important; }
   .plan-stats-grid { grid-template-columns: 1fr 1fr !important; }
+  .plan-hero-grid  { grid-template-columns: 1fr !important; }
+  .plan-recipe-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
 
   /* ── Insights page ── */
   .insights-main-grid    { grid-template-columns: 1fr !important; }

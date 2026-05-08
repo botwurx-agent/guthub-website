@@ -690,7 +690,7 @@ export default function MealPlannerClient() {
                 </div>
 
                 {/* Hero: gradient image + macros side by side */}
-                <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 20, marginBottom: 24 }}>
+                <div className="plan-hero-grid" style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 20, marginBottom: 24 }}>
                   <div style={{
                     borderRadius: 14, height: 200,
                     background: MEAL_GRADIENTS[activeMeal],
@@ -739,7 +739,7 @@ export default function MealPlannerClient() {
                 </div>
 
                 {/* Ingredients + Method side by side */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 32 }}>
+                <div className="plan-recipe-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 32 }}>
                   <div>
                     <h4 style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--terracotta-600)', fontWeight: 700, margin: '0 0 12px' }}>
                       Ingredients
