@@ -139,7 +139,7 @@ export default function LogMealPhoto({ onSuccess }: { onSuccess: () => void }) {
 
       {/* Meal type */}
       <Field label="Meal type">
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {MEAL_TYPES.map(t => (
             <button key={t} type="button" onClick={() => setMealType(t)} style={chipStyle(mealType === t)}>
               {t.charAt(0).toUpperCase() + t.slice(1)}

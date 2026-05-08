@@ -73,7 +73,7 @@ export default function LogMeal({ onSuccess }: { onSuccess: () => void }) {
     <form action={handle} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       {/* Meal type chips */}
       <Field label="Meal type">
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {MEAL_TYPES.map(t => (
             <button key={t} type="button" onClick={() => setMealType(t)} style={{
               padding: '7px 14px', borderRadius: 999, border: `1.5px solid ${mealType === t ? 'var(--terracotta-400)' : 'var(--border)'}`,
