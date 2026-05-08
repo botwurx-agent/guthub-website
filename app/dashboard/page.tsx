@@ -47,12 +47,12 @@ export default async function DashboardPage() {
   const prevScore = (gutScoreHistory && gutScoreHistory.length > 1) ? gutScoreHistory[1].score : null
   const scoreDelta = prevScore !== null ? Math.round(score - prevScore) : null
 
-  // Macros
+  // Macros — sum directly from meal_logs (source of truth); daily_records totals can drift
   const consumed = {
-    calories: Math.round(dailyRecord?.calories_consumed ?? 0),
-    protein:  Math.round(dailyRecord?.protein_consumed_g ?? 0),
-    carbs:    Math.round(dailyRecord?.carbs_consumed_g ?? 0),
-    fat:      Math.round(dailyRecord?.fat_consumed_g ?? 0),
+    calories: Math.round((mealLogs ?? []).reduce((s, m) => s + (m.calories ?? 0), 0)),
+    protein:  Math.round((mealLogs ?? []).reduce((s, m) => s + (m.protein_g ?? 0), 0)),
+    carbs:    Math.round((mealLogs ?? []).reduce((s, m) => s + (m.carbs_g ?? 0), 0)),
+    fat:      Math.round((mealLogs ?? []).reduce((s, m) => s + (m.fat_g ?? 0), 0)),
   }
   const targets = {
     calories: Math.round(macroTarget?.total_calories ?? 2000),
