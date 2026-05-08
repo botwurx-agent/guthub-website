@@ -142,8 +142,9 @@ export default function LogPageClient({
 }) {
   const router = useRouter()
   // Compute today/yesterday in the browser so the user's local timezone is used
-  const clientToday     = new Date().toLocaleDateString('en-CA')
-  const clientYesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA')
+  const clientToday = new Date().toLocaleDateString('en-CA')
+  const _yd = new Date(); _yd.setDate(_yd.getDate() - 1)
+  const clientYesterday = _yd.toLocaleDateString('en-CA')
 
   function dayLabel(dateStr: string) {
     if (dateStr === clientToday)     return 'Today'
