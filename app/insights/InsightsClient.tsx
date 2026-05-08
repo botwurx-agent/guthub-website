@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { computeGutScore } from '@/lib/gut-score'
 import { Sparkles, TrendingUp, TrendingDown, Minus, Download, FileText, ArrowRight, Paperclip, MessageSquare } from 'lucide-react'
 
 type GutScorePoint = { score_date: string; score: number }
 type WeightPoint   = { log_date: string; weight_kg: number }
 type SymptomLog    = { symptom_type: string; severity: number; log_date: string }
+type BmLog         = { log_date: string; bristol_type: number; urgency?: number | null; pain?: number | null }
 type Correlation   = { id: string; food_item: string; symptom_type: string; correlation_score: number; occurrence_count: number; llm_synthesis: string }
 type Insight       = { id: string; insight_type: string; title: string; body: string }
 type LabReport     = { id: string; filename: string; report_date: string | null; analysis_summary: string | null; storage_path: string }
@@ -72,6 +74,7 @@ export default function InsightsClient() {
   const [gutScores, setGutScores]   = useState<GutScorePoint[]>([])
   const [weights,   setWeights]     = useState<WeightPoint[]>([])
   const [symptoms,  setSymptoms]    = useState<SymptomLog[]>([])
+  const [bmLogs,    setBmLogs]      = useState<BmLog[]>([])
   const [correlations, setCorrelations] = useState<Correlation[]>([])
   const [insights,  setInsights]    = useState<Insight[]>([])
   const [labReports, setLabReports] = useState<LabReport[]>([])
@@ -93,9 +96,9 @@ export default function InsightsClient() {
       const { data: { user } } = await supabase.auth.getUser()
 
       const [
-        { data: scores },
         { data: wts },
         { data: syms },
+        { data: bms },
         { data: corrs },
         { data: ins },
         { data: labs },
@@ -103,9 +106,9 @@ export default function InsightsClient() {
         { data: water },
         { data: macTarget },
       ] = await Promise.all([
-        supabase.from('gut_scores').select('score_date, score').gte('score_date', since).order('score_date'),
         supabase.from('weight_logs').select('log_date, weight_kg').gte('log_date', since).order('log_date'),
-        supabase.from('symptom_logs').select('symptom_type, severity, log_date').gte('log_date', since),
+        supabase.from('symptom_logs').select('symptom_type, severity, log_date').gte('log_date', since).order('log_date'),
+        supabase.from('bm_logs').select('log_date, bristol_type, urgency, pain').gte('log_date', since).order('log_date'),
         supabase.from('correlations').select('*').order('correlation_score', { ascending: false }),
         supabase.from('insights').select('*').eq('dismissed', false).order('created_at', { ascending: false }).limit(10),
         user ? supabase.from('lab_reports').select('id, filename, report_date, analysis_summary, storage_path').eq('user_id', user.id).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
@@ -114,9 +117,22 @@ export default function InsightsClient() {
         supabase.from('macro_targets').select('protein_g, total_calories').eq('user_id', user?.id ?? '').order('target_date', { ascending: false }).limit(1).single(),
       ])
 
-      setGutScores(scores ?? [])
+      // Compute daily gut scores from symptom + BM logs (same formula as dashboard)
+      const allDates = Array.from(new Set([
+        ...(syms ?? []).map(s => s.log_date),
+        ...(bms ?? []).map(b => b.log_date),
+      ])).sort()
+      const computedScores: GutScorePoint[] = allDates.map(date => {
+        const daySymptoms = (syms ?? []).filter(s => s.log_date === date)
+        const dayBms = (bms ?? []).filter(b => b.log_date === date)
+        const { score } = computeGutScore(daySymptoms, dayBms)
+        return { score_date: date, score }
+      })
+
+      setGutScores(computedScores)
       setWeights(wts ?? [])
       setSymptoms(syms ?? [])
+      setBmLogs(bms ?? [])
       setCorrelations(corrs ?? [])
       setInsights(ins ?? [])
       setLabReports((labs ?? []) as LabReport[])

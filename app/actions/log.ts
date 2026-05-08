@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { computeGutScore } from '@/lib/gut-score'
 
 // ─── Water ────────────────────────────────────────────────────────────────
 export async function logWater({ userId, date, amountMl }: { userId: string; date: string; amountMl: number }) {
@@ -60,6 +61,8 @@ export async function logSymptom(formData: FormData) {
   })
 
   if (error) return { error: error.message }
+
+  await upsertGutScore(supabase, user.id, localDate(formData))
   revalidatePath('/dashboard')
   return { success: true }
 }
@@ -83,6 +86,8 @@ export async function logBM(formData: FormData) {
   })
 
   if (error) return { error: error.message }
+
+  await upsertGutScore(supabase, user.id, localDate(formData))
   revalidatePath('/dashboard')
   return { success: true }
 }
@@ -265,6 +270,18 @@ export async function reLogMeal(mealId: string, todayDate: string) {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
+async function upsertGutScore(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, date: string) {
+  const [{ data: syms }, { data: bms }] = await Promise.all([
+    supabase.from('symptom_logs').select('severity').eq('user_id', userId).eq('log_date', date),
+    supabase.from('bm_logs').select('bristol_type, urgency, pain').eq('user_id', userId).eq('log_date', date),
+  ])
+  const { score, symptomPenalty, bmPenalty } = computeGutScore(syms ?? [], bms ?? [])
+  await supabase.from('gut_scores').upsert(
+    { user_id: userId, score_date: date, score, base_score: 100, symptom_penalty: symptomPenalty, bm_penalty: bmPenalty },
+    { onConflict: 'user_id,score_date' }
+  )
+}
+
 function getToday() { return new Date().toISOString().split('T')[0] }
 function localDate(formData: FormData) {
   // Prefer client timezone — server computes the date so a stale/missing
