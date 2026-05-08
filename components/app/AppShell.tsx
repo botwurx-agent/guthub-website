@@ -87,9 +87,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         borderRight: '1px solid var(--forest-700)',
       }}>
         {/* Logo */}
-        <div style={{ padding: '4px 4px 12px', display: 'flex', alignItems: 'center' }}>
+        <Link href="/dashboard" style={{ padding: '4px 4px 12px', display: 'flex', alignItems: 'center' }}>
           <Image src="/logo-dark.png" alt="GutHub" width={140} height={36} style={{ height: 36, width: 'auto', maxWidth: '100%' }} priority />
-        </div>
+        </Link>
 
         {/* Tagline */}
         <div style={{
