@@ -151,10 +151,20 @@ function consolidateIngredients(ingredients: string[]): string[] {
     const displayUnit = unit
       ? (qty > 1 && PLURALIZE_UNITS.has(unit) ? unit + 's' : unit)
       : ''
-    result.push([qtyStr, displayUnit, name].filter(Boolean).join(' '))
+    // For weight units, include the dual measurement (g + oz / kg + lb)
+    let conv = ''
+    if (unit === 'g')      conv = `(${trimZero((qty / 28.3495).toFixed(1))} oz)`
+    else if (unit === 'oz') conv = `(${Math.round(qty * 28.3495)} g)`
+    else if (unit === 'kg') conv = `(${trimZero((qty * 2.20462).toFixed(1))} lb)`
+    else if (unit === 'lb') conv = `(${trimZero((qty * 0.4536).toFixed(2))} kg)`
+    result.push([qtyStr, displayUnit, conv, name].filter(Boolean).join(' '))
   }
 
   return [...result.sort(), ...noQty.sort()]
+}
+
+function trimZero(s: string): string {
+  return s.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1')
 }
 
 // Shopping list category map. Keyword match runs in order, first hit wins.
