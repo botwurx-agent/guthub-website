@@ -96,7 +96,7 @@ export default function CoachClient({
   useEffect(() => {
     if (!autostartMessage || autostartFired.current || streaming) return
     autostartFired.current = true
-    send(autostartMessage)
+    send(autostartMessage, "Analyzing today's symptoms…")
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -150,13 +150,14 @@ export default function CoachClient({
     reader.readAsDataURL(file)
   }
 
-  async function send(overrideText?: string) {
+  async function send(overrideText?: string, displayOverride?: string) {
     const text = overrideText ?? input
     if ((!text.trim() && !image) || streaming) return
     setInput('')
     setError(null)
 
-    const optimisticMsg: Message = { role: 'user', content: text.trim() || '[Image attached]', has_image: !!image }
+    const displayText = displayOverride ?? text
+    const optimisticMsg: Message = { role: 'user', content: displayText.trim() || '[Image attached]', has_image: !!image }
     setMessages(prev => [...prev, optimisticMsg])
 
     const imgPayload = image ? { imageBase64: image.base64, imageType: image.type } : {}
@@ -168,7 +169,12 @@ export default function CoachClient({
       const res = await fetch('/api/coach/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text.trim(), threadId, ...imgPayload }),
+        body: JSON.stringify({
+          message: text.trim(),
+          ...(displayOverride ? { displayContent: displayOverride } : {}),
+          threadId,
+          ...imgPayload,
+        }),
       })
       if (!res.ok) throw new Error('Request failed')
       if (!res.body) throw new Error('No stream')

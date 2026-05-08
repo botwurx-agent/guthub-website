@@ -110,7 +110,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return new Response('Unauthorized', { status: 401 })
 
-  const { message, threadId, imageBase64, imageType } = await request.json()
+  const { message, displayContent, threadId, imageBase64, imageType } = await request.json()
   if (!message?.trim() && !imageBase64) return new Response('Message required', { status: 400 })
 
   // Build user context
@@ -139,12 +139,14 @@ export async function POST(request: Request) {
 
   if (!isFirstMessage && (!history || history.length === 0)) isFirstMessage = true
 
-  // Save user message
+  // Save user message — store displayContent (short label) when provided so
+  // the persisted history matches what was visually shown, while the AI still
+  // receives the full `message` below.
   await supabase.from('coach_messages').insert({
     thread_id: thread,
     user_id: user.id,
     role: 'user',
-    content: message || '[Image attached]',
+    content: (displayContent?.trim() || message) || '[Image attached]',
     has_image: !!imageBase64,
     image_type: imageType ?? null,
   })
