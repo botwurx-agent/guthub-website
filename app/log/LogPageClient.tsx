@@ -327,7 +327,7 @@ export default function LogPageClient({
   ].filter(Boolean)
 
   return (
-    <div style={{ padding: '32px 32px 48px' }}>
+    <div className="app-page-content" style={{ padding: '32px 32px 48px' }}>
       {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
         <div>
@@ -380,7 +380,7 @@ export default function LogPageClient({
       </div>
 
       {/* 2-col grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)', gap: 20, alignItems: 'start' }}>
+      <div className="log-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)', gap: 20, alignItems: 'start' }}>
 
         {/* LEFT — timeline */}
         <div style={{ background: '#fff', borderRadius: 16, border: '1px solid var(--cream-200)', overflow: 'hidden' }}>

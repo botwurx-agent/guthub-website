@@ -76,6 +76,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       fontFamily: 'var(--font-body)',
     }} className="app-grid">
 
+
       {/* ─── SIDEBAR ─────────────────────────────────────────────────── */}
       <aside className="app-sidebar" style={{
         background: 'var(--forest-500)',
@@ -209,22 +210,54 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
+      {/* ─── MOBILE BOTTOM NAV ─────────────────────────────────────── */}
+      <nav className="app-bottom-nav" style={{ display: 'none' }}>
+        {NAV.map(item => {
+          const Icon = item.icon
+          const active = isActive(pathname, item.href)
+          return (
+            <Link key={item.href} href={item.href} style={{
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 4, padding: '8px 4px', textDecoration: 'none',
+              color: active ? 'var(--terracotta-400)' : 'var(--ink-400)',
+              fontSize: 10, fontWeight: active ? 700 : 500, letterSpacing: '0.02em',
+              transition: 'color 160ms',
+            }}>
+              <Icon size={22} strokeWidth={active ? 2 : 1.75} />
+              <span>{item.label}</span>
+              {item.badge && (
+                <span style={{
+                  position: 'absolute', top: 8, marginLeft: 18,
+                  fontSize: 8, fontWeight: 700, background: 'var(--terracotta-400)',
+                  color: '#fff', padding: '1px 4px', borderRadius: 999,
+                }}>{item.badge}</span>
+              )}
+            </Link>
+          )
+        })}
+      </nav>
+
       <style>{`
-        @media (max-width: 900px) {
-          .app-grid { grid-template-columns: 1fr !important; }
-          .app-sidebar {
-            position: static !important;
-            height: auto !important;
-            flex-direction: row !important;
-            overflow-x: auto !important;
-            padding: 12px !important;
+        @media (max-width: 767px) {
+          .app-grid {
+            grid-template-columns: 1fr !important;
+            grid-template-rows: auto 1fr !important;
           }
-          .app-sidebar > div:first-child,
-          .app-sidebar > div:nth-child(2),
-          .app-sidebar > div:last-child {
-            display: none !important;
-          }
+          .app-sidebar { display: none !important; }
+          .app-topbar { padding: 0 16px !important; }
           .app-topbar-search { display: none !important; }
+          .app-bottom-nav {
+            display: flex !important;
+            position: fixed !important;
+            bottom: 0 !important; left: 0 !important; right: 0 !important;
+            background: rgba(253,250,243,0.97) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border-top: 1px solid var(--ink-200) !important;
+            z-index: 40 !important;
+            height: 68px !important;
+            padding-bottom: env(safe-area-inset-bottom, 0) !important;
+          }
         }
       `}</style>
     </div>

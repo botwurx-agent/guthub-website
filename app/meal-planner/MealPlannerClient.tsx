@@ -371,7 +371,7 @@ export default function MealPlannerClient() {
   })()
 
   return (
-    <div style={{ padding: '32px 28px', maxWidth: 1100, margin: '0 auto' }}>
+    <div className="app-page-content" style={{ padding: '32px 28px', maxWidth: 1100, margin: '0 auto' }}>
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
@@ -472,7 +472,7 @@ export default function MealPlannerClient() {
 
       {/* Main content */}
       {!generating && hasAnyMeals && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 20, alignItems: 'start' }}>
+        <div className="plan-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 20, alignItems: 'start' }}>
           {/* LEFT column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
@@ -498,7 +498,7 @@ export default function MealPlannerClient() {
                   </button>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
+              <div className="plan-week-wrap"><div className="plan-week-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
                 {weekDates.map((date, i) => {
                   const isActive = i === activeDay
                   const isToday = date === toDateStr(new Date())
@@ -534,8 +534,7 @@ export default function MealPlannerClient() {
                     </button>
                   )
                 })}
-              </div>
-            </div>
+              </div></div></div>
 
             {/* Day meals card */}
             <div style={{ background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: 20 }}>

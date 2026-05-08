@@ -281,3 +281,51 @@ button { font-family: var(--font-body); }
   .footer-grid { grid-template-columns: 1fr !important; gap: 28px !important; }
   .footer-brand { grid-column: auto !important; }
 }
+
+/* ─── App screens — Mobile responsive ───────────────────────────────────────
+ * Breakpoint: ≤ 767px (phones). Sidebar replaced by bottom nav (in AppShell).
+ * All page content grids stack to single column.
+ * ─────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Global: reduce padding and add bottom clearance for bottom nav */
+  .app-page-content { padding: 20px 16px 80px !important; }
+
+  /* ── Log page ── */
+  .log-main-grid   { grid-template-columns: 1fr !important; }
+  .log-stat-chips  { grid-template-columns: 1fr 1fr !important; }
+  .log-macro-pair  { grid-template-columns: 1fr !important; }
+
+  /* ── Plan page ── */
+  .plan-main-grid  { grid-template-columns: 1fr !important; }
+  .plan-week-wrap  { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
+  .plan-week-grid  { min-width: 560px !important; }
+  .plan-stats-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Insights page ── */
+  .insights-main-grid    { grid-template-columns: 1fr !important; }
+  .insights-chart-pair   { grid-template-columns: 1fr !important; }
+  .insights-symptom-grid { grid-template-columns: 1fr !important; }
+
+  /* ── Coach page ── */
+  .coach-layout          { height: calc(100vh - 64px - 68px) !important; }
+  .coach-thread-sidebar  {
+    position: fixed !important;
+    top: 64px !important; left: 0 !important; bottom: 68px !important;
+    z-index: 30 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 220ms ease !important;
+    width: 280px !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.18) !important;
+  }
+  .coach-thread-sidebar.open { transform: translateX(0) !important; }
+  .coach-sidebar-overlay {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 29 !important;
+    background: rgba(0,0,0,0.35) !important;
+  }
+  .coach-mobile-threads-btn { display: flex !important; }
+  .coach-chat-pad { padding: 16px 16px 8px !important; }
+  .coach-input-area { padding: 10px 12px !important; }
+}

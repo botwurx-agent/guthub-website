@@ -229,7 +229,7 @@ export default function InsightsClient() {
   }
 
   return (
-    <div style={{ padding: '32px 28px', maxWidth: 1100, margin: '0 auto' }}>
+    <div className="app-page-content" style={{ padding: '32px 28px', maxWidth: 1100, margin: '0 auto' }}>
 
       {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, gap: 16, flexWrap: 'wrap' }}>
@@ -300,7 +300,7 @@ export default function InsightsClient() {
 
       {/* ── TRENDS TAB ──────────────────────────────────────────────────────── */}
       {tab === 'trends' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 20, alignItems: 'start' }}>
+        <div className="insights-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 20, alignItems: 'start' }}>
           {/* Left col */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
@@ -332,7 +332,7 @@ export default function InsightsClient() {
             </div>
 
             {/* Weight + Bloating — 2-col */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="insights-chart-pair" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div style={{ background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
                   <div>
@@ -374,7 +374,7 @@ export default function InsightsClient() {
             {/* Macros this month */}
             <div style={{ background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: 20 }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-800)', marginBottom: 16 }}>Macros, this month</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+              <div className="insights-symptom-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
                 <MetricStat
                   label="Avg protein"
                   val={avgProtein !== null ? `${avgProtein} g` : '—'}
@@ -515,7 +515,7 @@ export default function InsightsClient() {
 
       {/* ── TEST REPORTS TAB ─────────────────────────────────────────────────── */}
       {tab === 'labs' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 20, alignItems: 'start' }}>
+        <div className="insights-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 20, alignItems: 'start' }}>
           {/* Left: report detail or empty */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {labReports.length === 0 ? (

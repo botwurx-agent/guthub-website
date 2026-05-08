@@ -78,6 +78,7 @@ export default function CoachClient({
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [listening, setListening] = useState(false)
   const [voiceSupported, setVoiceSupported] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -305,10 +306,15 @@ export default function CoachClient({
   const isEmpty = messages.length === 0 && !streamingText
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 64px)', overflow: 'hidden', background: 'var(--cream-50)' }}>
+    <div className="coach-layout" style={{ display: 'flex', height: 'calc(100vh - 64px)', overflow: 'hidden', background: 'var(--cream-50)' }}>
+
+      {/* ── Mobile sidebar overlay ── */}
+      {sidebarOpen && (
+        <div className="coach-sidebar-overlay" style={{ display: 'none' }} onClick={() => setSidebarOpen(false)} />
+      )}
 
       {/* ── Threads sidebar ── */}
-      <aside style={{
+      <aside className={`coach-thread-sidebar${sidebarOpen ? ' open' : ''}`} style={{
         width: 240, flexShrink: 0, display: 'flex', flexDirection: 'column',
         background: '#fff', borderRight: '1px solid var(--cream-200)',
         overflow: 'hidden',
@@ -371,8 +377,26 @@ export default function CoachClient({
       {/* ── Chat area ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
 
+        {/* Mobile: threads toggle button */}
+        <div className="coach-mobile-threads-btn" style={{
+          display: 'none', alignItems: 'center', gap: 8, padding: '10px 14px',
+          borderBottom: '1px solid var(--cream-200)', background: '#fff',
+        }}>
+          <button
+            onClick={() => setSidebarOpen(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 8, border: '1px solid var(--cream-200)',
+              background: 'var(--cream-100)', fontSize: 13, fontWeight: 600,
+              color: 'var(--ink-700)', cursor: 'pointer', fontFamily: 'var(--font-body)',
+            }}
+          >
+            ☰ Threads
+          </button>
+        </div>
+
         {/* Messages scroll */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px 8px' }}>
+        <div className="coach-chat-pad" style={{ flex: 1, overflowY: 'auto', padding: '24px 32px 8px' }}>
           {isEmpty ? (
             <EmptyChat firstName={firstName} welcomeMessage={welcomeMessage} onSuggest={text => { setInput(text); send(text) }} />
           ) : (
@@ -429,7 +453,7 @@ export default function CoachClient({
         )}
 
         {/* Input bar */}
-        <div style={{ padding: '12px 32px 16px', background: 'var(--cream-50)', borderTop: '1px solid var(--cream-200)', flexShrink: 0 }}>
+        <div className="coach-input-area" style={{ padding: '12px 32px 16px', background: 'var(--cream-50)', borderTop: '1px solid var(--cream-200)', flexShrink: 0 }}>
           <div style={{
             display: 'flex', alignItems: 'flex-end', gap: 8,
             background: '#fff', borderRadius: 16,
