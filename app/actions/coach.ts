@@ -1,6 +1,51 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+
+export type LogDraft = {
+  meal_name: string
+  meal_type: string
+  calories: number
+  protein_g: number
+  carbs_g: number
+  fat_g: number
+}
+
+export async function logMealFromCoach(draft: LogDraft, clientTz: string, clientDate: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  if (!draft.meal_name?.trim()) return { error: 'Missing meal name.' }
+  const allowedTypes = new Set(['breakfast', 'lunch', 'dinner', 'snack', 'beverage'])
+  const mealType = allowedTypes.has(draft.meal_type) ? draft.meal_type : 'snack'
+
+  // Compute the user's local date — prefer their tz, fall back to client-sent date
+  let logDate = clientDate
+  if (clientTz) {
+    try { logDate = new Date().toLocaleDateString('en-CA', { timeZone: clientTz }) } catch { /* fall back */ }
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(logDate)) logDate = new Date().toISOString().split('T')[0]
+
+  const { error } = await supabase.from('meal_logs').insert({
+    user_id: user.id,
+    log_date: logDate,
+    meal_type: mealType,
+    meal_name: draft.meal_name.trim().slice(0, 200),
+    ingredients: JSON.stringify([]),
+    calories: draft.calories ?? null,
+    protein_g: draft.protein_g ?? null,
+    carbs_g: draft.carbs_g ?? null,
+    fat_g: draft.fat_g ?? null,
+    source: 'coach',
+  })
+
+  if (error) return { error: error.message }
+  revalidatePath('/log')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
 
 export async function getOrCreateThread() {
   const supabase = await createClient()

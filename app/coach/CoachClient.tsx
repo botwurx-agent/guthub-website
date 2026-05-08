@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useTransition } from 'react'
 import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown, Pencil, Trash2, Check, CalendarPlus, ChevronLeft, ChevronRight, Mic } from 'lucide-react'
-import { startNewThread, getThreadMessages, renameThread, deleteThread, savePlanFromCoach } from '@/app/actions/coach'
+import { startNewThread, getThreadMessages, renameThread, deleteThread, savePlanFromCoach, logMealFromCoach } from '@/app/actions/coach'
+import type { LogDraft } from '@/app/actions/coach'
 
 type Message = {
   id?: string
@@ -67,6 +68,10 @@ export default function CoachClient({
   const [planConflicts, setPlanConflicts] = useState<number | null>(null)
   const [savingPlan, setSavingPlan] = useState(false)
   const [planSaved, setPlanSaved] = useState(false)
+  const [logDraft, setLogDraft] = useState<LogDraft | null>(null)
+  const [loggingMeal, setLoggingMeal] = useState(false)
+  const [mealLogged, setMealLogged] = useState(false)
+  const [logError, setLogError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
@@ -188,6 +193,11 @@ export default function CoachClient({
                 setPlanConflicts(null)
                 setPlanSaved(false)
               }
+              if (payload.logDraft) {
+                setLogDraft(payload.logDraft)
+                setMealLogged(false)
+                setLogError(null)
+              }
             }
             if (payload.error) setError(payload.error)
           } catch {}
@@ -233,6 +243,18 @@ export default function CoachClient({
     } else {
       setPlanSaved(true)
     }
+  }
+
+  async function handleLogMeal() {
+    if (!logDraft || loggingMeal || mealLogged) return
+    setLoggingMeal(true)
+    setLogError(null)
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const date = new Date().toLocaleDateString('en-CA')
+    const result = await logMealFromCoach(logDraft, tz, date)
+    setLoggingMeal(false)
+    if (result?.error) { setLogError(result.error); return }
+    setMealLogged(true)
   }
 
   function startEditing(t: Thread) {
@@ -378,6 +400,15 @@ export default function CoachClient({
                   onSkip={() => handleSavePlan('skip')}
                 />
               )}
+              {logDraft && !streaming && (
+                <LogDraftCard
+                  draft={logDraft}
+                  saving={loggingMeal}
+                  saved={mealLogged}
+                  error={logError}
+                  onLog={handleLogMeal}
+                />
+              )}
             </>
           )}
           <div ref={bottomRef} />
@@ -471,6 +502,62 @@ export default function CoachClient({
 }
 
 // ── Meal plan draft save card ────────────────────────────────────────────────
+function LogDraftCard({ draft, saving, saved, error, onLog }: {
+  draft: LogDraft
+  saving: boolean
+  saved: boolean
+  error: string | null
+  onLog: () => void
+}) {
+  const mealTypeLabel = draft.meal_type.charAt(0).toUpperCase() + draft.meal_type.slice(1)
+  return (
+    <div style={{
+      margin: '16px 0', padding: '18px 20px', borderRadius: 14,
+      background: 'var(--terracotta-50)', border: '1px solid var(--terracotta-100)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <Utensils size={15} color="var(--terracotta-500)" />
+        <span style={{
+          fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+          color: 'var(--terracotta-500)',
+        }}>Log this meal</span>
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-500)', marginBottom: 4 }}>
+        {mealTypeLabel}
+      </div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-900)', marginBottom: 8, lineHeight: 1.35 }}>
+        {draft.meal_name}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, fontSize: 12.5, color: 'var(--ink-600)', marginBottom: 14 }}>
+        <span><b style={{ color: 'var(--ink-900)' }}>{draft.calories}</b> kcal</span>
+        <span><b style={{ color: 'var(--ink-900)' }}>{draft.protein_g}g</b> protein</span>
+        <span><b style={{ color: 'var(--ink-900)' }}>{draft.carbs_g}g</b> carbs</span>
+        <span><b style={{ color: 'var(--ink-900)' }}>{draft.fat_g}g</b> fat</span>
+      </div>
+      {error && (
+        <div style={{ fontSize: 12.5, color: '#b4422c', marginBottom: 10 }}>{error}</div>
+      )}
+      <button
+        onClick={onLog}
+        disabled={saving || saved}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          padding: '8px 16px', borderRadius: 999, border: 'none',
+          background: saved ? 'var(--forest-400)' : 'var(--terracotta-400)',
+          color: '#fff', fontSize: 13, fontWeight: 600,
+          cursor: saving || saved ? 'default' : 'pointer',
+          fontFamily: 'var(--font-body)',
+          opacity: saving ? 0.8 : 1,
+          transition: 'background 160ms',
+        }}>
+        {saving ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Logging…</>
+          : saved ? <><Check size={13} /> Logged for today</>
+          : <><Plus size={13} /> Log to today</>}
+      </button>
+    </div>
+  )
+}
+
 function MealPlanDraftCard({ slots, startOffset, conflicts, saving, saved, onOffsetChange, onSave, onReplace, onSkip }: {
   slots: PlanSlot[]
   startOffset: number
