@@ -106,13 +106,9 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
     grouped.get(item.logDate)!.push(item)
   }
 
-  const yesterday = daysAgoInTz(tz, 1)
   const timeline: TimelineDay[] = []
   for (const [date, items] of grouped) {
-    const label = date === today ? 'Today'
-      : date === yesterday ? 'Yesterday'
-      : new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-    timeline.push({ label, dateStr: date, items })
+    timeline.push({ label: date, dateStr: date, items })
   }
 
   const weekStats: WeekStats = {
@@ -132,7 +128,6 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
     <LogPageClient
       initialType={type ?? ''}
       userId={user.id}
-      today={today}
       timeline={timeline}
       weekStats={weekStats}
       currentLbs={currentLbs}

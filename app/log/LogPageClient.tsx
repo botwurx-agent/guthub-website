@@ -130,11 +130,10 @@ function StatRow({ label, sub, val, trend }: { label: string; sub: string; val: 
 }
 
 export default function LogPageClient({
-  initialType, userId, today, timeline, weekStats, currentLbs, goalLbs, waterGlasses,
+  initialType, userId, timeline, weekStats, currentLbs, goalLbs, waterGlasses,
 }: {
   initialType: string
   userId: string
-  today: string
   timeline: TimelineDay[]
   weekStats: WeekStats
   currentLbs: number | null
@@ -142,6 +141,15 @@ export default function LogPageClient({
   waterGlasses: number
 }) {
   const router = useRouter()
+  // Compute today/yesterday in the browser so the user's local timezone is used
+  const clientToday     = new Date().toLocaleDateString('en-CA')
+  const clientYesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA')
+
+  function dayLabel(dateStr: string) {
+    if (dateStr === clientToday)     return 'Today'
+    if (dateStr === clientYesterday) return 'Yesterday'
+    return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+  }
   const [filter, setFilter] = useState<FilterId>('all')
   const [activeForm, setActiveForm] = useState<FormId | null>(
     (initialType && initialType !== 'all') ? initialType as FormId : null
@@ -234,10 +242,12 @@ export default function LogPageClient({
                 return (
                   <div key={day.dateStr} style={{ paddingTop: 20, paddingBottom: 8 }}>
                     <div style={{ marginBottom: 12 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-900)' }}>{day.label}</div>
-                      <div style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 1 }}>
-                        {new Date(day.dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-900)' }}>{dayLabel(day.dateStr)}</div>
+                      {day.dateStr !== clientToday && day.dateStr !== clientYesterday && (
+                        <div style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 1 }}>
+                          {new Date(day.dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                        </div>
+                      )}
                     </div>
                     {visible.map(item => <EventRow key={item.id} item={item} />)}
                   </div>
@@ -287,7 +297,7 @@ export default function LogPageClient({
                 {activeForm === 'photo-meal' && <LogMealPhoto onSuccess={handleSuccess} />}
                 {activeForm === 'symptom' && <LogSymptom onSuccess={handleSuccess} />}
                 {activeForm === 'bm'      && <LogBM onSuccess={handleSuccess} />}
-                {activeForm === 'water'   && <LogWater userId={userId} today={today} currentGlasses={waterGlasses} onSuccess={handleSuccess} />}
+                {activeForm === 'water'   && <LogWater userId={userId} today={clientToday} currentGlasses={waterGlasses} onSuccess={handleSuccess} />}
                 {activeForm === 'weight'  && <LogWeight currentLbs={currentLbs} goalLbs={goalLbs} onSuccess={handleSuccess} />}
                 {activeForm === 'note'    && <LogNote onSuccess={handleSuccess} />}
               </div>

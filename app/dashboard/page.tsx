@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { getUserTimezone, todayInTz, formatTimeInTz } from '@/lib/timezone'
+import { getUserTimezone, todayInTz } from '@/lib/timezone'
+import ClientTime from '@/components/app/ClientTime'
 import { computeGutScore, gutScoreLabel } from '@/lib/gut-score'
 import Link from 'next/link'
 import {
@@ -158,7 +159,7 @@ export default async function DashboardPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {meals.map(meal => (
-                  <MealRow key={meal.id} meal={meal} mealTypeLabel={mealTypeLabel} tz={tz} />
+                  <MealRow key={meal.id} meal={meal} mealTypeLabel={mealTypeLabel} />
                 ))}
               </div>
             )}
@@ -259,7 +260,7 @@ export default async function DashboardPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {todaySymptoms.slice(0, 3).map((s, i) => (
-                  <SymptomRow key={i} symptom={s} tz={tz} />
+                  <SymptomRow key={i} symptom={s} />
                 ))}
               </div>
             )}
@@ -349,15 +350,13 @@ function DCard({ children, style }: { children: React.ReactNode; style?: React.C
   )
 }
 
-function MealRow({ meal, mealTypeLabel, tz }: {
+function MealRow({ meal, mealTypeLabel }: {
   meal: { meal_name: string; meal_type: string | null; calories: number | null; protein_g: number | null; carbs_g: number | null; fat_g: number | null; logged_at: string }
   mealTypeLabel: Record<string, string>
-  tz: string
 }) {
-  const time = formatTimeInTz(meal.logged_at, tz)
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid var(--cream-100)' }}>
-      <div style={{ fontSize: 12, color: 'var(--ink-400)', minWidth: 52, paddingTop: 2, fontVariantNumeric: 'tabular-nums' }}>{time}</div>
+      <div style={{ fontSize: 12, color: 'var(--ink-400)', minWidth: 52, paddingTop: 2, fontVariantNumeric: 'tabular-nums' }}><ClientTime iso={meal.logged_at} /></div>
       <div style={{
         width: 32, height: 32, borderRadius: 8, flexShrink: 0,
         background: 'var(--cream-100)', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -396,10 +395,9 @@ function MacroRow({ label, cur, goal, color }: { label: string; cur: number; goa
   )
 }
 
-function SymptomRow({ symptom, tz }: { symptom: { symptom_type: string; severity: number; logged_at: string }; tz: string }) {
+function SymptomRow({ symptom }: { symptom: { symptom_type: string; severity: number; logged_at: string } }) {
   const Icon = symptom.severity >= 7 ? Frown : symptom.severity >= 4 ? Meh : Smile
   const iconColor = symptom.severity >= 7 ? 'var(--terracotta-500)' : symptom.severity >= 4 ? '#C98A1E' : 'var(--forest-400)'
-  const time = formatTimeInTz(symptom.logged_at, tz)
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
       <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--cream-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -407,7 +405,7 @@ function SymptomRow({ symptom, tz }: { symptom: { symptom_type: string; severity
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-900)', textTransform: 'capitalize' }}>{symptom.symptom_type}</div>
-        <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 1 }}>{time} · severity {symptom.severity}/10</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 1 }}><ClientTime iso={symptom.logged_at} /> · severity {symptom.severity}/10</div>
       </div>
     </div>
   )
