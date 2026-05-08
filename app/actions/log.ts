@@ -193,6 +193,53 @@ export async function deleteMeal(mealId: string) {
   return { success: true }
 }
 
+// ─── Re-log meal (quick add same meal to today) ──────────────────────────
+export async function reLogMeal(mealId: string, todayDate: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const { data: orig, error: fetchErr } = await supabase
+    .from('meal_logs')
+    .select('user_id, meal_name, meal_type, ingredients, calories, protein_g, carbs_g, fat_g')
+    .eq('id', mealId)
+    .single()
+
+  if (fetchErr || !orig) return { error: 'Meal not found.' }
+  if (orig.user_id !== user.id) return { error: 'Not authorized.' }
+
+  const { error: insertErr } = await supabase.from('meal_logs').insert({
+    user_id: user.id,
+    log_date: todayDate,
+    meal_type: orig.meal_type,
+    meal_name: orig.meal_name,
+    ingredients: orig.ingredients,
+    calories: orig.calories,
+    protein_g: orig.protein_g,
+    fat_g: orig.fat_g,
+    carbs_g: orig.carbs_g,
+    source: 'manual',
+  })
+  if (insertErr) return { error: insertErr.message }
+
+  const { data: existing } = await supabase
+    .from('daily_records')
+    .select('calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g')
+    .eq('user_id', user.id).eq('record_date', todayDate).single()
+
+  await supabase.from('daily_records').upsert({
+    user_id: user.id, record_date: todayDate,
+    calories_consumed: (existing?.calories_consumed ?? 0) + (orig.calories ?? 0),
+    protein_consumed_g: (existing?.protein_consumed_g ?? 0) + (orig.protein_g ?? 0),
+    carbs_consumed_g: (existing?.carbs_consumed_g ?? 0) + (orig.carbs_g ?? 0),
+    fat_consumed_g: (existing?.fat_consumed_g ?? 0) + (orig.fat_g ?? 0),
+  }, { onConflict: 'user_id,record_date' })
+
+  revalidatePath('/dashboard')
+  revalidatePath('/log')
+  return { success: true }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────
 function getToday() { return new Date().toISOString().split('T')[0] }
 function localDate(formData: FormData) {

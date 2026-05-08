@@ -4,9 +4,9 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Utensils, Frown, Circle, Droplets, Scale, StickyNote,
-  Camera, Sparkles, TrendingDown, TrendingUp, Trash2,
+  Camera, Sparkles, TrendingDown, TrendingUp, Trash2, RotateCcw, Check,
 } from 'lucide-react'
-import { deleteMeal } from '@/app/actions/log'
+import { deleteMeal, reLogMeal } from '@/app/actions/log'
 import LogMeal from '@/components/app/log/LogMeal'
 import LogMealPhoto from '@/components/app/log/LogMealPhoto'
 import LogSymptom from '@/components/app/log/LogSymptom'
@@ -53,18 +53,30 @@ function formatTime(iso: string) {
   return `${h}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
-function EventRow({ item, onDelete }: {
+function EventRow({ item, onDelete, onLogAgain }: {
   item: TimelineDay['items'][number]
   onDelete?: (id: string) => void
+  onLogAgain?: (id: string) => Promise<void>
 }) {
   const style = KIND_STYLE[item.kind] ?? KIND_STYLE.note
   const Icon = KIND_ICON[item.kind] ?? StickyNote
   const [confirming, setConfirming] = useState(false)
   const [pending, startTransition] = useTransition()
+  const [logging, setLogging] = useState(false)
+  const [logged, setLogged] = useState(false)
 
   function handleDelete() {
     if (!onDelete) return
     startTransition(() => onDelete(item.id))
+  }
+
+  async function handleLogAgain() {
+    if (!onLogAgain || logging) return
+    setLogging(true)
+    await onLogAgain(item.id)
+    setLogging(false)
+    setLogged(true)
+    setTimeout(() => setLogged(false), 1800)
   }
 
   return (
@@ -92,6 +104,24 @@ function EventRow({ item, onDelete }: {
         }}>{item.title}</div>
         <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 1 }}>{item.meta}</div>
       </div>
+      {onLogAgain && !confirming && (
+        <button
+          onClick={handleLogAgain}
+          disabled={logging}
+          aria-label="Log this meal again for today"
+          title={logged ? 'Logged for today' : 'Log again for today'}
+          style={{
+            background: logged ? 'rgba(111,148,119,0.14)' : 'none',
+            border: 'none', padding: 6, borderRadius: 6,
+            cursor: logging ? 'wait' : 'pointer',
+            color: logged ? '#3F6A4A' : 'var(--ink-400)',
+            flexShrink: 0, display: 'flex', alignItems: 'center',
+            transition: 'all 160ms',
+          }}
+        >
+          {logged ? <Check size={14} /> : <RotateCcw size={14} />}
+        </button>
+      )}
       {onDelete && (
         confirming ? (
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
@@ -318,6 +348,13 @@ export default function LogPageClient({
     router.refresh()
   }
 
+  async function handleLogAgain(id: string) {
+    const today = new Date().toLocaleDateString('en-CA')
+    const res = await reLogMeal(id, today)
+    if (res?.error) { alert(res.error); return }
+    router.refresh()
+  }
+
   const totalItems = timeline.reduce((s, d) => s + d.items.length, 0)
   const summaryParts = [
     weekStats.meals ? `${weekStats.meals} meal${weekStats.meals !== 1 ? 's' : ''}` : null,
@@ -412,6 +449,7 @@ export default function LogPageClient({
                         key={item.id}
                         item={item}
                         onDelete={item.kind === 'meal' ? handleDeleteMeal : undefined}
+                        onLogAgain={item.kind === 'meal' ? handleLogAgain : undefined}
                       />
                     ))}
                   </div>
