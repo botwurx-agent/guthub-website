@@ -48,9 +48,10 @@ All env vars are set in Vercel. Supabase redirect URL `https://guthub-website.ve
 - After email auth: `window.location.href = '/dashboard'`
 - Server actions in `app/actions/auth.ts` exist but are NOT used by AuthModal — they were unreliable
 
-## Supabase migrations (both already run in production)
+## Supabase migrations (all run in production)
 - `supabase/migrations/001_initial_schema.sql` — 18 tables, RLS, storage buckets, triggers
 - `supabase/migrations/002_stripe_helpers.sql` — `increment_founding_counter()` RPC
+- `supabase/migrations/005_beverage_meal_type.sql` — adds `beverage` to `meal_logs_meal_type_check` constraint
 
 ## Routes / pages
 
@@ -83,16 +84,18 @@ All env vars are set in Vercel. Supabase redirect URL `https://guthub-website.ve
 ### Server actions
 - `app/actions/auth.ts` — signUp, signIn, signOut, signInWithGoogle, resetPassword (NOT used by AuthModal)
 - `app/actions/onboarding.ts` — saveProfileStep, completeOnboarding (AI macro calc) — USED by onboarding page
-- `app/actions/log.ts` — logWater, logWeight, logSymptom, logBM, logNote, logMeal
-- `app/actions/coach.ts` — getOrCreateThread, getThreadMessages, startNewThread, getThreadList
+- `app/actions/log.ts` — logWater, logWeight, logSymptom, logBM, logNote, logMeal. All use `localDate(formData)` helper — reads client-sent `log_date` field (YYYY-MM-DD) so timezone is always the user's local date, not UTC.
+- `app/actions/coach.ts` — getOrCreateThread, getThreadMessages, startNewThread, getThreadList, **renameThread**, **deleteThread**, **savePlanFromCoach** (check/replace/skip modes for conflict-safe meal plan saves)
 
 ### Key libs
 - `lib/ai-config.ts` — AI_MODEL, AI_MODEL_VISION, TEMP constants
 - `lib/stripe.ts` — Stripe client + PLANS config (API version: `2026-04-22.dahlia`)
 - `lib/gut-score.ts` — computeGutScore(), gutScoreLabel()
-- `lib/coach-context.ts` — 4-layer AI context builder
+- `lib/coach-context.ts` — comprehensive AI context builder: all intake fields (nickname, eating_style, allergens, primary_goals, sleep_quality, energy_level, ed_history, etc.), water logs, note_logs, meal_plan_slots, symptom logs with onset_minutes
 - `lib/supabase/server.ts` — createClient(), createServiceClient()
 - `lib/supabase/client.ts` — browser createClient()
+- `lib/timezone.ts` — getUserTimezone(), todayInTz(), daysAgoInTz(), formatTimeInTz()
+- `components/app/ClientTime.tsx` — `'use client'` component that renders ISO timestamp in user's local timezone
 
 ## Primitives: `components/ui.tsx` exports `Button`, `Badge`, `Eyebrow`, `Reveal`
 
@@ -108,7 +111,7 @@ Reference these when building/rebuilding app screens:
 - `app/app.css` — all component CSS classes used in mockups
 - `app/components/Icon.jsx` — custom SVG icons (we use lucide-react instead)
 
-## What's been built and confirmed working (as of 2026-05-07)
+## What's been built and confirmed working (as of 2026-05-08)
 
 ### ✅ Completed & live
 - **Marketing site** — full homepage, features, pricing, about pages
@@ -121,12 +124,28 @@ Reference these when building/rebuilding app screens:
   - Step 4: **goals chips** (8 options, multi-select max 3) + activity level chips + specific concerns + prior RD chips
   - Step 5: **sleep quality chips** (Great/Pretty good/So-so/Poorly) + energy level chips + stress 1-10 slider + notes
   - Step 6: finish/confirm + AI macro calculation on submit
-- **Dashboard** — gut score ring, macro progress bars, weight, water tracking
-- **Log** — tabbed: meal, symptom, BM, water, weight, note
-- **Coach** — SSE streaming AI chat with image upload, thread management
+- **Dashboard** — gut score ring, macro progress bars, weight, water tracking. Timestamps rendered via `<ClientTime>` (user's local TZ).
+- **Log** — tabbed: meal (+ Beverage chip), symptom, BM, water, weight, note. All log forms send `log_date` client-side so UTC server clock never determines the date.
+- **Coach** — SSE streaming AI chat with image upload:
+  - Thread sidebar with **inline rename** (pencil icon) and **delete** (trash icon)
+  - **Personalized welcome message** built from intake profile (conditions, goals, eating style)
+  - **Full intake context** passed to AI (all profile fields, water/notes/meal plan history)
+  - **Empathetic/comforting tone** tuned in system prompt
+  - **App page links** — coach can reference Today/Log/Plan/Insights/Settings using `[label](/path)` markdown; rendered as terracotta anchors
+  - **Save to Planner card** — when coach drafts a meal plan, a save card appears with `← Tomorrow →` start date picker (offset 0–30 days), conflict detection, and Replace / Add to empty slots only options
+  - **Auto-title** — after first exchange, AI generates a 4–7 word thread title automatically
 - **Meal Planner** — AI 7-day week grid, generate/swap/accept slots
 - **Insights** — SVG line charts for gut score + weight trends, symptom frequency, food-symptom correlations, AI analysis
 - **Stripe** — 3-tier checkout with 7-day trial, webhook, customer portal
+
+### Known gotchas & important fixes applied
+- **gpt-5-mini does NOT support `max_tokens`** — removed from `app/api/coach/stream/route.ts`
+- **Timezone for log dates**: `new Date()` on Vercel server = UTC. Fix: all log forms set `log_date` via `new Date().toLocaleDateString('en-CA')` client-side; server action reads it with `localDate(formData)` helper.
+- **Timezone for display labels**: "Today" / "Yesterday" computed in `LogPageClient.tsx` using `const _yd = new Date(); _yd.setDate(_yd.getDate() - 1)` — NOT `Date.now() - 86400000` (DST-unsafe).
+- **`x-vercel-ip-timezone` header** is only reliable at Edge runtime, not serverless functions. Used only for DB query range in `app/log/page.tsx` and `app/dashboard/page.tsx`; never for display labels.
+- **Beverage meal type**: DB constraint updated via `supabase/migrations/005_beverage_meal_type.sql`. Chip row uses `flexWrap: 'wrap'` to prevent overflow.
+- **Coach context** was reading wrong field names (`primary_goal` → `primary_goals`, `allergies` → `allergens`). Fixed in `lib/coach-context.ts`.
+- **`savePlanFromCoach` orphaned code**: old `const { error }` block removed after rewrite.
 
 ### 🔲 App pages not yet redesigned to match design handoff
 Working code exists but UI doesn't match the JSX mockups in `Guthub_app_design_handoff/`:
