@@ -106,6 +106,7 @@ export default function CommunityClient({
   const [newTag, setNewTag] = useState('General')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const filteredPosts = posts.filter(p => {
     if (activeTab !== 'all') {
@@ -154,23 +155,26 @@ export default function CommunityClient({
   async function submitPost() {
     if (!newTitle.trim() || !newBody.trim()) return
     setSubmitting(true)
+    setSubmitError(null)
     const { data: inserted, error } = await supabase
       .from('community_posts')
       .insert({ user_id: userId, title: newTitle.trim(), body: newBody.trim(), tag: newTag })
       .select('id, user_id, title, body, tag, pinned, like_count, comment_count, created_at, profiles!community_posts_user_id_fkey(name)')
       .single()
     setSubmitting(false)
-    if (!error && inserted) {
-      setPosts(prev => [inserted as unknown as Post, ...prev])
-      setSubmitted(true)
-      setTimeout(() => {
-        setShowShareModal(false)
-        setSubmitted(false)
-        setNewTitle('')
-        setNewBody('')
-        setNewTag('General')
-      }, 1800)
+    if (error || !inserted) {
+      setSubmitError(error?.message ?? 'Could not post — please try again.')
+      return
     }
+    setPosts(prev => [inserted as unknown as Post, ...prev])
+    setSubmitted(true)
+    setTimeout(() => {
+      setShowShareModal(false)
+      setSubmitted(false)
+      setNewTitle('')
+      setNewBody('')
+      setNewTag('General')
+    }, 1800)
   }
 
   return (
@@ -461,6 +465,15 @@ export default function CommunityClient({
                     </div>
                   </div>
                 </div>
+                {submitError && (
+                  <div style={{
+                    marginTop: 14, padding: '10px 12px', borderRadius: 8,
+                    background: 'rgba(180,66,44,0.08)', border: '1px solid rgba(180,66,44,0.2)',
+                    color: 'var(--error)', fontSize: 13, lineHeight: 1.4,
+                  }}>
+                    {submitError}
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
                   <button
                     onClick={() => setShowShareModal(false)}

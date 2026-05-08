@@ -162,5 +162,5 @@ CREATE POLICY "community_group_members_delete" ON community_group_members
 INSERT INTO community_groups (name, description, member_count) VALUES
   ('Low-FODMAP kitchen',  'Recipes and grocery tips for the low-FODMAP elimination diet', 3240),
   ('Reflux recovery',     'Managing GERD, LPR, and acid reflux through diet and lifestyle', 1890),
-  ('Midlife metabolism',  'Gut health changes in your 40s and 50s — what's normal, what to do', 2104),
+  ('Midlife metabolism',  'Gut health changes in your 40s and 50s', 2104),
   ('SIBO survivors',      'Support and strategies for small intestinal bacterial overgrowth', 876);
