@@ -5,7 +5,7 @@ import { Sparkles } from 'lucide-react'
 import { logMeal } from '@/app/actions/log'
 import { SuccessBanner, ErrorBanner, Field, Input, Textarea, SubmitBtn } from './shared'
 
-const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack']
+const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack', 'beverage']
 
 type Macros = { calories: string; protein: string; carbs: string; fat: string }
 

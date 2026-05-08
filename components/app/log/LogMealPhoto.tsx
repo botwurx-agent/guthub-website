@@ -5,7 +5,7 @@ import { Camera, Upload, X, Sparkles, ImagePlus, Loader2 } from 'lucide-react'
 import { logMeal } from '@/app/actions/log'
 import { SuccessBanner, ErrorBanner, Field, Input, SubmitBtn } from './shared'
 
-const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack']
+const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack', 'beverage']
 
 type ImageData = { base64: string; type: string; preview: string }
 type Macros = { meal_name: string; calories: string; protein: string; carbs: string; fat: string }
