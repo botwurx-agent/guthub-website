@@ -71,15 +71,15 @@ export async function logBM(formData: FormData) {
   if (!user) return { error: 'Not authenticated.' }
 
   const bristolType = parseInt(formData.get('bristol_type') as string)
-  const urgency = formData.get('urgency') ? parseInt(formData.get('urgency') as string) : null
-  const pain = formData.get('pain') ? parseInt(formData.get('pain') as string) : null
   const notes = (formData.get('notes') as string) || null
+  const flagsRaw = formData.get('flags') as string | null
+  const flags = flagsRaw ? JSON.parse(flagsRaw) as string[] : []
 
   if (!bristolType || bristolType < 1 || bristolType > 7) return { error: 'Please select a Bristol type.' }
 
   const { error } = await supabase.from('bm_logs').insert({
     user_id: user.id, log_date: localDate(formData),
-    bristol_type: bristolType, urgency, pain, notes,
+    bristol_type: bristolType, flags, notes,
   })
 
   if (error) return { error: error.message }

@@ -489,6 +489,7 @@ export default function LogPageClient({
                 <QuickAddTile icon={Camera} label="Photo meal" onClick={() => setActiveForm('photo-meal')} color="#DB6F56" />
                 <QuickAddTile icon={Utensils} label="Type meal" onClick={() => setActiveForm('meal')} color="#DB6F56" />
                 <QuickAddTile icon={Frown} label="Symptom" onClick={() => setActiveForm('symptom')} color="#C98A1E" />
+                <QuickAddTile icon={Circle} label="Bowel" onClick={() => setActiveForm('bm')} color="#6F9477" />
                 <QuickAddTile icon={Scale} label="Weight" onClick={() => setActiveForm('weight')} color="#9D978A" />
                 <QuickAddTile icon={Droplets} label="Water" onClick={() => setActiveForm('water')} color="#6FB8A8" />
                 <QuickAddTile icon={StickyNote} label="Note" onClick={() => setActiveForm('note')} color="#7A7468" />
