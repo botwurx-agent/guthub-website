@@ -300,8 +300,13 @@ button { font-family: var(--font-body); }
 
   /* ── Plan page ── */
   .plan-main-grid  { grid-template-columns: 1fr !important; }
-  .plan-week-wrap  { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; width: 100% !important; }
-  .plan-week-grid  { min-width: 0 !important; }
+  .plan-week-wrap  { width: 100% !important; min-width: 0 !important; }
+  .plan-week-grid  {
+    min-width: 0 !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+  }
+  .plan-week-grid > button { min-width: 0 !important; padding: 10px 2px !important; }
   .plan-stats-grid { grid-template-columns: 1fr 1fr !important; }
   .plan-hero-grid  { grid-template-columns: 1fr !important; }
   .plan-recipe-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
