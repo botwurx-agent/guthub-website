@@ -298,32 +298,51 @@ button { font-family: var(--font-body); }
   }
 
   /* ── Log page ── */
-  .log-main-grid   { grid-template-columns: 1fr !important; }
-  .log-stat-chips  { grid-template-columns: 1fr 1fr !important; }
-  .log-macro-pair  { grid-template-columns: 1fr !important; }
+  .log-main-grid   { grid-template-columns: minmax(0, 1fr) !important; }
+  .log-stat-chips  { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+  .log-macro-pair  { grid-template-columns: minmax(0, 1fr) !important; }
 
   /* ── Plan page ── */
-  .plan-main-grid  { grid-template-columns: 1fr !important; }
+  /* CRITICAL: must be minmax(0, 1fr) — bare `1fr` is `minmax(auto, 1fr)` which lets
+     the column expand to fit content's intrinsic min-width, breaking the layout. */
+  .plan-main-grid  { grid-template-columns: minmax(0, 1fr) !important; }
   /* Page header: stack vertically so right-side controls don't overflow */
   .plan-page-header { flex-direction: column !important; align-items: flex-start !important; }
   .plan-page-header-actions { flex-direction: row !important; flex-wrap: wrap !important; width: 100% !important; }
   /* Week strip card header: allow wrapping so nav doesn't overflow narrow screens */
   .plan-week-strip-header { flex-wrap: wrap !important; gap: 8px !important; }
-  .plan-week-wrap  { width: 100% !important; min-width: 0 !important; overflow: hidden !important; }
-  .plan-week-grid  {
+  /* Week strip: horizontal scroll instead of squeezing 7 cards into ~358px.
+     Per-card width fits the narrowest "MON 4" label cleanly. */
+  .plan-week-wrap  {
+    width: 100% !important;
     min-width: 0 !important;
-    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-    gap: 4px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    /* Hide scrollbar but keep scroll functionality */
+    scrollbar-width: none !important;
   }
-  .plan-week-grid > button { min-width: 0 !important; padding: 10px 2px !important; }
-  .plan-stats-grid { grid-template-columns: 1fr 1fr !important; }
-  .plan-hero-grid  { grid-template-columns: 1fr !important; }
-  .plan-recipe-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+  .plan-week-wrap::-webkit-scrollbar { display: none !important; }
+  .plan-week-grid  {
+    display: flex !important;
+    grid-template-columns: none !important;
+    gap: 8px !important;
+    min-width: max-content !important;
+    padding-bottom: 4px !important;
+  }
+  .plan-week-grid > button {
+    min-width: 64px !important;
+    flex: 0 0 auto !important;
+    padding: 12px 8px !important;
+  }
+  .plan-stats-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+  .plan-hero-grid  { grid-template-columns: minmax(0, 1fr) !important; }
+  .plan-recipe-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 20px !important; }
 
   /* ── Insights page ── */
-  .insights-main-grid    { grid-template-columns: 1fr !important; }
-  .insights-chart-pair   { grid-template-columns: 1fr !important; }
-  .insights-symptom-grid { grid-template-columns: 1fr !important; }
+  .insights-main-grid    { grid-template-columns: minmax(0, 1fr) !important; }
+  .insights-chart-pair   { grid-template-columns: minmax(0, 1fr) !important; }
+  .insights-symptom-grid { grid-template-columns: minmax(0, 1fr) !important; }
 
   /* ── Coach page ── */
   .coach-layout          { height: calc(100vh - 64px - 68px) !important; }
