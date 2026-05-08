@@ -298,7 +298,7 @@ export default function LogPageClient({
                 {activeForm === 'photo-meal' && <LogMealPhoto onSuccess={handleSuccess} />}
                 {activeForm === 'symptom' && <LogSymptom onSuccess={handleSuccess} />}
                 {activeForm === 'bm'      && <LogBM onSuccess={handleSuccess} />}
-                {activeForm === 'water'   && <LogWater userId={userId} today={clientToday} currentGlasses={waterGlasses} onSuccess={handleSuccess} />}
+                {activeForm === 'water'   && <LogWater userId={userId} currentGlasses={waterGlasses} onSuccess={handleSuccess} />}
                 {activeForm === 'weight'  && <LogWeight currentLbs={currentLbs} goalLbs={goalLbs} onSuccess={handleSuccess} />}
                 {activeForm === 'note'    && <LogNote onSuccess={handleSuccess} />}
               </div>

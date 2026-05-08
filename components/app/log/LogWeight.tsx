@@ -13,6 +13,7 @@ export default function LogWeight({ currentLbs, goalLbs, onSuccess }: {
 
   function handle(formData: FormData) {
     formData.set('log_date', new Date().toLocaleDateString('en-CA'))
+    formData.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
     setError(null)
     startTransition(async () => {
       const res = await logWeight(formData)

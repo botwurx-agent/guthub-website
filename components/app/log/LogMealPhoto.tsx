@@ -102,6 +102,7 @@ export default function LogMealPhoto({ onSuccess }: { onSuccess: () => void }) {
   function handle(formData: FormData) {
     if (!image) return setError('Please upload a photo first.')
     formData.set('log_date', new Date().toLocaleDateString('en-CA'))
+    formData.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
     formData.set('meal_type', mealType)
     formData.set('meal_name', macros.meal_name || 'Photo meal')
     formData.set('calories', macros.calories)

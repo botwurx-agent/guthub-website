@@ -11,8 +11,8 @@ const PRESETS = [
   { label: '1 litre', ml: 1000 },
 ]
 
-export default function LogWater({ userId, today, currentGlasses, onSuccess }: {
-  userId: string; today: string; currentGlasses: number; onSuccess: () => void
+export default function LogWater({ userId, currentGlasses, onSuccess }: {
+  userId: string; currentGlasses: number; onSuccess: () => void
 }) {
   const [selected, setSelected] = useState<number>(240)
   const [error, setError] = useState<string | null>(null)
@@ -21,8 +21,10 @@ export default function LogWater({ userId, today, currentGlasses, onSuccess }: {
 
   function handle() {
     setError(null)
+    // Compute fresh at click time so we don't depend on stale render-time `today` prop
+    const date = new Date().toLocaleDateString('en-CA')
     startTransition(async () => {
-      const res = await logWater({ userId, date: today, amountMl: selected })
+      const res = await logWater({ userId, date, amountMl: selected })
       if (res?.error) setError(res.error)
       else { setDone(true); setTimeout(onSuccess, 1000) }
     })
