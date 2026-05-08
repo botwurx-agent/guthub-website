@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { computeGutScore } from '@/lib/gut-score'
 import { Sparkles, TrendingUp, TrendingDown, Minus, Download, FileText, ArrowRight, Paperclip, MessageSquare } from 'lucide-react'
@@ -70,7 +71,11 @@ function ConfidencePill({ label, tone }: { label: string; tone: 'bad' | 'warn' |
 }
 
 export default function InsightsClient() {
-  const [tab, setTab]               = useState<'trends' | 'patterns' | 'labs'>('trends')
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab') as 'trends' | 'patterns' | 'labs' | null
+  const [tab, setTab] = useState<'trends' | 'patterns' | 'labs'>(
+    tabParam === 'labs' || tabParam === 'patterns' ? tabParam : 'trends'
+  )
   const [gutScores, setGutScores]   = useState<GutScorePoint[]>([])
   const [weights,   setWeights]     = useState<WeightPoint[]>([])
   const [symptoms,  setSymptoms]    = useState<SymptomLog[]>([])

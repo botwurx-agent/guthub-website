@@ -306,8 +306,8 @@ export default async function DashboardPage() {
             <p style={{ fontSize: 13, lineHeight: 1.55, color: 'rgba(250,245,238,0.88)', margin: '0 0 14px' }}>
               Upload stool tests, food sensitivity panels, or blood work — Coach reads them and explains what to do.
             </p>
-            <Link href="/coach" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 18px', borderRadius: 999, background: 'var(--cream-50)', color: 'var(--forest-700)', fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'var(--font-body)' }}>
-              Upload to Coach
+            <Link href="/insights?tab=labs" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 18px', borderRadius: 999, background: 'var(--cream-50)', color: 'var(--forest-700)', fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'var(--font-body)' }}>
+              Go to Test Reports
             </Link>
           </div>
 
