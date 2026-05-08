@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getUserTimezone, todayInTz, daysAgoInTz } from '@/lib/timezone'
 import LogPageClient from './LogPageClient'
 
 export type TimelineItem = {
@@ -38,8 +39,9 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const today = new Date().toLocaleDateString('en-CA')
-  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toLocaleDateString('en-CA')
+  const tz = await getUserTimezone()
+  const today = todayInTz(tz)
+  const sevenDaysAgo = daysAgoInTz(tz, 7)
 
   const [
     { data: meals },
@@ -104,7 +106,7 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
     grouped.get(item.logDate)!.push(item)
   }
 
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+  const yesterday = daysAgoInTz(tz, 1)
   const timeline: TimelineDay[] = []
   for (const [date, items] of grouped) {
     const label = date === today ? 'Today'

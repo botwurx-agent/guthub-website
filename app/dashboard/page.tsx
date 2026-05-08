@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getUserTimezone, todayInTz, formatTimeInTz } from '@/lib/timezone'
 import { computeGutScore, gutScoreLabel } from '@/lib/gut-score'
 import Link from 'next/link'
 import {
@@ -11,7 +12,8 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const today = new Date().toLocaleDateString('en-CA')
+  const tz = await getUserTimezone()
+  const today = todayInTz(tz)
 
   const [
     { data: profile },
@@ -156,7 +158,7 @@ export default async function DashboardPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {meals.map(meal => (
-                  <MealRow key={meal.id} meal={meal} mealTypeLabel={mealTypeLabel} />
+                  <MealRow key={meal.id} meal={meal} mealTypeLabel={mealTypeLabel} tz={tz} />
                 ))}
               </div>
             )}
@@ -257,7 +259,7 @@ export default async function DashboardPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {todaySymptoms.slice(0, 3).map((s, i) => (
-                  <SymptomRow key={i} symptom={s} />
+                  <SymptomRow key={i} symptom={s} tz={tz} />
                 ))}
               </div>
             )}
@@ -347,11 +349,12 @@ function DCard({ children, style }: { children: React.ReactNode; style?: React.C
   )
 }
 
-function MealRow({ meal, mealTypeLabel }: {
+function MealRow({ meal, mealTypeLabel, tz }: {
   meal: { meal_name: string; meal_type: string | null; calories: number | null; protein_g: number | null; carbs_g: number | null; fat_g: number | null; logged_at: string }
   mealTypeLabel: Record<string, string>
+  tz: string
 }) {
-  const time = new Date(meal.logged_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  const time = formatTimeInTz(meal.logged_at, tz)
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid var(--cream-100)' }}>
       <div style={{ fontSize: 12, color: 'var(--ink-400)', minWidth: 52, paddingTop: 2, fontVariantNumeric: 'tabular-nums' }}>{time}</div>
@@ -393,10 +396,10 @@ function MacroRow({ label, cur, goal, color }: { label: string; cur: number; goa
   )
 }
 
-function SymptomRow({ symptom }: { symptom: { symptom_type: string; severity: number; logged_at: string } }) {
+function SymptomRow({ symptom, tz }: { symptom: { symptom_type: string; severity: number; logged_at: string }; tz: string }) {
   const Icon = symptom.severity >= 7 ? Frown : symptom.severity >= 4 ? Meh : Smile
   const iconColor = symptom.severity >= 7 ? 'var(--terracotta-500)' : symptom.severity >= 4 ? '#C98A1E' : 'var(--forest-400)'
-  const time = new Date(symptom.logged_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  const time = formatTimeInTz(symptom.logged_at, tz)
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
       <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--cream-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
