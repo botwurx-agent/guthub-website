@@ -21,6 +21,7 @@ export async function buildCoachContext(supabase: SupabaseClient, userId: string
     { data: recentMeals },
     { data: recentNotes },
     { data: recentWater },
+    { data: recentSupplements },
     { data: mealPlan },
     { data: historicalSummary },
   ] = await Promise.all([
@@ -32,7 +33,7 @@ export async function buildCoachContext(supabase: SupabaseClient, userId: string
       .select('symptom_type, severity, log_date, onset_minutes, notes')
       .eq('user_id', userId).gte('log_date', fourteenDaysAgo).order('log_date', { ascending: false }).limit(15),
     supabase.from('bm_logs')
-      .select('bristol_type, urgency, pain, log_date, notes')
+      .select('bristol_type, flags, log_date, notes')
       .eq('user_id', userId).gte('log_date', fourteenDaysAgo).order('log_date', { ascending: false }).limit(10),
     supabase.from('weight_logs').select('weight_kg, log_date').eq('user_id', userId).order('log_date', { ascending: false }).limit(14),
     supabase.from('meal_logs')
@@ -40,6 +41,7 @@ export async function buildCoachContext(supabase: SupabaseClient, userId: string
       .eq('user_id', userId).gte('log_date', fourteenDaysAgo).order('log_date', { ascending: false }).limit(25),
     supabase.from('note_logs').select('content, log_date').eq('user_id', userId).order('log_date', { ascending: false }).limit(5),
     supabase.from('water_logs').select('amount_ml, log_date').eq('user_id', userId).gte('log_date', fourteenDaysAgo).order('log_date', { ascending: false }).limit(14),
+    supabase.from('supplement_logs').select('name, dose, with_food, log_date, notes').eq('user_id', userId).gte('log_date', fourteenDaysAgo).order('log_date', { ascending: false }).limit(20),
     supabase.from('meal_plan_slots')
       .select('day_label, slot_label, meal_name, calories, protein_g, carbs_g, fat_g, accepted')
       .eq('user_id', userId).eq('plan_week_start', today).order('day_label').limit(21),
@@ -120,9 +122,11 @@ Water intake today: ${waterToday > 0 ? Math.round(waterToday) + ' ml (' + (water
     : 'No symptoms logged in the last 14 days.'
 
   const bmSummary = recentBMs?.length
-    ? recentBMs.slice(0, 7).map(b =>
-        `${b.log_date}: Bristol type ${b.bristol_type}${b.urgency ? `, urgency ${b.urgency}` : ''}${b.pain ? `, pain ${b.pain}` : ''}${b.notes ? ` — "${b.notes}"` : ''}`
-      ).join('\n')
+    ? recentBMs.slice(0, 7).map(b => {
+        const flagsArr = (b.flags as string[] | null) ?? []
+        const flagsLabel = flagsArr.length ? `, flags: ${flagsArr.join(', ')}` : ''
+        return `${b.log_date}: Bristol type ${b.bristol_type}${flagsLabel}${b.notes ? ` — "${b.notes}"` : ''}`
+      }).join('\n')
     : 'No BMs logged in the last 14 days.'
 
   const weightTrend = recentWeights?.length
@@ -147,6 +151,12 @@ Water intake today: ${waterToday > 0 ? Math.round(waterToday) + ' ml (' + (water
     ? recentNotes.map(n => `${n.log_date}: "${n.content}"`).join('\n')
     : 'No recent notes.'
 
+  const supplementsSummary = recentSupplements?.length
+    ? recentSupplements.slice(0, 12).map(s =>
+        `${s.log_date}: ${s.name}${s.dose ? ` (${s.dose})` : ''}${s.with_food ? ', with food' : ''}${s.notes ? ` — "${s.notes}"` : ''}`
+      ).join('\n')
+    : 'No supplements logged in the last 14 days.'
+
   const logsSection = `## LAST 14 DAYS
 ### Symptoms
 ${symptomSummary}
@@ -162,6 +172,9 @@ ${waterSummary}
 
 ### Recent meals
 ${mealSummary}
+
+### Supplements
+${supplementsSummary}
 
 ### User notes
 ${notesSummary}`

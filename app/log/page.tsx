@@ -4,7 +4,7 @@ import LogPageClient from './LogPageClient'
 
 export type TimelineItem = {
   id: string
-  kind: 'meal' | 'symptom' | 'weight' | 'bm' | 'water' | 'note'
+  kind: 'meal' | 'symptom' | 'weight' | 'bm' | 'water' | 'note' | 'supplement'
   title: string
   meta: string
   loggedAt: string
@@ -64,6 +64,7 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
     { data: bms },
     { data: waters },
     { data: notes },
+    { data: supplements },
     { data: dailyRecord },
     { data: waterLogs },
     { data: macroTarget },
@@ -74,6 +75,7 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
     supabase.from('bm_logs').select('id, bristol_type, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
     supabase.from('water_logs').select('id, amount_ml, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
     supabase.from('note_logs').select('id, content, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
+    supabase.from('supplement_logs').select('id, name, dose, with_food, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
     supabase.from('daily_records').select('current_weight_kg, goal_weight_kg').eq('user_id', user.id).eq('record_date', today).single(),
     supabase.from('water_logs').select('amount_ml').eq('user_id', user.id).eq('log_date', today),
     supabase.from('macro_targets').select('total_calories, protein_g, carbs_g, fat_g').eq('user_id', user.id).order('target_date', { ascending: false }).limit(1).single(),
@@ -110,6 +112,11 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
       id: n.id, kind: 'note' as const, loggedAt: n.logged_at, logDate: n.log_date,
       title: n.content.length > 60 ? n.content.slice(0, 60) + '…' : n.content,
       meta: 'Journal note',
+    })),
+    ...(supplements ?? []).map(s => ({
+      id: s.id, kind: 'supplement' as const, loggedAt: s.logged_at, logDate: s.log_date,
+      title: s.name,
+      meta: [s.dose, s.with_food ? 'with food' : null].filter(Boolean).join(' · ') || 'Supplement',
     })),
   ]
 

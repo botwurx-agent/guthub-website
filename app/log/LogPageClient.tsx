@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Utensils, Frown, Circle, Droplets, Scale, StickyNote,
-  Camera, Sparkles, TrendingDown, TrendingUp, Trash2, RotateCcw, Check,
+  Camera, Sparkles, TrendingDown, TrendingUp, Trash2, RotateCcw, Check, Pill,
 } from 'lucide-react'
 import { deleteMeal, reLogMeal } from '@/app/actions/log'
 import LogMeal from '@/components/app/log/LogMeal'
@@ -14,10 +14,11 @@ import LogBM from '@/components/app/log/LogBM'
 import LogWater from '@/components/app/log/LogWater'
 import LogWeight from '@/components/app/log/LogWeight'
 import LogNote from '@/components/app/log/LogNote'
+import LogSupplement from '@/components/app/log/LogSupplement'
 import type { TimelineDay, WeekStats, TodayMacros, MacroTargets } from './page'
 
-type FilterId = 'all' | 'meal' | 'symptom' | 'weight' | 'note'
-type FormId = 'meal' | 'photo-meal' | 'symptom' | 'bm' | 'water' | 'weight' | 'note'
+type FilterId = 'all' | 'meal' | 'symptom' | 'weight' | 'note' | 'supplement'
+type FormId = 'meal' | 'photo-meal' | 'symptom' | 'bm' | 'water' | 'weight' | 'note' | 'supplement'
 
 const FILTER_TABS: { id: FilterId; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -28,12 +29,13 @@ const FILTER_TABS: { id: FilterId; label: string }[] = [
 ]
 
 const KIND_STYLE: Record<string, { color: string; bg: string }> = {
-  meal:    { color: '#DB6F56', bg: 'rgba(219,111,86,0.12)' },
-  symptom: { color: '#C98A1E', bg: 'rgba(201,138,30,0.12)' },
-  weight:  { color: '#9D978A', bg: 'rgba(157,151,138,0.12)' },
-  bm:      { color: '#6F9477', bg: 'rgba(111,148,119,0.12)' },
-  water:   { color: '#6FB8A8', bg: 'rgba(111,184,168,0.12)' },
-  note:    { color: '#7A7468', bg: 'rgba(122,116,104,0.12)' },
+  meal:       { color: '#DB6F56', bg: 'rgba(219,111,86,0.12)' },
+  symptom:    { color: '#C98A1E', bg: 'rgba(201,138,30,0.12)' },
+  weight:     { color: '#9D978A', bg: 'rgba(157,151,138,0.12)' },
+  bm:         { color: '#6F9477', bg: 'rgba(111,148,119,0.12)' },
+  water:      { color: '#6FB8A8', bg: 'rgba(111,184,168,0.12)' },
+  note:       { color: '#7A7468', bg: 'rgba(122,116,104,0.12)' },
+  supplement: { color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)' },
 }
 
 const KIND_ICON: Record<string, React.ElementType> = {
@@ -43,6 +45,7 @@ const KIND_ICON: Record<string, React.ElementType> = {
   bm: Circle,
   water: Droplets,
   note: StickyNote,
+  supplement: Pill,
 }
 
 function formatTime(iso: string) {
@@ -470,7 +473,7 @@ export default function LogPageClient({
                   (() => {
                     const labels: Record<FormId, string> = {
                       meal: 'Log a meal', 'photo-meal': 'Photo meal', symptom: 'Log a symptom', bm: 'Log bowel movement',
-                      water: 'Log water', weight: 'Log weight', note: 'Add a note',
+                      water: 'Log water', weight: 'Log weight', note: 'Add a note', supplement: 'Log supplement',
                     }
                     return labels[activeForm]
                   })()
@@ -493,6 +496,7 @@ export default function LogPageClient({
                 <QuickAddTile icon={Scale} label="Weight" onClick={() => setActiveForm('weight')} color="#9D978A" />
                 <QuickAddTile icon={Droplets} label="Water" onClick={() => setActiveForm('water')} color="#6FB8A8" />
                 <QuickAddTile icon={StickyNote} label="Note" onClick={() => setActiveForm('note')} color="#7A7468" />
+                <QuickAddTile icon={Pill} label="Supplement" onClick={() => setActiveForm('supplement')} color="#8B5CF6" />
               </div>
             ) : (
               <div>
@@ -502,7 +506,8 @@ export default function LogPageClient({
                 {activeForm === 'bm'      && <LogBM onSuccess={handleSuccess} />}
                 {activeForm === 'water'   && <LogWater userId={userId} currentGlasses={waterGlasses} onSuccess={handleSuccess} />}
                 {activeForm === 'weight'  && <LogWeight currentLbs={currentLbs} goalLbs={goalLbs} onSuccess={handleSuccess} />}
-                {activeForm === 'note'    && <LogNote onSuccess={handleSuccess} />}
+                {activeForm === 'note'       && <LogNote onSuccess={handleSuccess} />}
+                {activeForm === 'supplement' && <LogSupplement onSuccess={handleSuccess} />}
               </div>
             )}
           </div>

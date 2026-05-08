@@ -193,6 +193,30 @@ export async function deleteMeal(mealId: string) {
   return { success: true }
 }
 
+// ─── Supplement ───────────────────────────────────────────────────────────
+export async function logSupplement(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const name = (formData.get('name') as string)?.trim()
+  if (!name) return { error: 'Please enter a supplement name.' }
+
+  const dose = (formData.get('dose') as string)?.trim() || null
+  const withFood = formData.get('with_food') === 'on' || formData.get('with_food') === 'true'
+  const notes = (formData.get('notes') as string)?.trim() || null
+
+  const { error } = await supabase.from('supplement_logs').insert({
+    user_id: user.id, log_date: localDate(formData),
+    name, dose, with_food: withFood, notes,
+  })
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  revalidatePath('/log')
+  return { success: true }
+}
+
 // ─── Re-log meal (quick add same meal to today) ──────────────────────────
 export async function reLogMeal(mealId: string, todayDate: string) {
   const supabase = await createClient()
