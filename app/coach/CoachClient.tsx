@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from 'react'
-import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown, Pencil, Trash2, Check, CalendarPlus } from 'lucide-react'
+import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown, Pencil, Trash2, Check, CalendarPlus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { startNewThread, getThreadMessages, renameThread, deleteThread, savePlanFromCoach } from '@/app/actions/coach'
 
 type Message = {
@@ -63,6 +63,8 @@ export default function CoachClient({
   const [image, setImage] = useState<{ base64: string; type: string; preview: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [mealPlanDraft, setMealPlanDraft] = useState<PlanSlot[] | null>(null)
+  const [planStartOffset, setPlanStartOffset] = useState(0)
+  const [planConflicts, setPlanConflicts] = useState<number | null>(null)
   const [savingPlan, setSavingPlan] = useState(false)
   const [planSaved, setPlanSaved] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -141,6 +143,8 @@ export default function CoachClient({
               }
               if (payload.mealPlanDraft) {
                 setMealPlanDraft(payload.mealPlanDraft)
+                setPlanStartOffset(0)
+                setPlanConflicts(null)
                 setPlanSaved(false)
               }
             }
@@ -174,13 +178,20 @@ export default function CoachClient({
     })
   }
 
-  async function handleSavePlan() {
+  async function handleSavePlan(mode: 'check' | 'replace' | 'skip') {
     if (!mealPlanDraft) return
     setSavingPlan(true)
-    const result = await savePlanFromCoach(mealPlanDraft)
+    const result = await savePlanFromCoach(mealPlanDraft, planStartOffset, mode)
     setSavingPlan(false)
-    if (!result?.error) setPlanSaved(true)
-    else setError(result.error)
+    if (result?.error) { setError(result.error); return }
+    if (mode === 'check') {
+      const conflicts = (result as { conflicts: number }).conflicts ?? 0
+      if (conflicts > 0) { setPlanConflicts(conflicts); return }
+      // No conflicts — go ahead and save
+      await handleSavePlan('replace')
+    } else {
+      setPlanSaved(true)
+    }
   }
 
   function startEditing(t: Thread) {
@@ -316,9 +327,14 @@ export default function CoachClient({
               {mealPlanDraft && !streaming && (
                 <MealPlanDraftCard
                   slots={mealPlanDraft}
+                  startOffset={planStartOffset}
+                  conflicts={planConflicts}
                   saving={savingPlan}
                   saved={planSaved}
-                  onSave={handleSavePlan}
+                  onOffsetChange={v => { setPlanStartOffset(v); setPlanConflicts(null) }}
+                  onSave={() => handleSavePlan('check')}
+                  onReplace={() => handleSavePlan('replace')}
+                  onSkip={() => handleSavePlan('skip')}
                 />
               )}
             </>
@@ -396,48 +412,76 @@ export default function CoachClient({
 }
 
 // ── Meal plan draft save card ────────────────────────────────────────────────
-function MealPlanDraftCard({ slots, saving, saved, onSave }: {
+function MealPlanDraftCard({ slots, startOffset, conflicts, saving, saved, onOffsetChange, onSave, onReplace, onSkip }: {
   slots: PlanSlot[]
+  startOffset: number
+  conflicts: number | null
   saving: boolean
   saved: boolean
+  onOffsetChange: (v: number) => void
   onSave: () => void
+  onReplace: () => void
+  onSkip: () => void
 }) {
   const days = Array.from(new Set(slots.map(s => s.day_index))).sort()
-  const dayLabel = (i: number) => {
+
+  const actualDate = (dayIndex: number) => {
     const d = new Date()
-    d.setDate(d.getDate() + 1 + i)
+    d.setDate(d.getDate() + 1 + startOffset + dayIndex)
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
   }
 
+  const startLabel = () => {
+    const d = new Date()
+    d.setDate(d.getDate() + 1 + startOffset)
+    if (startOffset === 0) return 'Tomorrow'
+    if (startOffset === 1) return 'In 2 days'
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+  }
+
+  const iconBtn = (style?: React.CSSProperties): React.CSSProperties => ({
+    background: 'none', border: '1px solid var(--forest-300)', borderRadius: 6,
+    cursor: 'pointer', color: 'var(--forest-600)', padding: '3px 6px',
+    display: 'flex', alignItems: 'center', ...style,
+  })
+
   return (
     <div style={{
-      margin: '8px 0 16px 44px',
-      borderRadius: 14,
+      margin: '8px 0 16px 44px', borderRadius: 14,
       border: '1.5px solid var(--forest-300)',
-      background: 'var(--forest-50, #f2f7f4)',
-      overflow: 'hidden',
+      background: '#f4f8f5', overflow: 'hidden',
     }}>
       {/* Header */}
-      <div style={{
-        padding: '12px 16px 10px',
-        borderBottom: '1px solid var(--forest-200, #c8ddd1)',
-        display: 'flex', alignItems: 'center', gap: 8,
-      }}>
+      <div style={{ padding: '12px 16px 10px', borderBottom: '1px solid #d4e6da', display: 'flex', alignItems: 'center', gap: 8 }}>
         <CalendarPlus size={16} color="var(--forest-600)" />
         <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--forest-700)' }}>
           {days.length}-day meal plan ready to save
         </span>
-        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--forest-500)' }}>
-          {slots.length} meals · starts tomorrow
+        <span style={{ fontSize: 12, color: 'var(--forest-500)', marginLeft: 'auto' }}>
+          {slots.length} meals
         </span>
       </div>
 
+      {/* Start date picker */}
+      <div style={{ padding: '10px 16px 8px', borderBottom: '1px solid #d4e6da', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 12.5, color: 'var(--ink-600)', fontWeight: 500 }}>Starting:</span>
+        <button style={iconBtn()} onClick={() => onOffsetChange(Math.max(0, startOffset - 1))} disabled={startOffset === 0}>
+          <ChevronLeft size={14} />
+        </button>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--forest-700)', minWidth: 120, textAlign: 'center' }}>
+          {startLabel()}
+        </span>
+        <button style={iconBtn()} onClick={() => onOffsetChange(Math.min(30, startOffset + 1))}>
+          <ChevronRight size={14} />
+        </button>
+      </div>
+
       {/* Meal list */}
-      <div style={{ padding: '10px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ padding: '10px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {days.map(di => (
           <div key={di}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--forest-500)', marginBottom: 4 }}>
-              {dayLabel(di)}
+              {actualDate(di)}
             </div>
             {slots.filter(s => s.day_index === di).map((s, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8, paddingLeft: 4, marginBottom: 3 }}>
@@ -450,28 +494,49 @@ function MealPlanDraftCard({ slots, saving, saved, onSave }: {
         ))}
       </div>
 
-      {/* Action */}
-      <div style={{ padding: '10px 16px 14px' }}>
+      {/* Action area */}
+      <div style={{ padding: '10px 16px 14px', borderTop: '1px solid #d4e6da' }}>
         {saved ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13.5, fontWeight: 600, color: 'var(--forest-600)' }}>
             <Check size={15} />
-            Saved! <a href="/meal-planner" style={{ color: 'var(--terracotta-500)', textDecoration: 'underline', marginLeft: 4 }}>View in Planner →</a>
+            Saved!
+            <a href="/meal-planner" style={{ color: 'var(--terracotta-500)', textDecoration: 'underline', marginLeft: 4 }}>
+              View in Planner →
+            </a>
+          </div>
+        ) : conflicts !== null && conflicts > 0 ? (
+          /* Conflict resolution */
+          <div>
+            <p style={{ fontSize: 13, color: 'var(--ink-700)', margin: '0 0 10px', lineHeight: 1.45 }}>
+              <strong>{conflicts} meal{conflicts > 1 ? 's' : ''}</strong> already exist on these days. What would you like to do?
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                onClick={onReplace}
+                disabled={saving}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, background: 'var(--forest-500)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-body)' }}
+              >
+                {saving ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : null}
+                Replace existing
+              </button>
+              <button
+                onClick={onSkip}
+                disabled={saving}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, background: '#fff', color: 'var(--forest-600)', border: '1.5px solid var(--forest-300)', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-body)' }}
+              >
+                Add to empty slots only
+              </button>
+            </div>
           </div>
         ) : (
+          /* Default save button */
           <button
             onClick={onSave}
             disabled={saving}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              padding: '9px 18px', borderRadius: 10,
-              background: saving ? 'var(--forest-300)' : 'var(--forest-500)',
-              color: '#fff', border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
-              fontSize: 13.5, fontWeight: 600, fontFamily: 'var(--font-body)',
-              transition: 'background 160ms',
-            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 10, background: saving ? 'var(--forest-300)' : 'var(--forest-500)', color: '#fff', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontSize: 13.5, fontWeight: 600, fontFamily: 'var(--font-body)', transition: 'background 160ms' }}
           >
             {saving
-              ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Saving…</>
+              ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Checking…</>
               : <><CalendarPlus size={14} /> Save to Planner</>}
           </button>
         )}

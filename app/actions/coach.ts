@@ -52,23 +52,26 @@ export async function startNewThread() {
   return data
 }
 
-export async function savePlanFromCoach(meals: Array<{
-  day_index: number
-  meal_type: string
-  meal_name: string
-  calories?: number
-  protein_g?: number
-  carbs_g?: number
-  fat_g?: number
-}>) {
+export async function savePlanFromCoach(
+  meals: Array<{
+    day_index: number
+    meal_type: string
+    meal_name: string
+    calories?: number
+    protein_g?: number
+    carbs_g?: number
+    fat_g?: number
+  }>,
+  startOffset: number,           // 0 = tomorrow, 1 = day after, etc.
+  mode: 'check' | 'replace' | 'skip'
+) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated.' }
 
-  // day_index 0 = tomorrow
   const rows = meals.map(m => {
     const d = new Date()
-    d.setDate(d.getDate() + 1 + (m.day_index ?? 0))
+    d.setDate(d.getDate() + 1 + startOffset + (m.day_index ?? 0))
     return {
       user_id:   user.id,
       plan_date: d.toISOString().split('T')[0],
@@ -82,11 +85,33 @@ export async function savePlanFromCoach(meals: Array<{
     }
   })
 
+  const targetDates = [...new Set(rows.map(r => r.plan_date))]
+
+  // Always check existing slots for these dates
+  const { data: existing } = await supabase
+    .from('meal_plan_slots')
+    .select('plan_date, meal_type')
+    .eq('user_id', user.id)
+    .in('plan_date', targetDates)
+
+  const conflictCount = existing?.filter(e =>
+    rows.some(r => r.plan_date === e.plan_date && r.meal_type === e.meal_type)
+  ).length ?? 0
+
+  // In 'check' mode just return the conflict count — don't save yet
+  if (mode === 'check') return { conflicts: conflictCount, total: rows.length }
+
+  const toSave = mode === 'skip'
+    ? rows.filter(r => !existing?.some(e => e.plan_date === r.plan_date && e.meal_type === r.meal_type))
+    : rows
+
+  if (toSave.length === 0) return { success: true, count: 0 }
+
   const { error } = await supabase
     .from('meal_plan_slots')
-    .upsert(rows, { onConflict: 'user_id,plan_date,meal_type' })
+    .upsert(toSave, { onConflict: 'user_id,plan_date,meal_type' })
 
-  return error ? { error: error.message } : { success: true, count: rows.length }
+  return error ? { error: error.message } : { success: true, count: toSave.length }
 }
 
 export async function renameThread(threadId: string, title: string) {
