@@ -51,6 +51,7 @@ export default function LogMeal({ onSuccess }: { onSuccess: () => void }) {
   }
 
   function handle(formData: FormData) {
+    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
     formData.set('meal_type', mealType)
     // Inject controlled macro values so server action sees them
     formData.set('calories', macros.calories)

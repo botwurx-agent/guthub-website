@@ -21,7 +21,7 @@ export async function logWeight(formData: FormData) {
   if (!weightLbs || weightLbs < 50 || weightLbs > 700) return { error: 'Please enter a valid weight.' }
 
   const weightKg = weightLbs / 2.20462
-  const today = getToday()
+  const today = localDate(formData)
 
   const [logRes, recordRes] = await Promise.all([
     supabase.from('weight_logs').insert({ user_id: user.id, log_date: today, weight_kg: weightKg }),
@@ -53,7 +53,7 @@ export async function logSymptom(formData: FormData) {
   if (!severity || severity < 1 || severity > 10) return { error: 'Please select a severity.' }
 
   const { error } = await supabase.from('symptom_logs').insert({
-    user_id: user.id, log_date: getToday(),
+    user_id: user.id, log_date: localDate(formData),
     symptom_type: symptomType, severity, notes,
     suspected_trigger_meal_id: suspectedTriggerMealId,
     onset_minutes: onsetMinutes,
@@ -78,7 +78,7 @@ export async function logBM(formData: FormData) {
   if (!bristolType || bristolType < 1 || bristolType > 7) return { error: 'Please select a Bristol type.' }
 
   const { error } = await supabase.from('bm_logs').insert({
-    user_id: user.id, log_date: getToday(),
+    user_id: user.id, log_date: localDate(formData),
     bristol_type: bristolType, urgency, pain, notes,
   })
 
@@ -97,7 +97,7 @@ export async function logNote(formData: FormData) {
   if (!content) return { error: 'Please enter a note.' }
 
   const { error } = await supabase.from('note_logs').insert({
-    user_id: user.id, log_date: getToday(), content,
+    user_id: user.id, log_date: localDate(formData), content,
   })
 
   if (error) return { error: error.message }
@@ -124,7 +124,7 @@ export async function logMeal(formData: FormData) {
     ? ingredientsRaw.split('\n').map(s => s.trim()).filter(Boolean)
     : []
 
-  const today = getToday()
+  const today = localDate(formData)
 
   const { error: mealError } = await supabase.from('meal_logs').insert({
     user_id: user.id, log_date: today,
@@ -155,6 +155,10 @@ export async function logMeal(formData: FormData) {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 function getToday() { return new Date().toISOString().split('T')[0] }
+function localDate(formData: FormData) {
+  const d = formData.get('log_date') as string | null
+  return (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) ? d : getToday()
+}
 function parseFloatOrNull(v: string | null): number | null {
   if (!v) return null
   const n = parseFloat(v)

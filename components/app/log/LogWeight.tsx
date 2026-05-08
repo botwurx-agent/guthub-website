@@ -12,6 +12,7 @@ export default function LogWeight({ currentLbs, goalLbs, onSuccess }: {
   const [isPending, startTransition] = useTransition()
 
   function handle(formData: FormData) {
+    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
     setError(null)
     startTransition(async () => {
       const res = await logWeight(formData)

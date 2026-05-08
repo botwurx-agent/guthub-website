@@ -49,6 +49,7 @@ export default function LogSymptom({ onSuccess }: { onSuccess: () => void }) {
   function handle(formData: FormData) {
     if (!selected) return setError('Please select a symptom.')
     if (!severity) return setError('Please select a severity.')
+    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
     formData.set('symptom_type', selected.toLowerCase().replace(/[\s/]+/g, '_'))
     formData.set('severity', String(severity))
     if (triggerId) formData.set('suspected_trigger_meal_id', triggerId)

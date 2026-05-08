@@ -10,6 +10,7 @@ export default function LogNote({ onSuccess }: { onSuccess: () => void }) {
   const [isPending, startTransition] = useTransition()
 
   function handle(formData: FormData) {
+    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
     setError(null)
     startTransition(async () => {
       const res = await logNote(formData)

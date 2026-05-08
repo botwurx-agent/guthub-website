@@ -24,6 +24,7 @@ export default function LogBM({ onSuccess }: { onSuccess: () => void }) {
 
   function handle(formData: FormData) {
     if (!bristol) return setError('Please select a Bristol type.')
+    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
     formData.set('bristol_type', String(bristol))
     if (urgency) formData.set('urgency', String(urgency))
     if (pain) formData.set('pain', String(pain))

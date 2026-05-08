@@ -38,8 +38,8 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const today = new Date().toISOString().split('T')[0]
-  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]
+  const today = new Date().toLocaleDateString('en-CA')
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toLocaleDateString('en-CA')
 
   const [
     { data: meals },
