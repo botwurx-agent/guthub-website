@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronLeft, ChevronRight, RefreshCw, Check, Sparkles, UtensilsCrossed, ShoppingCart, Settings } from 'lucide-react'
+import { ChevronLeft, ChevronRight, RefreshCw, Check, Sparkles, UtensilsCrossed, ShoppingCart, Settings, Copy } from 'lucide-react'
 
 type Slot = {
   id: string
@@ -37,6 +37,32 @@ const MEAL_GRADIENTS: Record<string, string> = {
   breakfast: 'linear-gradient(135deg, #fde68a, #f5c7aa)',
   lunch: 'linear-gradient(135deg, #86efac, #5eead4)',
   dinner: 'linear-gradient(135deg, #6ee7b7, #1f5441)',
+}
+
+// Shopping list category map. Keyword match runs in order, first hit wins.
+const SHOP_CATEGORIES: { key: string; label: string; emoji: string; keywords: string[] }[] = [
+  { key: 'produce', label: 'Produce', emoji: '🥬',
+    keywords: ['tomato','onion','garlic','shallot','lettuce','spinach','kale','arugula','broccoli','cauliflower','carrot','pepper','bell pepper','cucumber','zucchini','squash','pumpkin','mushroom','avocado','lemon','lime','orange','grapefruit','berry','blueberr','strawberr','raspberr','blackberr','apple','banana','grape','melon','pear','peach','plum','mango','pineapple','herb','parsley','cilantro','basil','dill','mint','rosemary','thyme','sage','ginger','celery','scallion','green onion','leek','asparagus','green bean','peas','corn','potato','sweet potato','yam','beet','radish','cabbage','brussels','eggplant','okra','chard','sprout','jicama','fennel','artichoke','cherry','fig','date','watermelon','kiwi','olive','salad'] },
+  { key: 'protein', label: 'Proteins', emoji: '🍗',
+    keywords: ['chicken','beef','steak','salmon','tuna','shrimp','prawn','turkey','pork','bacon','ham','sausage','egg','tofu','tempeh','seitan','lentil','bean','chickpea','black bean','kidney bean','pinto','meat','fish','seafood','lamb','bison','duck','crab','lobster','sardine','mackerel','cod','tilapia','halibut','trout','anchov','liver','venison','jerky'] },
+  { key: 'dairy', label: 'Dairy', emoji: '🥛',
+    keywords: ['milk','yogurt','yoghurt','cheese','butter','cream','cottage','kefir','ghee','whey','feta','mozzarella','cheddar','parmesan','ricotta','goat cheese','cream cheese','sour cream','half-and-half','buttermilk'] },
+  { key: 'grain', label: 'Grains & Bread', emoji: '🌾',
+    keywords: ['oat','rice','quinoa','bread','pasta','noodle','flour','cereal','tortilla','wrap','cracker','pita','bagel','bun','roll','barley','farro','bulgur','couscous','rye','wheat','sourdough','pancake','waffle','granola','muesli','panko','breadcrumb'] },
+  { key: 'pantry', label: 'Pantry & Spices', emoji: '🧂',
+    keywords: ['olive oil','coconut oil','avocado oil','sesame oil','vegetable oil','canola','salt','pepper','cumin','paprika','turmeric','cinnamon','nutmeg','clove','cardamom','curry','garam','chili','cayenne','oregano','vinegar','soy sauce','tamari','coconut amino','broth','stock','honey','maple','syrup','sugar','vanilla','cocoa','chocolate','almond butter','peanut butter','tahini','mustard','ketchup','mayo','sriracha','salsa','hummus','pesto','dressing','sauce','baking','yeast','oil','spice','seasoning','tomato paste','tomato sauce','coconut milk','almond milk','oat milk','soy milk','plant milk'] },
+  { key: 'snacks', label: 'Nuts, Seeds & Snacks', emoji: '🥜',
+    keywords: ['almond','cashew','walnut','pecan','pistachio','peanut','hazelnut','macadamia','brazil nut','chia','flax','hemp','pumpkin seed','sunflower seed','sesame','nut','seed','trail mix','popcorn','protein bar','energy bar','protein powder'] },
+]
+
+function categorize(ingredient: string): string {
+  const lower = ingredient.toLowerCase()
+  for (const cat of SHOP_CATEGORIES) {
+    for (const kw of cat.keywords) {
+      if (lower.includes(kw)) return cat.key
+    }
+  }
+  return 'other'
 }
 
 function getMondayOf(date: Date): Date {
@@ -80,6 +106,8 @@ export default function MealPlannerClient() {
   const [planDays, setPlanDays] = useState<1 | 3 | 7>(7)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [macros, setMacros] = useState<MacroTarget | null>(null)
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())
+  const [copied, setCopied] = useState(false)
   const supabase = createClient()
 
   const fetchSlots = useCallback(async () => {
@@ -127,6 +155,47 @@ export default function MealPlannerClient() {
 
   const allIngredients = slots.flatMap(s => s.ingredients ?? [])
   const uniqueIngredients = [...new Set(allIngredients)].sort()
+
+  // Group ingredients by category for shopping list
+  const groupedIngredients = (() => {
+    const groups = new Map<string, string[]>()
+    for (const item of uniqueIngredients) {
+      const key = categorize(item)
+      if (!groups.has(key)) groups.set(key, [])
+      groups.get(key)!.push(item)
+    }
+    // Return in defined order, with 'other' last
+    const ordered: { key: string; label: string; emoji: string; items: string[] }[] = []
+    for (const cat of SHOP_CATEGORIES) {
+      if (groups.has(cat.key)) {
+        ordered.push({ key: cat.key, label: cat.label, emoji: cat.emoji, items: groups.get(cat.key)! })
+      }
+    }
+    if (groups.has('other')) {
+      ordered.push({ key: 'other', label: 'Other', emoji: '🛒', items: groups.get('other')! })
+    }
+    return ordered
+  })()
+
+  function toggleChecked(item: string) {
+    setCheckedItems(prev => {
+      const next = new Set(prev)
+      if (next.has(item)) next.delete(item)
+      else next.add(item)
+      return next
+    })
+  }
+
+  async function copyShoppingList() {
+    const text = groupedIngredients
+      .map(g => `${g.label}:\n${g.items.map(i => `  • ${i}`).join('\n')}`)
+      .join('\n\n')
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch { /* clipboard blocked — silently noop */ }
+  }
 
   async function generateWeek() {
     setGenerating(true)
@@ -582,24 +651,96 @@ export default function MealPlannerClient() {
 
             {/* Shopping list */}
             <div style={{ background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <div>
                   <h3 style={{ margin: '0 0 2px', fontSize: 15, fontWeight: 700, color: 'var(--ink-800)' }}>Shopping list</h3>
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--ink-400)' }}>For the week</p>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--ink-400)' }}>
+                    {uniqueIngredients.length > 0
+                      ? `${uniqueIngredients.length - checkedItems.size} of ${uniqueIngredients.length} left`
+                      : 'For the week'}
+                  </p>
                 </div>
-                <ShoppingCart size={18} color="var(--ink-300)" />
+                {uniqueIngredients.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={copyShoppingList}
+                    title="Copy list to clipboard"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      background: copied ? 'var(--forest-50, #EEF3EF)' : 'var(--cream-100)',
+                      border: `1px solid ${copied ? 'var(--forest-200, #C5D5C9)' : 'var(--cream-200)'}`,
+                      borderRadius: 8, padding: '5px 10px',
+                      fontSize: 12, fontWeight: 600,
+                      color: copied ? 'var(--forest-500)' : 'var(--ink-600)',
+                      cursor: 'pointer', fontFamily: 'var(--font-body)',
+                      transition: 'all 160ms',
+                    }}
+                  >
+                    {copied ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
+                  </button>
+                ) : (
+                  <ShoppingCart size={18} color="var(--ink-300)" />
+                )}
               </div>
-              {uniqueIngredients.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 320, overflowY: 'auto' }}>
-                  {uniqueIngredients.map((item, i) => (
-                    <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, padding: '4px 0', cursor: 'pointer', color: 'var(--ink-700)' }}>
-                      <input type="checkbox" style={{ accentColor: 'var(--terracotta-400)', flexShrink: 0 }} />
-                      <span>{item}</span>
-                    </label>
-                  ))}
-                </div>
-              ) : (
+
+              {uniqueIngredients.length === 0 ? (
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-400)' }}>Generate a meal plan to see your shopping list.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxHeight: 480, overflowY: 'auto', paddingRight: 4 }}>
+                  {groupedIngredients.map(group => {
+                    // Sort: unchecked first, then checked at bottom; alphabetical within each.
+                    const sorted = [...group.items].sort((a, b) => {
+                      const ac = checkedItems.has(a) ? 1 : 0
+                      const bc = checkedItems.has(b) ? 1 : 0
+                      if (ac !== bc) return ac - bc
+                      return a.localeCompare(b)
+                    })
+                    const remaining = group.items.filter(i => !checkedItems.has(i)).length
+                    return (
+                      <div key={group.key}>
+                        <div style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          marginBottom: 6, paddingBottom: 4,
+                          borderBottom: '1px solid var(--cream-200)',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <span style={{ fontSize: 14 }}>{group.emoji}</span>
+                            <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-600)' }}>
+                              {group.label}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: 11, color: 'var(--ink-400)', fontVariantNumeric: 'tabular-nums' }}>
+                            {remaining}/{group.items.length}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {sorted.map((item, i) => {
+                            const checked = checkedItems.has(item)
+                            return (
+                              <label key={`${group.key}-${i}`}
+                                style={{
+                                  display: 'flex', alignItems: 'center', gap: 10,
+                                  fontSize: 13.5, padding: '4px 0',
+                                  cursor: 'pointer',
+                                  color: checked ? 'var(--ink-300)' : 'var(--ink-700)',
+                                  textDecoration: checked ? 'line-through' : 'none',
+                                  transition: 'color 160ms',
+                                }}>
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => toggleChecked(item)}
+                                  style={{ accentColor: 'var(--terracotta-400)', flexShrink: 0, cursor: 'pointer' }}
+                                />
+                                <span>{item}</span>
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               )}
             </div>
 
