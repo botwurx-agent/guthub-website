@@ -229,7 +229,11 @@ export default function MealPlannerClient() {
   const [generating, setGenerating] = useState(false)
   const [regeneratingSlot, setRegeneratingSlot] = useState<string | null>(null)
   const [acceptingSlot, setAcceptingSlot] = useState<string | null>(null)
-  const [activeDay, setActiveDay] = useState(() => (new Date().getDay() + 6) % 7)
+  const [activeDay, setActiveDay] = useState(0)
+  // Set activeDay to today's weekday after mount (avoids SSR/hydration TZ mismatch)
+  useEffect(() => {
+    setActiveDay((new Date().getDay() + 6) % 7)
+  }, [])
   const [activeMeal, setActiveMeal] = useState<'breakfast' | 'lunch' | 'dinner'>('dinner')
   const [planDays, setPlanDays] = useState<1 | 3 | 7>(7)
   const [profile, setProfile] = useState<Profile | null>(null)
