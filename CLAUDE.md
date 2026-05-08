@@ -147,15 +147,15 @@ Reference these when building/rebuilding app screens:
 - **Coach context** was reading wrong field names (`primary_goal` → `primary_goals`, `allergies` → `allergens`). Fixed in `lib/coach-context.ts`.
 - **`savePlanFromCoach` orphaned code**: old `const { error }` block removed after rewrite.
 
-### 🔲 App pages not yet redesigned to match design handoff
-Working code exists but UI doesn't match the JSX mockups in `Guthub_app_design_handoff/`:
-1. Today (Dashboard) — `app/dashboard/page.tsx` → reference `PageToday.jsx`
-2. Log — `app/log/` → reference `PageLog.jsx`
-3. Coach — `app/coach/` → reference `PageCoach.jsx`
-4. Meal Planner — `app/meal-planner/` → reference `PagePlan.jsx`
-5. Insights — `app/insights/` → reference `PageInsights.jsx`
+### ✅ All app pages rebuilt to match design handoff
+All pages have been rebuilt to match the JSX mockups in `Guthub_app_design_handoff/`:
+1. Today (Dashboard) — `app/dashboard/page.tsx` ✅
+2. Log — `app/log/` ✅
+3. Coach — `app/coach/` ✅
+4. Meal Planner — `app/meal-planner/` ✅
+5. Insights — `app/insights/` ✅
 
-**Rebuild one page at a time, confirm with user before moving to next.**
+**Current phase: testing pages and features, fixing bugs.**
 
 ## AppShell details (`components/app/AppShell.tsx`)
 - 248px forest-500 sidebar, sticky, full viewport height
