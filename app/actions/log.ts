@@ -153,6 +153,46 @@ export async function logMeal(formData: FormData) {
   return { success: true }
 }
 
+// ─── Delete meal ──────────────────────────────────────────────────────────
+export async function deleteMeal(mealId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  // Fetch the meal first so we can subtract its macros from daily_records
+  const { data: meal, error: fetchErr } = await supabase
+    .from('meal_logs')
+    .select('id, user_id, log_date, calories, protein_g, carbs_g, fat_g')
+    .eq('id', mealId)
+    .single()
+
+  if (fetchErr || !meal) return { error: 'Meal not found.' }
+  if (meal.user_id !== user.id) return { error: 'Not authorized.' }
+
+  const { error: delErr } = await supabase.from('meal_logs').delete().eq('id', mealId)
+  if (delErr) return { error: delErr.message }
+
+  // Subtract this meal's macros from daily_records (clamped at 0)
+  const { data: existing } = await supabase
+    .from('daily_records')
+    .select('calories_consumed, protein_consumed_g, carbohydrates_consumed_g, fat_consumed_g')
+    .eq('user_id', user.id).eq('record_date', meal.log_date).single()
+
+  if (existing) {
+    await supabase.from('daily_records').upsert({
+      user_id: user.id, record_date: meal.log_date,
+      calories_consumed: Math.max(0, (existing.calories_consumed ?? 0) - (meal.calories ?? 0)),
+      protein_consumed_g: Math.max(0, (existing.protein_consumed_g ?? 0) - (meal.protein_g ?? 0)),
+      carbohydrates_consumed_g: Math.max(0, (existing.carbohydrates_consumed_g ?? 0) - (meal.carbs_g ?? 0)),
+      fat_consumed_g: Math.max(0, (existing.fat_consumed_g ?? 0) - (meal.fat_g ?? 0)),
+    }, { onConflict: 'user_id,record_date' })
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/log')
+  return { success: true }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────
 function getToday() { return new Date().toISOString().split('T')[0] }
 function localDate(formData: FormData) {

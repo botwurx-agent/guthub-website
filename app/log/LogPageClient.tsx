@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Utensils, Frown, Circle, Droplets, Scale, StickyNote,
-  Camera, Sparkles, TrendingDown, TrendingUp,
+  Camera, Sparkles, TrendingDown, TrendingUp, Trash2,
 } from 'lucide-react'
+import { deleteMeal } from '@/app/actions/log'
 import LogMeal from '@/components/app/log/LogMeal'
 import LogMealPhoto from '@/components/app/log/LogMealPhoto'
 import LogSymptom from '@/components/app/log/LogSymptom'
@@ -52,9 +53,20 @@ function formatTime(iso: string) {
   return `${h}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
-function EventRow({ item }: { item: TimelineDay['items'][number] }) {
+function EventRow({ item, onDelete }: {
+  item: TimelineDay['items'][number]
+  onDelete?: (id: string) => void
+}) {
   const style = KIND_STYLE[item.kind] ?? KIND_STYLE.note
   const Icon = KIND_ICON[item.kind] ?? StickyNote
+  const [confirming, setConfirming] = useState(false)
+  const [pending, startTransition] = useTransition()
+
+  function handleDelete() {
+    if (!onDelete) return
+    startTransition(() => onDelete(item.id))
+  }
+
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 12,
@@ -80,6 +92,32 @@ function EventRow({ item }: { item: TimelineDay['items'][number] }) {
         }}>{item.title}</div>
         <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 1 }}>{item.meta}</div>
       </div>
+      {onDelete && (
+        confirming ? (
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+            <button onClick={handleDelete} disabled={pending} style={{
+              fontSize: 11, fontWeight: 600, color: '#fff',
+              background: '#B4422C', border: 'none',
+              padding: '5px 10px', borderRadius: 7,
+              cursor: pending ? 'wait' : 'pointer',
+              fontFamily: 'var(--font-body)',
+            }}>{pending ? '…' : 'Delete'}</button>
+            <button onClick={() => setConfirming(false)} disabled={pending} style={{
+              fontSize: 11, color: 'var(--ink-500)', background: 'none',
+              border: 'none', padding: '5px 6px', cursor: 'pointer',
+              fontFamily: 'var(--font-body)',
+            }}>Cancel</button>
+          </div>
+        ) : (
+          <button onClick={() => setConfirming(true)} aria-label="Delete" style={{
+            background: 'none', border: 'none', padding: 6, borderRadius: 6,
+            cursor: 'pointer', color: 'var(--ink-400)', flexShrink: 0,
+            display: 'flex', alignItems: 'center',
+          }}>
+            <Trash2 size={14} />
+          </button>
+        )
+      )}
     </div>
   )
 }
@@ -159,6 +197,12 @@ export default function LogPageClient({
   function handleSuccess() {
     router.refresh()
     setActiveForm(null)
+  }
+
+  async function handleDeleteMeal(id: string) {
+    const res = await deleteMeal(id)
+    if (res?.error) { alert(res.error); return }
+    router.refresh()
   }
 
   const totalItems = timeline.reduce((s, d) => s + d.items.length, 0)
@@ -250,7 +294,13 @@ export default function LogPageClient({
                         </div>
                       )}
                     </div>
-                    {visible.map(item => <EventRow key={item.id} item={item} />)}
+                    {visible.map(item => (
+                      <EventRow
+                        key={item.id}
+                        item={item}
+                        onDelete={item.kind === 'meal' ? handleDeleteMeal : undefined}
+                      />
+                    ))}
                   </div>
                 )
               })}
