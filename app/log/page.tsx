@@ -24,6 +24,20 @@ export type WeekStats = {
   notes: number
 }
 
+export type TodayMacros = {
+  calories: number
+  protein: number
+  carbs: number
+  fat: number
+}
+
+export type MacroTargets = {
+  calories: number
+  protein: number
+  carbs: number
+  fat: number
+}
+
 const MEAL_TYPE: Record<string, string> = {
   breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snack: 'Snack',
 }
@@ -52,8 +66,9 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
     { data: notes },
     { data: dailyRecord },
     { data: waterLogs },
+    { data: macroTarget },
   ] = await Promise.all([
-    supabase.from('meal_logs').select('id, meal_name, meal_type, calories, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
+    supabase.from('meal_logs').select('id, meal_name, meal_type, calories, protein_g, carbs_g, fat_g, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
     supabase.from('symptom_logs').select('id, symptom_type, severity, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
     supabase.from('weight_logs').select('id, weight_kg, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
     supabase.from('bm_logs').select('id, bristol_type, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
@@ -61,6 +76,7 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
     supabase.from('note_logs').select('id, content, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
     supabase.from('daily_records').select('current_weight_kg, goal_weight_kg').eq('user_id', user.id).eq('record_date', today).single(),
     supabase.from('water_logs').select('amount_ml').eq('user_id', user.id).eq('log_date', today),
+    supabase.from('macro_targets').select('total_calories, protein_g, carbs_g, fat_g').eq('user_id', user.id).order('target_date', { ascending: false }).limit(1).single(),
   ])
 
   // Build unified timeline items
@@ -118,6 +134,21 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
     notes: notes?.length ?? 0,
   }
 
+  // Today's macro totals — sum directly from meal_logs (source of truth)
+  const todayMeals = (meals ?? []).filter(m => m.log_date === today)
+  const todayMacros: TodayMacros = {
+    calories: Math.round(todayMeals.reduce((s, m) => s + (m.calories ?? 0), 0)),
+    protein:  Math.round(todayMeals.reduce((s, m) => s + (m.protein_g ?? 0), 0)),
+    carbs:    Math.round(todayMeals.reduce((s, m) => s + (m.carbs_g ?? 0), 0)),
+    fat:      Math.round(todayMeals.reduce((s, m) => s + (m.fat_g ?? 0), 0)),
+  }
+  const targets: MacroTargets = {
+    calories: Math.round(macroTarget?.total_calories ?? 2000),
+    protein:  Math.round(macroTarget?.protein_g ?? 150),
+    carbs:    Math.round(macroTarget?.carbs_g ?? 200),
+    fat:      Math.round(macroTarget?.fat_g ?? 65),
+  }
+
   const currentLbs = dailyRecord?.current_weight_kg
     ? Math.round(dailyRecord.current_weight_kg * 2.20462 * 10) / 10 : null
   const goalLbs = dailyRecord?.goal_weight_kg
@@ -133,6 +164,8 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
       currentLbs={currentLbs}
       goalLbs={goalLbs}
       waterGlasses={waterGlasses}
+      todayMacros={todayMacros}
+      targets={targets}
     />
   )
 }
