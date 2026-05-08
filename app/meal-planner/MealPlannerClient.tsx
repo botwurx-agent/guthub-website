@@ -39,6 +39,124 @@ const MEAL_GRADIENTS: Record<string, string> = {
   dinner: 'linear-gradient(135deg, #6ee7b7, #1f5441)',
 }
 
+// ─── Shopping list ingredient consolidation ────────────────────────────────
+
+const UNIT_MAP: Record<string, string> = {
+  oz: 'oz', ounce: 'oz', ounces: 'oz',
+  g: 'g', gram: 'g', grams: 'g',
+  kg: 'kg',
+  lb: 'lb', lbs: 'lb', pound: 'lb', pounds: 'lb',
+  cup: 'cup', cups: 'cup',
+  tbsp: 'tbsp', tablespoon: 'tbsp', tablespoons: 'tbsp',
+  tsp: 'tsp', teaspoon: 'tsp', teaspoons: 'tsp',
+  ml: 'ml',
+  l: 'l', liter: 'l', litre: 'l', liters: 'l', litres: 'l',
+  clove: 'clove', cloves: 'clove',
+  slice: 'slice', slices: 'slice',
+  piece: 'piece', pieces: 'piece',
+  can: 'can', cans: 'can',
+  scoop: 'scoop', scoops: 'scoop',
+  strip: 'strip', strips: 'strip',
+  bunch: 'bunch', bunches: 'bunch',
+  sprig: 'sprig', sprigs: 'sprig',
+}
+
+const PLURALIZE_UNITS = new Set(['cup', 'slice', 'piece', 'clove', 'scoop', 'can', 'strip', 'bunch', 'sprig'])
+const PREP_SUFFIX_RX = /,\s*(chopped|sliced|diced|minced|grated|halved|crushed|torn|wilted|cooked|baked|grilled|scrambled|hard-boiled|soft-boiled|boiled|roasted|steamed|peeled|cubed|quartered|shelled|blanched|flaked|seared|smoked|optional|cold-smoked|thawed|frozen).*$/i
+
+function parseLeadingQty(s: string): { qty: number; rest: string } | null {
+  // Normalize unicode fractions
+  s = s.replace(/½/g, '0.5').replace(/¼/g, '0.25').replace(/¾/g, '0.75')
+       .replace(/⅓/g, '0.333').replace(/⅔/g, '0.667').replace(/⅛/g, '0.125')
+  // Match: mixed "1 1/2", fraction "1/4", decimal/integer
+  const m = s.match(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+\.?\d*)\s+/)
+  if (!m) return null
+  const raw = m[1].trim()
+  let qty: number
+  if (raw.includes(' ')) {
+    const [whole, frac] = raw.split(' ')
+    const [n, d] = frac.split('/')
+    qty = parseInt(whole) + parseInt(n) / parseInt(d)
+  } else if (raw.includes('/')) {
+    const [n, d] = raw.split('/')
+    qty = parseInt(n) / parseInt(d)
+  } else {
+    qty = parseFloat(raw)
+  }
+  return isNaN(qty) || qty <= 0 ? null : { qty, rest: s.slice(m[0].length) }
+}
+
+function fmtQty(n: number): string {
+  if (n % 1 === 0) return String(n)
+  const r = Math.round(n * 4) / 4
+  const whole = Math.floor(r)
+  const frac = r - whole
+  const fracStr = frac === 0.25 ? '¼' : frac === 0.5 ? '½' : frac === 0.75 ? '¾' : parseFloat(frac.toFixed(1)).toString()
+  return whole > 0 ? `${whole} ${fracStr}` : fracStr
+}
+
+function consolidateIngredients(ingredients: string[]): string[] {
+  type Entry = { qty: number; unit: string; name: string }
+  const groups = new Map<string, Entry>()
+  const noQty: string[] = []
+
+  // Build unit regex (longest first to avoid prefix matches)
+  const unitWords = Object.keys(UNIT_MAP).sort((a, b) => b.length - a.length)
+  const unitRx = new RegExp(`^(${unitWords.join('|')})(?:\\s+of)?\\s+`, 'i')
+
+  for (const raw of ingredients) {
+    // Compounds like "1 tbsp oil & 1 tbsp lemon juice" — split and recurse
+    if (/ & | \+ /.test(raw)) {
+      const parts = raw.split(/ & | \+ /).map(p => p.trim()).filter(Boolean)
+      const sub = consolidateIngredients(parts)
+      // Merge sub results back into groups — re-run through consolidation
+      for (const s of sub) {
+        const inner = consolidateIngredients([s])
+        // already processed; just add to noQty for simplicity if can't re-parse
+        noQty.push(...inner)
+      }
+      continue
+    }
+
+    // Strip parenthetical alt-units/notes e.g. "(6 oz)" or "(cold-smoked)"
+    const cleaned = raw.replace(/\([^)]*\)/g, '').replace(/\s{2,}/g, ' ').trim()
+
+    const parsed = parseLeadingQty(cleaned)
+    if (!parsed) { noQty.push(raw); continue }
+
+    const { qty, rest } = parsed
+    const unitM = rest.match(unitRx)
+    let unit = '', name = rest
+
+    if (unitM) {
+      unit = UNIT_MAP[unitM[1].toLowerCase()] ?? unitM[1].toLowerCase()
+      name = rest.slice(unitM[0].length).trim()
+    }
+
+    // Normalize name: lowercase, strip prep suffixes
+    name = name.toLowerCase().replace(PREP_SUFFIX_RX, '').replace(/[,.]$/, '').trim()
+    if (!name) { noQty.push(raw); continue }
+
+    const key = `${unit}|${name}`
+    if (groups.has(key)) {
+      groups.get(key)!.qty += qty
+    } else {
+      groups.set(key, { qty, unit, name })
+    }
+  }
+
+  const result: string[] = []
+  for (const { qty, unit, name } of groups.values()) {
+    const qtyStr = fmtQty(qty)
+    const displayUnit = unit
+      ? (qty > 1 && PLURALIZE_UNITS.has(unit) ? unit + 's' : unit)
+      : ''
+    result.push([qtyStr, displayUnit, name].filter(Boolean).join(' '))
+  }
+
+  return [...result.sort(), ...noQty.sort()]
+}
+
 // Shopping list category map. Keyword match runs in order, first hit wins.
 const SHOP_CATEGORIES: { key: string; label: string; emoji: string; keywords: string[] }[] = [
   { key: 'produce', label: 'Produce', emoji: '🥬',
@@ -154,7 +272,7 @@ export default function MealPlannerClient() {
   const dayProtein = Math.round(daySlots.reduce((sum, s) => sum + (s.protein_g ?? 0), 0))
 
   const allIngredients = slots.flatMap(s => s.ingredients ?? [])
-  const uniqueIngredients = [...new Set(allIngredients)].sort()
+  const uniqueIngredients = consolidateIngredients(allIngredients)
 
   // Group ingredients by category for shopping list
   const groupedIngredients = (() => {
