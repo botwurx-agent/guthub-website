@@ -51,7 +51,7 @@ export default async function DashboardPage() {
   const consumed = {
     calories: Math.round(dailyRecord?.calories_consumed ?? 0),
     protein:  Math.round(dailyRecord?.protein_consumed_g ?? 0),
-    carbs:    Math.round(dailyRecord?.carbohydrates_consumed_g ?? 0),
+    carbs:    Math.round(dailyRecord?.carbs_consumed_g ?? 0),
     fat:      Math.round(dailyRecord?.fat_consumed_g ?? 0),
   }
   const targets = {

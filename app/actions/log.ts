@@ -138,14 +138,14 @@ export async function logMeal(formData: FormData) {
   // Update daily_record consumed totals
   const { data: existing } = await supabase
     .from('daily_records')
-    .select('calories_consumed, protein_consumed_g, carbohydrates_consumed_g, fat_consumed_g')
+    .select('calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g')
     .eq('user_id', user.id).eq('record_date', today).single()
 
   await supabase.from('daily_records').upsert({
     user_id: user.id, record_date: today,
     calories_consumed: (existing?.calories_consumed ?? 0) + (calories ?? 0),
     protein_consumed_g: (existing?.protein_consumed_g ?? 0) + (protein ?? 0),
-    carbohydrates_consumed_g: (existing?.carbohydrates_consumed_g ?? 0) + (carbs ?? 0),
+    carbs_consumed_g: (existing?.carbs_consumed_g ?? 0) + (carbs ?? 0),
     fat_consumed_g: (existing?.fat_consumed_g ?? 0) + (fat ?? 0),
   }, { onConflict: 'user_id,record_date' })
 
@@ -175,7 +175,7 @@ export async function deleteMeal(mealId: string) {
   // Subtract this meal's macros from daily_records (clamped at 0)
   const { data: existing } = await supabase
     .from('daily_records')
-    .select('calories_consumed, protein_consumed_g, carbohydrates_consumed_g, fat_consumed_g')
+    .select('calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g')
     .eq('user_id', user.id).eq('record_date', meal.log_date).single()
 
   if (existing) {
@@ -183,7 +183,7 @@ export async function deleteMeal(mealId: string) {
       user_id: user.id, record_date: meal.log_date,
       calories_consumed: Math.max(0, (existing.calories_consumed ?? 0) - (meal.calories ?? 0)),
       protein_consumed_g: Math.max(0, (existing.protein_consumed_g ?? 0) - (meal.protein_g ?? 0)),
-      carbohydrates_consumed_g: Math.max(0, (existing.carbohydrates_consumed_g ?? 0) - (meal.carbs_g ?? 0)),
+      carbs_consumed_g: Math.max(0, (existing.carbs_consumed_g ?? 0) - (meal.carbs_g ?? 0)),
       fat_consumed_g: Math.max(0, (existing.fat_consumed_g ?? 0) - (meal.fat_g ?? 0)),
     }, { onConflict: 'user_id,record_date' })
   }

@@ -96,7 +96,7 @@ Additional notes: ${str(hp.additional_notes) || 'None'}`
   // ── Layer 2: Active state ─────────────────────────────────────────────────
   const gutScoreVal = gutScore?.score ?? null
   const consumed = dailyRecord
-    ? `${Math.round(dailyRecord.calories_consumed ?? 0)} kcal | Protein ${Math.round(dailyRecord.protein_consumed_g ?? 0)}g | Carbs ${Math.round(dailyRecord.carbohydrates_consumed_g ?? 0)}g | Fat ${Math.round(dailyRecord.fat_consumed_g ?? 0)}g`
+    ? `${Math.round(dailyRecord.calories_consumed ?? 0)} kcal | Protein ${Math.round(dailyRecord.protein_consumed_g ?? 0)}g | Carbs ${Math.round(dailyRecord.carbs_consumed_g ?? 0)}g | Fat ${Math.round(dailyRecord.fat_consumed_g ?? 0)}g`
     : 'No data yet today'
   const targets = macroTarget
     ? `${Math.round(macroTarget.total_calories)} kcal | Protein ${Math.round(macroTarget.protein_g)}g | Carbs ${Math.round(macroTarget.carbs_g)}g | Fat ${Math.round(macroTarget.fat_g)}g`
