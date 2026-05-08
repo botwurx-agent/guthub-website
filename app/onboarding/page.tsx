@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect, useTransition, useRef } from 'react'
 import Image from 'next/image'
-import { ChevronRight, ChevronLeft, Check, Loader2, Lock } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Check, Loader2, Lock, Plus, X, Search } from 'lucide-react'
 import { saveProfileStep, completeOnboarding } from '@/app/actions/onboarding'
 import { createClient } from '@/lib/supabase/client'
+import {
+  CONDITION_TIER2, CONDITION_TIER3, ALLERGEN_TIER2, EATING_STYLE_TIER2, TIER3_REDIRECT_MESSAGE,
+} from '@/lib/intake-tiers'
 
 const TOTAL_STEPS = 6
 
@@ -581,8 +584,14 @@ function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, 
         </OField>
       </div>
 
-      <OField label="Medical conditions" hint="Pick any that apply. You can add more later.">
-        <ChipGroup options={CONDITION_OPTIONS} value={conditions} onChange={setConditions} />
+      <OField label="Medical conditions" hint="Pick any that apply. Tap &ldquo;Other&rdquo; to search additional options.">
+        <TieredAutocomplete
+          tier1={CONDITION_OPTIONS}
+          tier2={CONDITION_TIER2}
+          tier3={CONDITION_TIER3}
+          value={conditions}
+          onChange={setConditions}
+        />
       </OField>
 
       {hasIbd && (
@@ -596,8 +605,13 @@ function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, 
         </OField>
       )}
 
-      <OField label="Food allergies & sensitivities">
-        <ChipGroup options={ALLERGEN_OPTIONS} value={allergens} onChange={setAllergens} />
+      <OField label="Food allergies & sensitivities" hint="Tap &ldquo;Other&rdquo; to search FODMAP and integrative sensitivities.">
+        <TieredAutocomplete
+          tier1={ALLERGEN_OPTIONS}
+          tier2={ALLERGEN_TIER2}
+          value={allergens}
+          onChange={setAllergens}
+        />
       </OField>
 
       <OField label="Current medications & supplements" hint="Optional. Names and rough dose are enough.">
@@ -622,23 +636,33 @@ function StepEating({ eatingStyle, setEatingStyle, eatingStyleFollowing, setEati
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 580 }}>
-      <OField label="Eating style" hint="Pick the one that best describes how you eat.">
-        <ChipGroup
-          options={EATING_STYLE_OPTIONS.map(o => o.label)}
-          value={eatingStyle ? [EATING_STYLE_OPTIONS.find(o => o.value === eatingStyle)?.label ?? eatingStyle] : []}
-          onChange={v => {
-            const last = v[v.length - 1]
-            const match = EATING_STYLE_OPTIONS.find(o => o.label === last)
-            const newVal = match ? match.value : last ?? 'default'
-            setEatingStyle(newVal)
-            if (newVal === 'no_specific' || newVal === 'default') {
-              setEatingStyleFollowing('')
-              setFodmapPhase('')
-            }
-            if (newVal !== 'low_fodmap') setFodmapPhase('')
-          }}
-          multi={false}
-        />
+      <OField label="Eating style" hint="Pick the one that best describes how you eat. Tap &ldquo;Other&rdquo; to search more options.">
+        {(() => {
+          const allStyles = [...EATING_STYLE_OPTIONS, ...EATING_STYLE_TIER2]
+          const labelOf = (val: string) => allStyles.find(o => o.value === val)?.label ?? val
+          const valueOf = (label: string) => allStyles.find(o => o.label === label)?.value ?? label
+          const tier1Labels = EATING_STYLE_OPTIONS.map(o => o.label)
+          const tier2Labels = EATING_STYLE_TIER2.map(o => o.label)
+          const selectedLabel = eatingStyle && eatingStyle !== 'default' ? labelOf(eatingStyle) : null
+          return (
+            <TieredAutocomplete
+              tier1={tier1Labels}
+              tier2={tier2Labels}
+              value={selectedLabel ? [selectedLabel] : []}
+              onChange={v => {
+                const last = v[v.length - 1]
+                const newVal = last ? valueOf(last) : 'default'
+                setEatingStyle(newVal)
+                if (newVal === 'no_specific' || newVal === 'default') {
+                  setEatingStyleFollowing('')
+                  setFodmapPhase('')
+                }
+                if (newVal !== 'low_fodmap') setFodmapPhase('')
+              }}
+              multi={false}
+            />
+          )
+        })()}
       </OField>
 
       {hasStyle && (
@@ -1001,6 +1025,174 @@ function ChipGroup({ options, value, onChange, multi = true }: {
           </button>
         )
       })}
+    </div>
+  )
+}
+
+// Tiered autocomplete: Tier 1 chips + "+ Other" reveals Tier 2 search.
+// Tier 3 hits (medical conditions only) show a physician-redirect note and refuse to add.
+function TieredAutocomplete({
+  tier1, tier2, tier3, value, onChange, multi = true,
+}: {
+  tier1: string[]
+  tier2: string[]
+  tier3?: string[]
+  value: string[]
+  onChange: (v: string[]) => void
+  multi?: boolean
+}) {
+  const [otherOpen, setOtherOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [redirectShown, setRedirectShown] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Render Tier 1 chips plus any selected Tier 2 items so users can see/remove them
+  const extraSelected = value.filter(v => !tier1.includes(v))
+  const allChips = [...tier1, ...extraSelected]
+
+  function toggle(o: string) {
+    if (multi) onChange(value.includes(o) ? value.filter(x => x !== o) : [...value, o])
+    else       onChange(value.includes(o) ? [] : [o])
+  }
+
+  function tryAdd(item: string) {
+    setRedirectShown(false)
+    if (tier3 && tier3.some(t => t.toLowerCase() === item.toLowerCase())) {
+      setRedirectShown(true); return
+    }
+    if (!value.includes(item)) {
+      onChange(multi ? [...value, item] : [item])
+    }
+    setQuery('')
+    if (multi) inputRef.current?.focus()
+    else setOtherOpen(false)
+  }
+
+  const q = query.trim().toLowerCase()
+  const tier3HitOnQuery = q && tier3
+    ? tier3.find(t => t.toLowerCase().includes(q) || q.includes(t.toLowerCase()))
+    : null
+  const suggestions = (q
+    ? tier2.filter(t => t.toLowerCase().includes(q))
+    : tier2
+  ).filter(t => !value.includes(t)).slice(0, 8)
+
+  return (
+    <div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {allChips.map(o => {
+          const sel = value.includes(o)
+          const isExtra = !tier1.includes(o)
+          return (
+            <button
+              key={o}
+              type="button"
+              onClick={() => toggle(o)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '8px 16px', borderRadius: 999,
+                border: `1.5px solid ${sel ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
+                background: sel ? 'var(--terracotta-50)' : '#fff',
+                color: sel ? 'var(--terracotta-600)' : 'var(--ink-700)',
+                fontSize: 13.5, fontWeight: sel ? 600 : 400,
+                cursor: 'pointer', fontFamily: 'var(--font-body)',
+                transition: 'all 160ms',
+              }}
+            >
+              {sel && (isExtra ? <X size={12} strokeWidth={2.5} /> : <Check size={12} strokeWidth={2.5} />)}
+              {o}
+            </button>
+          )
+        })}
+        <button
+          type="button"
+          onClick={() => { setOtherOpen(o => !o); setRedirectShown(false) }}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            padding: '8px 16px', borderRadius: 999,
+            border: `1.5px dashed ${otherOpen ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
+            background: otherOpen ? 'var(--terracotta-50)' : '#fff',
+            color: otherOpen ? 'var(--terracotta-600)' : 'var(--ink-500)',
+            fontSize: 13.5, fontWeight: otherOpen ? 600 : 400,
+            cursor: 'pointer', fontFamily: 'var(--font-body)',
+            transition: 'all 160ms',
+          }}
+        >
+          <Plus size={12} strokeWidth={2.5} /> Other
+        </button>
+      </div>
+
+      {otherOpen && (
+        <div style={{
+          marginTop: 12, padding: 12, borderRadius: 12,
+          border: '1px solid var(--cream-200)', background: 'var(--cream-50)',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 12px', borderRadius: 8,
+            border: '1px solid var(--cream-200)', background: '#fff',
+            marginBottom: 10,
+          }}>
+            <Search size={14} color="var(--ink-400)" />
+            <input
+              ref={inputRef}
+              autoFocus
+              value={query}
+              onChange={e => { setQuery(e.target.value); setRedirectShown(false) }}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && suggestions.length > 0) {
+                  e.preventDefault()
+                  tryAdd(suggestions[0])
+                }
+              }}
+              placeholder="Type to search…"
+              style={{
+                flex: 1, border: 'none', outline: 'none', background: 'transparent',
+                fontSize: 14, fontFamily: 'var(--font-body)', color: 'var(--ink-900)',
+              }}
+            />
+          </div>
+
+          {(redirectShown || tier3HitOnQuery) && (
+            <div style={{
+              padding: '10px 12px', borderRadius: 8,
+              background: 'rgba(180,66,44,0.08)', border: '1px solid rgba(180,66,44,0.2)',
+              fontSize: 13, color: '#b4422c', lineHeight: 1.5, marginBottom: 8,
+            }}>
+              {TIER3_REDIRECT_MESSAGE}
+            </div>
+          )}
+
+          {!tier3HitOnQuery && suggestions.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {suggestions.map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => tryAdd(s)}
+                  style={{
+                    padding: '8px 12px', borderRadius: 8, border: 'none',
+                    background: 'transparent', textAlign: 'left',
+                    fontSize: 14, color: 'var(--ink-700)',
+                    cursor: 'pointer', fontFamily: 'var(--font-body)',
+                    transition: 'background 120ms',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#fff' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!tier3HitOnQuery && suggestions.length === 0 && q && (
+            <div style={{ fontSize: 13, color: 'var(--ink-400)', padding: '6px 12px' }}>
+              No matches for &ldquo;{query}&rdquo;.
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
