@@ -49,6 +49,11 @@ export async function middleware(request: NextRequest) {
     const isMarketingOnly = MARKETING_PATHS.some(p => pathname === p) &&
       !APP_PATHS.some(p => pathname.startsWith(p))
     if (isMarketingOnly && pathname !== '/auth/callback') {
+      // Root of app domain → send to dashboard if logged in, sign-in modal if not
+      if (pathname === '/') {
+        const dest = user ? `https://${APP_DOMAIN}/dashboard` : `https://${WWW_DOMAIN}/?auth=signin`
+        return NextResponse.redirect(dest)
+      }
       return NextResponse.redirect(`https://${WWW_DOMAIN}${pathname}${request.nextUrl.search}`)
     }
 
