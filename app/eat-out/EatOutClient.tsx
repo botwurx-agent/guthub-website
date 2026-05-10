@@ -170,7 +170,7 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
             ))}
           </div>
 
-          <div style={{ padding: '28px 28px 24px' }}>
+          <div className="eat-out-input-pad" style={{ padding: '28px 28px 24px' }}>
 
             {mode === 'photo' ? (
               <div>
@@ -338,7 +338,7 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
           </div>
 
           {/* How it works */}
-          <div style={{ borderTop: '1px solid var(--cream-100)', padding: '14px 28px', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+          <div className="eat-out-how-it-works" style={{ borderTop: '1px solid var(--cream-100)', padding: '14px 28px', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
             {[
               ['📸', 'Snap the menu'],
               ['🔍', 'AI reads every item'],
@@ -356,7 +356,7 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Verdict banner */}
-          <div style={{ borderRadius: 16, padding: '20px 24px', background: verdictCfg!.bg, border: `1.5px solid ${verdictCfg!.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div className="eat-out-verdict" style={{ borderRadius: 16, padding: '20px 24px', background: verdictCfg!.bg, border: `1.5px solid ${verdictCfg!.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <span style={{ fontSize: 30 }}>{verdictCfg!.icon}</span>
               <div>
@@ -379,7 +379,7 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16 }}>
+          <div className="eat-out-results-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16 }}>
 
             {/* Safe */}
             <div style={{ background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, overflow: 'hidden' }}>
@@ -478,7 +478,7 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
           )}
 
           {/* Log CTA */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: '16px 20px', flexWrap: 'wrap', gap: 12 }}>
+          <div className="eat-out-log-cta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: '16px 20px', flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Utensils size={17} color="var(--forest-500)" />
               <span style={{ fontSize: 14, color: 'var(--ink-700)', fontWeight: 500 }}>

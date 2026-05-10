@@ -366,4 +366,17 @@ button { font-family: var(--font-body); }
   .coach-mobile-threads-btn { display: flex !important; }
   .coach-chat-pad { padding: 16px 16px 8px !important; }
   .coach-input-area { padding: 10px 12px !important; }
+
+  /* ── Eat Out page ── */
+  /* Input card inner padding */
+  .eat-out-input-pad { padding: 20px 16px 18px !important; }
+  /* "How it works" footer: tighten padding, allow wrapping */
+  .eat-out-how-it-works { padding: 12px 16px !important; gap: 12px !important; }
+  /* Results grid: stack to single column */
+  .eat-out-results-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  /* Verdict banner: stack emoji+text above "Scan another" button */
+  .eat-out-verdict { flex-direction: column !important; align-items: flex-start !important; }
+  /* Log CTA: stack text above button, button full width */
+  .eat-out-log-cta { flex-direction: column !important; align-items: stretch !important; }
+  .eat-out-log-cta a { justify-content: center !important; }
 }
