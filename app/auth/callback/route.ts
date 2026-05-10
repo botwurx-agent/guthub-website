@@ -21,10 +21,12 @@ export async function GET(request: Request) {
           .single()
 
         const destination = profile?.onboarding_completed ? next : '/onboarding'
-        return NextResponse.redirect(`${origin}${destination}`)
+        const appBase = process.env.NODE_ENV === 'production' ? 'https://app.guthub.ai' : origin
+        return NextResponse.redirect(`${appBase}${destination}`)
       }
     }
   }
 
-  return NextResponse.redirect(`${origin}/?auth=signin&error=auth_failed`)
+  const wwwBase = process.env.NODE_ENV === 'production' ? 'https://www.guthub.ai' : origin
+  return NextResponse.redirect(`${wwwBase}/?auth=signin&error=auth_failed`)
 }

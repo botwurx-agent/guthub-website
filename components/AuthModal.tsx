@@ -82,7 +82,8 @@ export default function AuthModal() {
         setIsPending(false);
         return;
       }
-      window.location.href = '/onboarding';
+      const appBase = window.location.hostname.endsWith('guthub.ai') ? 'https://app.guthub.ai' : ''
+      window.location.href = `${appBase}/onboarding`;
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
@@ -97,7 +98,8 @@ export default function AuthModal() {
           .select('onboarding_completed')
           .eq('id', user.id)
           .single();
-        window.location.href = profile?.onboarding_completed ? '/dashboard' : '/onboarding';
+        const appBase = window.location.hostname.endsWith('guthub.ai') ? 'https://app.guthub.ai' : ''
+        window.location.href = appBase + (profile?.onboarding_completed ? '/dashboard' : '/onboarding');
       }
     }
   }
@@ -126,7 +128,9 @@ export default function AuthModal() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: window.location.hostname.endsWith('guthub.ai')
+          ? 'https://app.guthub.ai/auth/callback'
+          : `${window.location.origin}/auth/callback`,
       },
     });
     if (error) setError(error.message);

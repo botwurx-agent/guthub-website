@@ -14,6 +14,7 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: { domain: process.env.NODE_ENV === 'production' ? '.guthub.ai' : undefined },
       cookies: {
         getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet) {
