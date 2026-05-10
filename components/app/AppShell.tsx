@@ -43,6 +43,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [restarting, setRestarting] = useState(false)
 
   useEffect(() => {
+    // Persist the browser's timezone in a cookie so server components can
+    // read the correct local date — x-vercel-ip-timezone is unreliable in
+    // serverless (only works on Edge runtime).
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    document.cookie = `tz=${encodeURIComponent(tz)};path=/;max-age=31536000;samesite=lax`
+
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
