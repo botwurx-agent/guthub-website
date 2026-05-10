@@ -25,8 +25,23 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const pathname = request.nextUrl.pathname
-  const protectedPaths = ['/dashboard', '/log', '/coach', '/insights', '/meal-planner', '/settings']
+  const protectedPaths = ['/dashboard', '/log', '/coach', '/insights', '/meal-planner', '/settings', '/eat-out', '/doctor-report']
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
+
+  // Admin protection
+  if (pathname.startsWith('/admin')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      url.searchParams.set('auth', 'signin')
+      return NextResponse.redirect(url)
+    }
+    const adminEmails = (process.env.ADMIN_EMAILS ?? '').split(',').map(e => e.trim().toLowerCase())
+    if (!adminEmails.includes((user.email ?? '').toLowerCase())) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+    return supabaseResponse
+  }
 
   // 1. Not logged in → sign in
   if (isProtected && !user) {
