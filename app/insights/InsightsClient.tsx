@@ -280,17 +280,18 @@ export default function InsightsClient() {
             <Sparkles size={15} />
             {analyzing ? 'Analyzing…' : 'Run analysis'}
           </button>
-          <button
+          <a
+            href="/doctor-report"
             style={{
               display: 'flex', alignItems: 'center', gap: 7,
               background: 'var(--terracotta-500)', border: 'none',
               borderRadius: 10, padding: '9px 16px',
               fontSize: 14, fontWeight: 600, cursor: 'pointer', color: '#fff',
+              textDecoration: 'none', fontFamily: 'var(--font-body)',
             }}
-            onClick={() => window.print()}
           >
             <Download size={15} /> Doctor report
-          </button>
+          </a>
         </div>
       </div>
 
