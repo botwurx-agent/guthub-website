@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
   // Admin protection — password cookie, no Supabase account needed
   if (pathname.startsWith('/admin')) {
     if (pathname === '/admin/login') return supabaseResponse
-    const adminPassword = process.env.ADMIN_PASSWORD
+    const adminPassword = (process.env.ADMIN_PASSWORD ?? '').trim()
     const sessionCookie = request.cookies.get('admin_session')?.value
     if (!adminPassword || sessionCookie !== adminPassword) {
       return NextResponse.redirect(new URL('/admin/login', request.url))

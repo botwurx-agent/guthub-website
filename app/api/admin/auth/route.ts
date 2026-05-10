@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
-  const password = formData.get('password') as string
+  const password = ((formData.get('password') as string) ?? '').trim()
 
-  const adminPassword = process.env.ADMIN_PASSWORD
+  const adminPassword = (process.env.ADMIN_PASSWORD ?? '').trim()
   if (!adminPassword) {
     return NextResponse.redirect(new URL('/admin/login?error=noenv', request.url))
   }
   if (password !== adminPassword) {
-    return NextResponse.redirect(new URL(`/admin/login?error=mismatch&al=${adminPassword.length}&pl=${password?.length ?? 0}`, request.url))
+    return NextResponse.redirect(new URL('/admin/login?error=mismatch', request.url))
   }
 
   const response = NextResponse.redirect(new URL('/admin', request.url))
