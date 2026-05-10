@@ -88,24 +88,44 @@ export async function completeOnboarding() {
 async function calculateMacros(profile: Record<string, unknown>) {
   const weightLbs = kgToLbs(profile.weight_kg as number)
   const heightIn = cmToIn(profile.height_cm as number)
-  const healthProfile = (profile.health_profile as Record<string, string>) ?? {}
+  const healthProfile = (profile.health_profile as Record<string, unknown>) ?? {}
   const gender = profile.gender as string
   const dob = profile.dob as string
   const age = dob ? Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000) : 30
-  const activity = healthProfile.activity_level ?? 'moderate'
-  const goal = healthProfile.primary_goal ?? 'maintenance'
-  const diet = profile.diet_mode as string ?? 'default'
+  const activity = (healthProfile.activity_level as string) ?? 'moderate'
+  const diet = (profile.diet_mode as string) ?? 'default'
+
+  // Resolve goals — stored as array; map weight-related chips to macro intent
+  const goalsRaw = healthProfile.primary_goals as string[] | string | undefined
+  const goals: string[] = Array.isArray(goalsRaw)
+    ? goalsRaw
+    : goalsRaw ? [goalsRaw] : []
+
+  const WEIGHT_LOSS_GOALS = new Set([
+    'support_healthy_weight', 'improve_body_composition', 'fat_loss', 'weight_loss',
+  ])
+  const MUSCLE_GOALS = new Set(['muscle_gain', 'feel_healthier_in_body'])
+  const wantsWeightLoss = goals.some(g => WEIGHT_LOSS_GOALS.has(g))
+  const wantsMuscle     = goals.some(g => MUSCLE_GOALS.has(g))
+  const macroGoal = wantsWeightLoss ? 'weight_loss' : wantsMuscle ? 'muscle_gain' : 'maintenance'
+
+  const targetWeight = healthProfile.target_weight_lbs as string | number | undefined
+  const targetWeightLine = targetWeight
+    ? `- Target weight: ${targetWeight} lbs (deficit should reflect distance from goal)`
+    : ''
 
   const prompt = `Calculate TDEE and macro targets using Mifflin-St Jeor formula.
 
 User data:
 - Gender: ${gender}
 - Age: ${age} years
-- Weight: ${weightLbs.toFixed(1)} lbs
+- Current weight: ${weightLbs.toFixed(1)} lbs
 - Height: ${heightIn.toFixed(1)} inches
 - Activity level: ${activity}
-- Primary goal: ${goal}
+- Goal: ${macroGoal}
+${targetWeightLine}
 - Diet preference: ${diet}
+- All goals: ${goals.join(', ') || 'general wellness'}
 
 Mifflin-St Jeor BMR:
 - Men:   BMR = (4.536 × weight_lb) + (15.88 × height_in) - (5 × age) + 5
@@ -115,9 +135,14 @@ Mifflin-St Jeor BMR:
 Activity multipliers:
 - sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, very_active: 1.9
 
+Calorie target by goal:
+- maintenance: TDEE
+- weight_loss: TDEE minus 300-500 kcal deficit (larger deficit if target weight is far from current)
+- muscle_gain: TDEE plus 200-300 kcal surplus
+
 Macro percentages by goal:
 - maintenance or muscle_gain: Carbs 40%, Protein 30%, Fat 30%
-- fat_loss or weight_loss: Carbs 25%, Protein 40%, Fat 35%
+- weight_loss: Carbs 25%, Protein 40%, Fat 35%
 - keto diet override: Carbs 5%, Protein 35%, Fat 60%
 
 Gram conversion: Carbs÷4, Protein÷4, Fat÷9
@@ -145,9 +170,13 @@ async function calculateGoalWeight(profile: Record<string, unknown>) {
   const heightCm = profile.height_cm as number
   const weightLbs = kgToLbs(weightKg)
   const heightIn = cmToIn(heightCm)
-  const healthProfile = (profile.health_profile as Record<string, string>) ?? {}
-  const goal = healthProfile.primary_goal ?? 'maintenance'
-  const targetWeight = healthProfile.target_weight_lbs
+  const healthProfile = (profile.health_profile as Record<string, unknown>) ?? {}
+  const goalsRaw = healthProfile.primary_goals as string[] | string | undefined
+  const goals: string[] = Array.isArray(goalsRaw) ? goalsRaw : goalsRaw ? [goalsRaw] : []
+  const goal = goals.includes('support_healthy_weight') || goals.includes('improve_body_composition')
+    ? 'weight_loss'
+    : goals.includes('muscle_gain') ? 'muscle_gain' : 'maintenance'
+  const targetWeight = healthProfile.target_weight_lbs as string | number | undefined
 
   const prompt = `Calculate a safe 1-month goal weight milestone.
 
