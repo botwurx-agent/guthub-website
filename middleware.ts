@@ -28,17 +28,13 @@ export async function middleware(request: NextRequest) {
   const protectedPaths = ['/dashboard', '/log', '/coach', '/insights', '/meal-planner', '/settings', '/eat-out', '/doctor-report']
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
 
-  // Admin protection
+  // Admin protection — password cookie, no Supabase account needed
   if (pathname.startsWith('/admin')) {
-    if (!user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/'
-      url.searchParams.set('auth', 'signin')
-      return NextResponse.redirect(url)
-    }
-    const adminEmails = (process.env.ADMIN_EMAILS ?? '').split(',').map(e => e.trim().toLowerCase())
-    if (!adminEmails.includes((user.email ?? '').toLowerCase())) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+    if (pathname === '/admin/login') return supabaseResponse
+    const adminPassword = process.env.ADMIN_PASSWORD
+    const sessionCookie = request.cookies.get('admin_session')?.value
+    if (!adminPassword || sessionCookie !== adminPassword) {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
     }
     return supabaseResponse
   }
