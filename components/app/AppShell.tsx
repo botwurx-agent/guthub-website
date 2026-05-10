@@ -7,7 +7,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Home, List, UtensilsCrossed, BarChart3, Sparkles,
   Users, Settings, HelpCircle, Plus, Bell, Search, RotateCcw,
-  Info, Zap, Clock, AlertTriangle, X, CheckCheck,
+  Info, Zap, Clock, AlertTriangle, X, CheckCheck, MapPin,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -27,6 +27,7 @@ const NAV: NavItem[] = [
   { href: '/meal-planner', label: 'Plan',     icon: UtensilsCrossed },
   { href: '/insights',     label: 'Insights', icon: BarChart3 },
   { href: '/coach',        label: 'Coach',    icon: Sparkles, badge: 'AI' },
+  { href: '/eat-out',      label: 'Eat Out',  icon: MapPin,   badge: 'New' },
 ]
 
 const NAV_FOOT: NavItem[] = [

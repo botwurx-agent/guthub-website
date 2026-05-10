@@ -6,6 +6,7 @@ import Link from 'next/link'
 import {
   TrendingUp, Plus, Flame, FlaskConical,
   Clock, Leaf, RefreshCw, Frown, Meh, Smile,
+  MapPin, ArrowRight,
 } from 'lucide-react'
 
 export default async function DashboardPage() {
@@ -291,6 +292,25 @@ export default async function DashboardPage() {
               </div>
             )}
           </DCard>
+
+          {/* Eat Out Safely */}
+          <Link href="/eat-out" style={{ textDecoration: 'none', display: 'block', borderRadius: 16, overflow: 'hidden', background: 'linear-gradient(135deg, var(--terracotta-500), #c0472a)', padding: '20px 22px', position: 'relative' }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <MapPin size={20} color="#fff" />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)' }}>New</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginTop: 1 }}>Eating out tonight?</div>
+              </div>
+            </div>
+            <p style={{ fontSize: 13, lineHeight: 1.55, color: 'rgba(255,255,255,0.88)', margin: '0 0 14px' }}>
+              Tell us where you&apos;re going — we&apos;ll scan the menu against your personal trigger history.
+            </p>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 999, background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontSize: 13, fontWeight: 600 }}>
+              What can I eat here? <ArrowRight size={13} />
+            </div>
+          </Link>
 
           {/* Test report */}
           <div style={{ borderRadius: 16, padding: '20px 22px', background: 'linear-gradient(135deg, var(--forest-500), var(--forest-600))' }}>
