@@ -43,7 +43,7 @@ export default function Pricing() {
               <Badge tone="soft">Full access</Badge>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 4 }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: 64, fontWeight: 400, color: 'var(--ink-900)', letterSpacing: '-0.025em', lineHeight: 1 }}>$9.95</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: 64, fontWeight: 400, color: 'var(--ink-900)', letterSpacing: '-0.025em', lineHeight: 1 }}>$13</span>
               <span style={{ fontSize: 17, color: 'var(--ink-600)' }}>/month</span>
             </div>
             <div style={{ fontSize: 14, color: 'var(--ink-500)', marginBottom: 28 }}>Month-to-month · Billed after your 7-day trial</div>

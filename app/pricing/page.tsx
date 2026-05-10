@@ -7,7 +7,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Pricing — GutHub',
-  description: 'Try it free for 7 days. $9.95/month for founding members. Cancel anytime.',
+  description: 'Try it free for 7 days. $13/month for founding members. Cancel anytime.',
 };
 
 export default function PricingPage() {
