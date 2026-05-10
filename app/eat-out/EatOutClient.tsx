@@ -27,17 +27,40 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
   const [restaurant, setRestaurant] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageMime, setImageMime] = useState<string>('image/jpeg')
+  const [converting, setConverting] = useState(false)
   const [loading, setLoading]     = useState(false)
   const [result, setResult]       = useState<AnalysisResult | null>(null)
   const [error, setError]         = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
-  function handleImage(file: File) {
-    setImageFile(file)
+  function isHeic(file: File) {
+    return file.type === 'image/heic' || file.type === 'image/heif' || /\.(heic|heif)$/i.test(file.name)
+  }
+
+  async function handleImage(file: File) {
+    setError('')
+    let processedFile = file
+
+    if (isHeic(file)) {
+      setConverting(true)
+      try {
+        const heic2any = (await import('heic2any')).default
+        const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 }) as Blob
+        processedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' })
+      } catch {
+        setError('Could not convert HEIC image. Please export it as JPEG from your Photos app and try again.')
+        setConverting(false)
+        return
+      }
+      setConverting(false)
+    }
+
+    setImageMime(processedFile.type || 'image/jpeg')
+    setImageFile(processedFile)
     const reader = new FileReader()
     reader.onload = e => setImagePreview(e.target?.result as string)
-    reader.readAsDataURL(file)
-    setError('')
+    reader.readAsDataURL(processedFile)
   }
 
   function clearImage() {
@@ -56,7 +79,7 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
 
       if (mode === 'photo' && imageFile) {
         const base64 = await fileToBase64(imageFile)
-        body = { ...body, imageBase64: base64, imageMime: imageFile.type }
+        body = { ...body, imageBase64: base64, imageMime }
       }
 
       const res = await fetch('/api/eat-out/analyze', {
@@ -81,7 +104,7 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
     setError('')
   }
 
-  const canAnalyze = mode === 'photo' ? !!imageFile : !!restaurant.trim()
+  const canAnalyze = mode === 'photo' ? !!imageFile && !converting : !!restaurant.trim()
   const verdictCfg = result ? VERDICT_CONFIG[result.overall_verdict] : null
 
   return (
@@ -237,6 +260,12 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
                   />
                 </div>
 
+                {converting && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, padding: '10px 14px', background: 'var(--cream-100)', border: '1px solid var(--cream-200)', borderRadius: 10, fontSize: 13, color: 'var(--ink-600)' }}>
+                    <span style={{ width: 15, height: 15, border: '2px solid var(--cream-300)', borderTopColor: 'var(--forest-500)', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block', flexShrink: 0 }} />
+                    Converting HEIC to JPEG…
+                  </div>
+                )}
                 <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--ink-300)', lineHeight: 1.5 }}>
                   Tip: shoot in good lighting, frame the full menu page. Handwritten or dim menus may need a retake.
                 </p>
@@ -279,17 +308,22 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
 
             <button
               onClick={analyze}
-              disabled={loading || !canAnalyze}
+              disabled={loading || converting || !canAnalyze}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
                 width: '100%', marginTop: 20, padding: '14px 24px',
-                background: !canAnalyze || loading ? 'var(--ink-200)' : 'var(--terracotta-500)',
+                background: !canAnalyze || loading || converting ? 'var(--ink-200)' : 'var(--terracotta-500)',
                 color: '#fff', border: 'none', borderRadius: 12,
-                fontSize: 15, fontWeight: 700, cursor: !canAnalyze || loading ? 'not-allowed' : 'pointer',
+                fontSize: 15, fontWeight: 700, cursor: !canAnalyze || loading || converting ? 'not-allowed' : 'pointer',
                 fontFamily: 'var(--font-body)', transition: 'all 140ms',
               }}
             >
-              {loading ? (
+              {converting ? (
+                <>
+                  <span style={{ width: 17, height: 17, border: '2.5px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />
+                  Converting image…
+                </>
+              ) : loading ? (
                 <>
                   <span style={{ width: 17, height: 17, border: '2.5px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />
                   Scanning menu against your triggers…
