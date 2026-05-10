@@ -55,18 +55,25 @@ export default async function AdminUsersPage({
   let req = supabase
     .from('profiles')
     .select(`
-      id, full_name, email, created_at, onboarding_completed,
+      id, name, created_at, onboarding_completed,
       subscription_status, subscription_plan, trial_ends_at,
       stripe_customer_id
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1)
 
-  if (query)        req = req.or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
+  if (query)        req = req.ilike('name', `%${query}%`)
   if (planFilter)   req = req.eq('subscription_plan', planFilter)
   if (statusFilter) req = req.eq('subscription_status', statusFilter)
 
-  const { data: users, count } = await req
+  const { data: profiles, count } = await req
+
+  // Fetch emails from auth.users via admin API
+  const { data: authList } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+  const emailMap: Record<string, string> = {}
+  for (const u of authList?.users ?? []) emailMap[u.id] = u.email ?? ''
+
+  const users = (profiles ?? []).map(p => ({ ...p, email: emailMap[p.id] ?? '' }))
 
   const totalPages = Math.ceil((count ?? 0) / pageSize)
 
@@ -160,7 +167,7 @@ export default async function AdminUsersPage({
                 </td>
               </tr>
             ) : (users ?? []).map((u, i) => {
-              const initials = (u.full_name ?? u.email ?? '?')
+              const initials = (u.name ?? u.email ?? '?')
                 .split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
               const joined = u.created_at
                 ? new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -184,7 +191,7 @@ export default async function AdminUsersPage({
                       }}>{initials}</div>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-800)' }}>
-                          {u.full_name || '(no name)'}
+                          {u.name || '(no name)'}
                         </div>
                         <div style={{ fontSize: 11, color: 'var(--ink-400)' }}>{u.email || u.id.slice(0, 8)}</div>
                       </div>

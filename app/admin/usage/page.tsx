@@ -78,7 +78,7 @@ export default async function AdminUsagePage() {
     supabase.from('symptom_logs').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
     supabase.from('meal_logs').select('meal_type').limit(200),
     supabase.from('symptom_logs').select('symptom_name').limit(500),
-    supabase.from('profiles').select('full_name, email, created_at').order('created_at', { ascending: false }).limit(5),
+    supabase.from('profiles').select('id, name, created_at').order('created_at', { ascending: false }).limit(5),
   ])
 
   const total = totalUsers ?? 0
@@ -238,7 +238,7 @@ export default async function AdminUsagePage() {
           <div style={{ borderTop: '1px solid var(--cream-100)', marginTop: 20, paddingTop: 16 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-600)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Most recent signups</div>
             {(recentActivity ?? []).map((u, i) => {
-              const initials = (u.full_name ?? u.email ?? '?')
+              const initials = (u.name ?? '?')
                 .split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
               const joined = u.created_at
                 ? new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -253,7 +253,7 @@ export default async function AdminUsagePage() {
                   }}>{initials}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {u.full_name || u.email || 'Unknown'}
+                      {u.name || 'Unknown'}
                     </div>
                   </div>
                   <span style={{ fontSize: 11, color: 'var(--ink-400)' }}>{joined}</span>
