@@ -5,6 +5,7 @@ export async function POST(request: NextRequest) {
   const password = formData.get('password') as string
 
   const adminPassword = process.env.ADMIN_PASSWORD
+  console.log('[admin/auth] ADMIN_PASSWORD set:', !!adminPassword, '| lengths:', adminPassword?.length, password?.length)
   if (!adminPassword || password !== adminPassword) {
     return NextResponse.redirect(new URL('/admin/login?error=1', request.url))
   }
