@@ -36,8 +36,11 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: P
                 outline: 'none', boxSizing: 'border-box',
               }}
             />
-            {error && (
-              <div style={{ fontSize: 12, color: '#dc2626', marginTop: 5 }}>Incorrect password.</div>
+            {error === 'noenv' && (
+              <div style={{ fontSize: 12, color: '#dc2626', marginTop: 5 }}>ADMIN_PASSWORD env var not set.</div>
+            )}
+            {error && error !== 'noenv' && (
+              <div style={{ fontSize: 12, color: '#dc2626', marginTop: 5 }}>Incorrect password. ({error})</div>
             )}
           </div>
 

@@ -5,9 +5,11 @@ export async function POST(request: NextRequest) {
   const password = formData.get('password') as string
 
   const adminPassword = process.env.ADMIN_PASSWORD
-  console.log('[admin/auth] ADMIN_PASSWORD set:', !!adminPassword, '| lengths:', adminPassword?.length, password?.length)
-  if (!adminPassword || password !== adminPassword) {
-    return NextResponse.redirect(new URL('/admin/login?error=1', request.url))
+  if (!adminPassword) {
+    return NextResponse.redirect(new URL('/admin/login?error=noenv', request.url))
+  }
+  if (password !== adminPassword) {
+    return NextResponse.redirect(new URL(`/admin/login?error=mismatch&al=${adminPassword.length}&pl=${password?.length ?? 0}`, request.url))
   }
 
   const response = NextResponse.redirect(new URL('/admin', request.url))
