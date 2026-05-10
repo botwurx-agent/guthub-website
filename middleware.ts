@@ -1,6 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const WWW_DOMAIN = 'www.guthub.ai'
+const APP_DOMAIN = 'app.guthub.ai'
+
+const MARKETING_PATHS = ['/', '/features', '/pricing', '/about', '/auth/callback']
+const APP_PATHS = ['/dashboard', '/log', '/coach', '/insights', '/meal-planner', '/settings', '/eat-out', '/doctor-report', '/onboarding', '/admin']
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -25,10 +31,35 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const pathname = request.nextUrl.pathname
-  const protectedPaths = ['/dashboard', '/log', '/coach', '/insights', '/meal-planner', '/settings', '/eat-out', '/doctor-report']
-  const isProtected = protectedPaths.some(p => pathname.startsWith(p))
+  const hostname = request.headers.get('host') ?? ''
 
-  // Admin protection — password cookie, no Supabase account needed
+  // ── Domain-based routing ──────────────────────────────────────────────────
+
+  if (hostname === WWW_DOMAIN) {
+    // www: only marketing pages — redirect app paths to app.guthub.ai
+    const isAppPath = APP_PATHS.some(p => pathname.startsWith(p))
+    if (isAppPath) {
+      return NextResponse.redirect(`https://${APP_DOMAIN}${pathname}${request.nextUrl.search}`)
+    }
+  }
+
+  if (hostname === APP_DOMAIN) {
+    // app: only app pages — redirect marketing paths to www.guthub.ai
+    const isMarketingOnly = MARKETING_PATHS.some(p => pathname === p) &&
+      !APP_PATHS.some(p => pathname.startsWith(p))
+    if (isMarketingOnly && pathname !== '/auth/callback') {
+      return NextResponse.redirect(`https://${WWW_DOMAIN}${pathname}${request.nextUrl.search}`)
+    }
+
+    // Unauthenticated users hitting app on app domain → www for sign in
+    const isProtectedPath = APP_PATHS.filter(p => p !== '/admin').some(p => pathname.startsWith(p))
+    if (isProtectedPath && !user) {
+      return NextResponse.redirect(`https://${WWW_DOMAIN}/?auth=signin`)
+    }
+  }
+
+  // ── Admin protection ──────────────────────────────────────────────────────
+
   if (pathname.startsWith('/admin')) {
     if (pathname === '/admin/login') return supabaseResponse
     const adminPassword = (process.env.ADMIN_PASSWORD ?? '').trim()
@@ -38,6 +69,11 @@ export async function middleware(request: NextRequest) {
     }
     return supabaseResponse
   }
+
+  // ── App auth + subscription gates ────────────────────────────────────────
+
+  const protectedPaths = ['/dashboard', '/log', '/coach', '/insights', '/meal-planner', '/settings', '/eat-out', '/doctor-report']
+  const isProtected = protectedPaths.some(p => pathname.startsWith(p))
 
   // 1. Not logged in → sign in
   if (isProtected && !user) {
@@ -61,10 +97,10 @@ export async function middleware(request: NextRequest) {
     const hasAccess = status === 'active' || status === 'trialing' || trialActive
 
     if (!hasAccess) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/pricing'
-      url.searchParams.set('reason', 'subscription_required')
-      return NextResponse.redirect(url)
+      const target = hostname === APP_DOMAIN
+        ? `https://${WWW_DOMAIN}/pricing?reason=subscription_required`
+        : `/pricing?reason=subscription_required`
+      return NextResponse.redirect(target)
     }
   }
 
