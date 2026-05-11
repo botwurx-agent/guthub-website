@@ -99,7 +99,7 @@ export async function POST(request: Request) {
 </html>`
 
         resend.emails.send({
-          from: 'GutHub <onboarding@resend.dev>',
+          from: 'GutHub <hello@guthub.ai>',
           to: email,
           subject: `You're subscribed to GutHub — welcome aboard`,
           html,

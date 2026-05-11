@@ -94,7 +94,7 @@ export default async function PricingPage({
 </html>`
 
         resend.emails.send({
-          from: 'GutHub <onboarding@resend.dev>',
+          from: 'GutHub <hello@guthub.ai>',
           to: user.email,
           subject: `Your GutHub trial has ended — your data is waiting`,
           html,
