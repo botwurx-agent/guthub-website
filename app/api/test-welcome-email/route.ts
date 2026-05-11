@@ -59,12 +59,12 @@ export async function GET() {
 </html>`
 
   const { data, error } = await resend.emails.send({
-    from: 'GutHub <hello@guthub.ai>',
+    from: 'GutHub <support@guthub.ai>',
     to: ['stevenazari1@gmail.com'],
     subject: 'Welcome to GutHub, Steven — your 7-day trial has started',
     html,
   })
 
-  if (error) return NextResponse.json({ error }, { status: 500 })
+  if (error) return NextResponse.json({ error: JSON.stringify(error) }, { status: 500 })
   return NextResponse.json({ ok: true, id: data?.id })
 }
