@@ -108,6 +108,29 @@ export async function POST(request: Request) {
       break
     }
 
+    case 'customer.subscription.created': {
+      const sub = event.data.object as Stripe.Subscription
+      const userId = sub.metadata?.supabase_user_id
+      const plan = sub.metadata?.plan
+      if (!userId) break
+
+      if (plan === 'founding') {
+        await supabase.rpc('increment_founding_counter')
+      }
+
+      const trialEnd = sub.trial_end
+        ? new Date(sub.trial_end * 1000).toISOString()
+        : new Date(Date.now() + 7 * 86400000).toISOString()
+
+      await supabase.from('profiles').update({
+        subscription_status: 'trialing',
+        subscription_plan: plan ?? null,
+        stripe_subscription_id: sub.id,
+        trial_ends_at: trialEnd,
+      }).eq('id', userId)
+      break
+    }
+
     case 'customer.subscription.updated': {
       const sub = event.data.object as Stripe.Subscription
       const userId = sub.metadata?.supabase_user_id

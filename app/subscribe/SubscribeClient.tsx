@@ -73,7 +73,7 @@ function CheckoutForm({
     // Confirm the SetupIntent to save the card
     const { error: setupError, setupIntent } = await stripe.confirmSetup({
       elements,
-      confirmParams: { return_url: window.location.origin + '/dashboard?checkout=success' },
+      confirmParams: { return_url: window.location.origin + '/onboarding' },
       redirect: 'if_required',
     })
 
@@ -109,7 +109,7 @@ function CheckoutForm({
     }
 
     setSucceeded(true)
-    setTimeout(() => router.push('/dashboard?checkout=success'), 1500)
+    setTimeout(() => router.push(data.needsOnboarding ? '/onboarding' : '/dashboard?checkout=success'), 1500)
   }
 
   if (succeeded) {

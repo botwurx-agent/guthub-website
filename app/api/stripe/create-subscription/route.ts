@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('stripe_customer_id, name')
+    .select('stripe_customer_id, name, onboarding_completed')
     .eq('id', user.id)
     .single()
 
@@ -55,5 +55,9 @@ export async function POST(request: Request) {
     metadata: { supabase_user_id: user.id, plan },
   })
 
-  return NextResponse.json({ subscriptionId: subscription.id, status: subscription.status })
+  return NextResponse.json({
+    subscriptionId: subscription.id,
+    status: subscription.status,
+    needsOnboarding: !profile?.onboarding_completed,
+  })
 }

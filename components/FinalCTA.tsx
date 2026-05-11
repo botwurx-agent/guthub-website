@@ -24,7 +24,7 @@ export default function FinalCTA() {
         <p style={{ fontSize: 19, color: 'rgba(253,250,243,.88)', marginBottom: 36, lineHeight: 1.55 }}>
           Personalized guidance that actually knows you. Founding member pricing locked for life, while spots last.
         </p>
-        <Button variant="inverse" size="lg" onClick={() => openAuth('signup')}>
+        <Button variant="inverse" size="lg" as="a" href="/pricing">
           Start your 7-day free trial
         </Button>
         <div style={{ marginTop: 18, fontSize: 14, color: 'rgba(253,250,243,.75)' }}>

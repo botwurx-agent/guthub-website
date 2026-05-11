@@ -54,12 +54,12 @@ export default function Pricing() {
               </div>
             ))}
             <div style={{ marginTop: 28 }}>
-              <Button variant="primary" size="lg" style={{ width: '100%', justifyContent: 'center' }} onClick={() => openAuth('signup')}>
+              <Button variant="primary" size="lg" as="a" href="/pricing" style={{ width: '100%', justifyContent: 'center' }}>
                 Start your 7-day free trial
               </Button>
             </div>
             <div style={{ marginTop: 16, fontSize: 13, color: 'var(--ink-500)', textAlign: 'center' }}>
-              No credit card for the first 7 days · Cancel anytime · Secure checkout
+              $0 charged today · Cancel before day 7 and pay nothing · Secure checkout
             </div>
           </div>
         </Reveal>

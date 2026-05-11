@@ -38,7 +38,7 @@ export default function Hero() {
           </Reveal>
           <Reveal delay={380} y={12}>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 28 }}>
-              <Button variant="primary" size="lg" onClick={() => openAuth('signup')}>
+              <Button variant="primary" size="lg" as="a" href="/pricing">
                 Start your 7-day free trial
               </Button>
               <Button variant="secondary" size="lg" as="a" href="#how">
