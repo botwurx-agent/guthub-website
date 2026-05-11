@@ -3,10 +3,12 @@
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { Resend } from 'resend'
 import OpenAI from 'openai'
 import { AI_MODEL } from '@/lib/ai-config'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 // ─── Save profile step data ────────────────────────────────────────────────
 export async function saveProfileStep(step: number, data: Record<string, unknown>) {
@@ -80,6 +82,127 @@ export async function completeOnboarding() {
     starting_weight_kg: profile.weight_kg,
     trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   }).eq('id', user.id)
+
+  // Send welcome email (non-blocking)
+  if (user.email) {
+    const firstName = (profile.name ?? '').split(' ')[0] || 'there'
+    const healthProfile = (profile.health_profile as Record<string, unknown>) ?? {}
+    const goalsRaw = healthProfile.primary_goals as string[] | string | undefined
+    const goals: string[] = Array.isArray(goalsRaw) ? goalsRaw : goalsRaw ? [goalsRaw] : []
+    const goalLabels: Record<string, string> = {
+      improve_digestion: 'Improve digestion',
+      reduce_bloating: 'Reduce bloating',
+      support_healthy_weight: 'Support a healthy weight',
+      increase_energy: 'Increase energy',
+      improve_sleep: 'Improve sleep quality',
+      manage_ibs: 'Manage IBS symptoms',
+      manage_ibd: 'Manage IBD / Crohn\'s',
+      reduce_inflammation: 'Reduce inflammation',
+    }
+    const goalList = goals.slice(0, 3).map(g => goalLabels[g] ?? g.replace(/_/g, ' ')).join(', ')
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://guthub-website.vercel.app'
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Welcome to GutHub</title></head>
+<body style="margin:0;padding:0;background:#FDFAF3;font-family:Georgia,'Times New Roman',serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#FDFAF3;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#22432E;border-radius:16px 16px 0 0;padding:36px 48px;text-align:center;">
+            <p style="margin:0;font-family:Georgia,serif;font-size:28px;font-weight:400;color:#FDFAF3;letter-spacing:-0.5px;">GutHub</p>
+            <p style="margin:8px 0 0;font-family:Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#6F9477;">AI Gut Health Companion</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="background:#FFFFFF;padding:48px;border-left:1px solid #E0DCD2;border-right:1px solid #E0DCD2;">
+
+            <p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#C85A44;">Welcome</p>
+            <h1 style="margin:0 0 24px;font-family:Georgia,serif;font-size:32px;font-weight:400;color:#1B1A17;line-height:1.25;">Hi ${firstName}, your gut health journey starts now.</h1>
+
+            <p style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#5A564D;">
+              You've completed your profile and your 7-day free trial is now active. We've calculated your personalised macro targets and your AI coach is ready to help.
+            </p>
+
+            ${goalList ? `
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#FAF5EE;border-radius:10px;padding:20px 24px;margin-bottom:28px;">
+              <tr>
+                <td>
+                  <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#7A7468;">Your goals</p>
+                  <p style="margin:0;font-family:Arial,sans-serif;font-size:15px;color:#1B1A17;">${goalList}</p>
+                </td>
+              </tr>
+            </table>` : ''}
+
+            <p style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#5A564D;">Here's what to explore first:</p>
+
+            <!-- Feature list -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+              <tr>
+                <td style="padding:12px 0;border-bottom:1px solid #EFEBE2;">
+                  <p style="margin:0;font-family:Arial,sans-serif;font-size:14px;color:#1B1A17;"><span style="color:#22432E;font-weight:700;">Log</span> &nbsp;—&nbsp; <span style="color:#5A564D;">Track meals, symptoms, water and weight in seconds.</span></p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 0;border-bottom:1px solid #EFEBE2;">
+                  <p style="margin:0;font-family:Arial,sans-serif;font-size:14px;color:#1B1A17;"><span style="color:#22432E;font-weight:700;">AI Coach</span> &nbsp;—&nbsp; <span style="color:#5A564D;">Ask anything about your gut, food, or symptoms — it knows your profile.</span></p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 0;border-bottom:1px solid #EFEBE2;">
+                  <p style="margin:0;font-family:Arial,sans-serif;font-size:14px;color:#1B1A17;"><span style="color:#22432E;font-weight:700;">Meal Planner</span> &nbsp;—&nbsp; <span style="color:#5A564D;">Generate a personalised gut-friendly week of meals.</span></p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 0;">
+                  <p style="margin:0;font-family:Arial,sans-serif;font-size:14px;color:#1B1A17;"><span style="color:#22432E;font-weight:700;">Insights</span> &nbsp;—&nbsp; <span style="color:#5A564D;">See trends, identify food triggers, track your gut score over time.</span></p>
+                </td>
+              </tr>
+            </table>
+
+            <!-- CTA -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
+              <tr>
+                <td align="center">
+                  <a href="${appUrl}/dashboard" style="display:inline-block;background:#DB6F56;color:#FFFFFF;font-family:Arial,sans-serif;font-size:15px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:999px;letter-spacing:0.02em;">Go to my dashboard →</a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0;font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#7A7468;">
+              Your trial runs for 7 days. If you have any questions, just reply to this email — we read every one.
+            </p>
+
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#FAF5EE;border-radius:0 0 16px 16px;border:1px solid #E0DCD2;border-top:none;padding:28px 48px;text-align:center;">
+            <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:12px;color:#9D978A;">GutHub · AI-powered gut health companion</p>
+            <p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:#C2BDB1;">You're receiving this because you created a GutHub account.</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+
+    resend.emails.send({
+      from: 'GutHub <hello@guthub.ai>',
+      to: user.email,
+      subject: `Welcome to GutHub, ${firstName} — your 7-day trial has started`,
+      html,
+    }).catch(() => { /* non-blocking */ })
+  }
 
   revalidatePath('/', 'layout')
   redirect('/dashboard')
