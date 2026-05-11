@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getUserTimezone, todayInTz } from '@/lib/timezone'
 import ClientTime from '@/components/app/ClientTime'
 import { computeGutScore, gutScoreLabel } from '@/lib/gut-score'
+import { MealIllustration } from '@/components/app/MealIllustration'
 import Link from 'next/link'
 import {
   TrendingUp, Plus, Flame, FlaskConical,
@@ -193,7 +194,10 @@ export default async function DashboardPage() {
                 <div style={{
                   width: 88, height: 88, borderRadius: 12, flexShrink: 0,
                   background: 'linear-gradient(135deg, var(--forest-300), var(--forest-400))',
-                }} />
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <MealIllustration meal="dinner" size={52} />
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--terracotta-500)', marginBottom: 5 }}>
                     Dinner{tonightSlot.accepted ? ' · ✓ accepted' : ''}
@@ -220,7 +224,10 @@ export default async function DashboardPage() {
                 <div style={{
                   width: 88, height: 88, borderRadius: 12, flexShrink: 0,
                   background: 'linear-gradient(135deg, var(--forest-300), var(--forest-400))',
-                }} />
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <MealIllustration meal="dinner" size={52} />
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--terracotta-500)', marginBottom: 5 }}>Dinner</div>
                   <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 400, margin: '0 0 10px', color: 'var(--ink-900)', lineHeight: 1.3 }}>
