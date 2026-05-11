@@ -59,7 +59,7 @@ export async function GET() {
 </html>`
 
   const { data, error } = await resend.emails.send({
-    from: 'GutHub <support@guthub.ai>',
+    from: 'GutHub <onboarding@resend.dev>',
     to: ['stevenazari1@gmail.com'],
     subject: 'Welcome to GutHub, Steven — your 7-day trial has started',
     html,
