@@ -364,16 +364,20 @@ export default function MealPlannerClient() {
     setGeneratingCount(0)
     setGeneratingTotal(total)
 
+    // For 1 or 3 day plans, start from the currently selected day.
+    // For 7 days, always start from Monday (weekStart).
+    const genStart = planDays === 7 ? weekStart : addDays(weekStart, activeDay)
+
     // Clear the slots for the dates being regenerated
     const datesToClear: string[] = []
-    for (let i = 0; i < planDays; i++) datesToClear.push(toDateStr(addDays(weekStart, i)))
+    for (let i = 0; i < planDays; i++) datesToClear.push(toDateStr(addDays(genStart, i)))
     setSlots(prev => prev.filter(s => !datesToClear.includes(s.plan_date)))
 
     try {
       const res = await fetch('/api/meal-planner/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: null, days: planDays }),
+        body: JSON.stringify({ weekStart: toDateStr(genStart), regenerate: null, days: planDays }),
       })
       if (res.ok && res.body) {
         await consumeStream(res.body, meal => {
@@ -495,7 +499,9 @@ export default function MealPlannerClient() {
               }}
             >
               <Sparkles size={15} />
-              {generating ? 'Generating…' : hasAnyMeals ? `Regenerate ${planDays === 1 ? '1 day' : `${planDays} days`}` : `Generate ${planDays === 1 ? '1 day' : `${planDays} days`}`}
+              {generating ? 'Generating…' : hasAnyMeals
+                ? `Regenerate ${planDays === 1 ? DAY_LABELS[activeDay] : `${planDays} days`}`
+                : `Generate ${planDays === 1 ? DAY_LABELS[activeDay] : `${planDays} days`}`}
             </button>
           </div>
         </div>
