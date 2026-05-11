@@ -114,8 +114,7 @@ export async function completeOnboarding() {
         <!-- Header -->
         <tr>
           <td style="background:#22432E;border-radius:16px 16px 0 0;padding:36px 48px;text-align:center;">
-            <p style="margin:0;font-family:Georgia,serif;font-size:28px;font-weight:400;color:#FDFAF3;letter-spacing:-0.5px;">GutHub</p>
-            <p style="margin:8px 0 0;font-family:Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#6F9477;">AI Gut Health Companion</p>
+            <img src="https://guthub-website.vercel.app/logo-dark.png" alt="GutHub" width="140" height="36" style="display:block;margin:0 auto;" />
           </td>
         </tr>
 
