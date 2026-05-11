@@ -229,6 +229,8 @@ export default function MealPlannerClient() {
   const [generating, setGenerating] = useState(false)
   const [generatingCount, setGeneratingCount] = useState(0)
   const [generatingTotal, setGeneratingTotal] = useState(0)
+  const [loadingMsgIdx, setLoadingMsgIdx] = useState(0)
+  const loadingMsgTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const [regeneratingSlot, setRegeneratingSlot] = useState<string | null>(null)
   const [acceptingSlot, setAcceptingSlot] = useState<string | null>(null)
   const [activeDay, setActiveDay] = useState(0)
@@ -239,6 +241,24 @@ export default function MealPlannerClient() {
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState(false)
   const supabase = createClient()
+
+  const LOADING_MESSAGES = [
+    'Consulting with your gut flora…',
+    'Raiding the farmers market…',
+    'Bribing the fermentation gods…',
+    'Asking the kefir what it wants to be today…',
+    'Calculating your fiber destiny…',
+    'Negotiating with cruciferous vegetables…',
+    'Summoning the spirit of a registered dietitian…',
+    'Making sure nothing on here will upset your Tuesday…',
+    'Adding probiotics to everything (you\'re welcome)…',
+    'Checking if broccoli is okay with being here again…',
+    'Sourcing the good olive oil, not the cheap stuff…',
+    'Teaching the AI what FODMAP stands for…',
+    'Preventing yet another sad desk lunch…',
+    'Your microbiome said "finally"…',
+    'Almost done — just plating the salmon nicely…',
+  ]
 
   const fetchSlots = useCallback(async () => {
     setLoading(true)
@@ -358,11 +378,26 @@ export default function MealPlannerClient() {
     }
   }
 
+  function startLoadingMessages() {
+    setLoadingMsgIdx(0)
+    loadingMsgTimer.current = setInterval(() => {
+      setLoadingMsgIdx(i => (i + 1) % LOADING_MESSAGES.length)
+    }, 3000)
+  }
+
+  function stopLoadingMessages() {
+    if (loadingMsgTimer.current) {
+      clearInterval(loadingMsgTimer.current)
+      loadingMsgTimer.current = null
+    }
+  }
+
   async function generateWeek() {
     const total = planDays * 3
     setGenerating(true)
     setGeneratingCount(0)
     setGeneratingTotal(total)
+    startLoadingMessages()
 
     // For 1 or 3 day plans, start from the currently selected day.
     // For 7 days, always start from Monday (weekStart).
@@ -393,6 +428,7 @@ export default function MealPlannerClient() {
     } catch { /* network error — slots will be empty */ }
 
     await fetchSlots()
+    stopLoadingMessages()
     setGenerating(false)
     setGeneratingCount(0)
     setGeneratingTotal(0)
@@ -516,11 +552,14 @@ export default function MealPlannerClient() {
         }}>
           <div style={{ width: 18, height: 18, border: '2.5px solid var(--cream-200)', borderTopColor: 'var(--terracotta-500)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>
-              {generatingCount === 0
-                ? 'AI is crafting your meals…'
-                : `Generated ${generatingCount} of ${generatingTotal} meals…`}
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6, transition: 'opacity 300ms' }}>
+              {LOADING_MESSAGES[loadingMsgIdx]}
             </div>
+            {generatingCount > 0 && (
+              <div style={{ fontSize: 12, color: 'var(--ink-400)', marginBottom: 4 }}>
+                {generatingCount} of {generatingTotal} meals ready
+              </div>
+            )}
             <div style={{ height: 4, background: 'var(--cream-200)', borderRadius: 99, overflow: 'hidden' }}>
               <div style={{
                 height: '100%', borderRadius: 99,
