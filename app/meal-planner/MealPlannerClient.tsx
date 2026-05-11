@@ -27,7 +27,7 @@ type Profile = {
 type MacroTarget = {
   total_calories: number | null
   protein_g: number | null
-  carbohydrates_g: number | null
+  carbs_g: number | null
   fat_g: number | null
 }
 
