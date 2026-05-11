@@ -106,13 +106,66 @@ export default async function DashboardPage() {
     ? `Your gut score is up ${scoreDelta} point${scoreDelta === 1 ? '' : 's'} since yesterday. Here's what to focus on today.`
     : `Here's your gut health snapshot for today.`
 
-  // Nudge copy — data-driven
-  const nudgeTitle = todaySymptoms.length > 0
-    ? <>{`You've logged `}<em style={{ fontStyle: 'italic', color: '#e8c870' }}>{todaySymptoms.length} symptom{todaySymptoms.length > 1 ? 's' : ''}</em> today. Let's find the pattern.</>
-    : <>Ready to <em style={{ fontStyle: 'italic', color: '#e8c870' }}>track your first meal</em> today?</>
-  const nudgeBody = todaySymptoms.length > 0
-    ? `Your coach can help identify food triggers. Start by logging what you ate before each symptom.`
-    : `Every meal logged helps your coach spot patterns and tailor your plan. It only takes a few seconds.`
+  // Coach Proactive nudge — pick the most relevant scenario
+  const timeOfDay = getTimeOfDay()
+  const calPct = targets.calories > 0 ? consumed.calories / targets.calories : 0
+  const proteinPct = targets.protein > 0 ? consumed.protein / targets.protein : 0
+
+  let nudgeTitle: React.ReactNode
+  let nudgeBody: string
+  let nudgePrimaryLabel: string
+  let nudgePrimaryHref: string
+  let nudgeSecondaryLabel = 'Talk to Coach'
+  let nudgeSecondaryHref = '/coach'
+
+  if (meals.length === 0) {
+    // Nothing logged yet
+    nudgeTitle = <>Ready to <em style={{ fontStyle: 'italic', color: '#e8c870' }}>track your first meal</em> today?</>
+    nudgeBody = `Every meal logged helps your coach spot patterns and tailor your plan. It only takes a few seconds.`
+    nudgePrimaryLabel = 'Log a meal'
+    nudgePrimaryHref = '/log'
+  } else if (todaySymptoms.length > 0) {
+    // Meals + symptoms → pattern finding is most valuable
+    nudgeTitle = <>{`You logged `}<em style={{ fontStyle: 'italic', color: '#e8c870' }}>{todaySymptoms.length} symptom{todaySymptoms.length > 1 ? 's' : ''}</em> today — let&apos;s find what triggered it.</>
+    nudgeBody = `Your coach can cross-reference your meals with your symptoms to pinpoint food triggers. ${meals.length > 1 ? `You've logged ${meals.length} meals to work with.` : `Adding more meal logs gives your coach more to work with.`}`
+    nudgePrimaryLabel = 'Discuss with Coach'
+    nudgePrimaryHref = '/coach?autostart=symptoms'
+    nudgeSecondaryLabel = 'Log more meals'
+    nudgeSecondaryHref = '/log'
+  } else if (calPct >= 0.9) {
+    // Near or at calorie target
+    const remaining = Math.max(0, targets.calories - consumed.calories)
+    nudgeTitle = <>You&apos;re <em style={{ fontStyle: 'italic', color: '#e8c870' }}>{remaining === 0 ? 'at' : 'close to'} your calorie target</em> for today.</>
+    nudgeBody = remaining > 0
+      ? `${remaining} kcal remaining. Great progress — your coach can suggest a light option to finish the day strong.`
+      : `You've hit your daily calorie target. Ask your coach about optimising tomorrow's meals.`
+    nudgePrimaryLabel = 'Get meal ideas'
+    nudgePrimaryHref = '/coach'
+    nudgeSecondaryLabel = 'Log a meal'
+    nudgeSecondaryHref = '/log'
+  } else if (meals.length > 0 && proteinPct < 0.5 && timeOfDay !== 'morning') {
+    // Protein running low past morning
+    nudgeTitle = <>Your <em style={{ fontStyle: 'italic', color: '#e8c870' }}>protein intake is low</em> for where you are in the day.</>
+    nudgeBody = `You've hit ${consumed.protein}g of your ${targets.protein}g target. Your coach can suggest high-protein options for your next meal.`
+    nudgePrimaryLabel = 'Get suggestions'
+    nudgePrimaryHref = '/coach'
+    nudgeSecondaryLabel = 'Log a meal'
+    nudgeSecondaryHref = '/log'
+  } else if (streak >= 3) {
+    // Celebrate streak
+    nudgeTitle = <><em style={{ fontStyle: 'italic', color: '#e8c870' }}>{streak}-day streak</em> — you&apos;re building real momentum.</>
+    nudgeBody = `Consistent logging is how your coach learns your patterns. Check your insights to see what the data is telling you.`
+    nudgePrimaryLabel = 'View insights'
+    nudgePrimaryHref = '/insights'
+    nudgeSecondaryLabel = 'Log a meal'
+    nudgeSecondaryHref = '/log'
+  } else {
+    // Meals logged, no special condition — encourage continued logging
+    nudgeTitle = <>{meals.length} meal{meals.length > 1 ? 's' : ''} logged today — <em style={{ fontStyle: 'italic', color: '#e8c870' }}>keep it up.</em></>
+    nudgeBody = `Your coach is tracking your patterns. Log your remaining meals to get the most accurate gut health insights today.`
+    nudgePrimaryLabel = 'Log a meal'
+    nudgePrimaryHref = '/log'
+  }
 
   return (
     <div style={{ padding: '32px 40px 48px' }}>
@@ -162,11 +215,11 @@ export default async function DashboardPage() {
               {nudgeBody}
             </p>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <Link href="/log" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 999, background: 'var(--cream-50)', color: 'var(--forest-600)', fontSize: 13.5, fontWeight: 600, textDecoration: 'none', fontFamily: 'var(--font-body)' }}>
-                Log a meal
+              <Link href={nudgePrimaryHref} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 999, background: 'var(--cream-50)', color: 'var(--forest-600)', fontSize: 13.5, fontWeight: 600, textDecoration: 'none', fontFamily: 'var(--font-body)' }}>
+                {nudgePrimaryLabel}
               </Link>
-              <Link href={todaySymptoms.length > 0 ? '/coach?autostart=symptoms' : '/coach'} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 999, border: '1px solid rgba(250,245,238,0.3)', color: 'var(--cream-100)', fontSize: 13.5, fontWeight: 500, textDecoration: 'none', fontFamily: 'var(--font-body)' }}>
-                Talk it through with Coach
+              <Link href={nudgeSecondaryHref} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 999, border: '1px solid rgba(250,245,238,0.3)', color: 'var(--cream-100)', fontSize: 13.5, fontWeight: 500, textDecoration: 'none', fontFamily: 'var(--font-body)' }}>
+                {nudgeSecondaryLabel}
               </Link>
             </div>
           </div>
