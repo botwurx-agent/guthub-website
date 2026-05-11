@@ -40,12 +40,12 @@ export default function AuthModal() {
     return () => { document.body.style.overflow = ''; };
   }, [open]);
 
-  // Check for auth error from OAuth redirect
+  // Auto-open for ?auth=signin (e.g. redirected from protected page)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('auth') === 'signin' && params.get('error')) {
-      setScreen('signin');
-      setError('Sign in failed. Please try again.');
+    if (params.get('auth') === 'signin') {
+      setScreen(params.get('error') ? 'signin' : 'signin');
+      if (params.get('error')) setError('Sign in failed. Please try again.');
       setOpen(true);
     }
   }, []);
@@ -83,7 +83,9 @@ export default function AuthModal() {
         return;
       }
       const appBase = window.location.hostname.endsWith('guthub.ai') ? 'https://app.guthub.ai' : ''
-      window.location.href = `${appBase}/onboarding`;
+      const returnTo = new URLSearchParams(window.location.search).get('return')
+      const onboardingUrl = returnTo ? `${appBase}/onboarding?return=${encodeURIComponent(returnTo)}` : `${appBase}/onboarding`
+      window.location.href = onboardingUrl;
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
@@ -99,7 +101,12 @@ export default function AuthModal() {
           .eq('id', user.id)
           .single();
         const appBase = window.location.hostname.endsWith('guthub.ai') ? 'https://app.guthub.ai' : ''
-        window.location.href = appBase + (profile?.onboarding_completed ? '/dashboard' : '/onboarding');
+        const returnTo = new URLSearchParams(window.location.search).get('return')
+        if (returnTo && profile?.onboarding_completed) {
+          window.location.href = appBase + returnTo
+        } else {
+          window.location.href = appBase + (profile?.onboarding_completed ? '/dashboard' : '/onboarding');
+        }
       }
     }
   }
@@ -125,13 +132,14 @@ export default function AuthModal() {
   async function handleGoogle() {
     setError(null);
     const supabase = createClient();
+    const returnTo = new URLSearchParams(window.location.search).get('return')
+    const callbackBase = window.location.hostname.endsWith('guthub.ai')
+      ? 'https://app.guthub.ai/auth/callback'
+      : `${window.location.origin}/auth/callback`
+    const callbackUrl = returnTo ? `${callbackBase}?next=${encodeURIComponent(returnTo)}` : callbackBase
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: window.location.hostname.endsWith('guthub.ai')
-          ? 'https://app.guthub.ai/auth/callback'
-          : `${window.location.origin}/auth/callback`,
-      },
+      options: { redirectTo: callbackUrl },
     });
     if (error) setError(error.message);
   }

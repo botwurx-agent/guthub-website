@@ -21,7 +21,7 @@ export default async function SubscribePage({
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/?auth=signin')
+  if (!user) redirect(`/?auth=signin&return=/subscribe?plan=${planKey}`)
 
   // Check already subscribed
   const { data: profile } = await supabase
