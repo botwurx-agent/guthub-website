@@ -1,9 +1,12 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getUserTimezone, todayInTz } from '@/lib/timezone'
 import ClientTime from '@/components/app/ClientTime'
 import { computeGutScore, gutScoreLabel } from '@/lib/gut-score'
 import { MealIllustration } from '@/components/app/MealIllustration'
+import { Resend } from 'resend'
 import Link from 'next/link'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 import {
   TrendingUp, Plus, Flame, FlaskConical,
   Clock, Leaf, RefreshCw, Frown, Meh, Smile,
@@ -30,7 +33,7 @@ export default async function DashboardPage() {
     { data: recentLogDates },
     { data: tonightSlot },
   ] = await Promise.all([
-    supabase.from('profiles').select('name, weight_kg, health_profile').eq('id', user.id).single(),
+    supabase.from('profiles').select('name, weight_kg, health_profile, trial_ends_at, trial_email_sent').eq('id', user.id).single(),
     supabase.from('macro_targets').select('*').eq('user_id', user.id).order('target_date', { ascending: false }).limit(1).single(),
     supabase.from('daily_records').select('*').eq('user_id', user.id).eq('record_date', today).single(),
     supabase.from('symptom_logs').select('symptom_type, severity, notes, logged_at').eq('user_id', user.id).eq('log_date', today).order('logged_at', { ascending: false }),
@@ -41,6 +44,30 @@ export default async function DashboardPage() {
     supabase.from('meal_logs').select('log_date').eq('user_id', user.id).order('log_date', { ascending: false }).limit(30),
     supabase.from('meal_plan_slots').select('meal_name, calories, protein_g, carbs_g, fat_g, accepted').eq('user_id', user.id).eq('plan_date', today).eq('meal_type', 'dinner').maybeSingle(),
   ])
+
+  // Day 5 trial reminder — fire once when ≤ 2 days remain
+  const trialEndsAt = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
+  const daysLeft = trialEndsAt ? Math.ceil((trialEndsAt.getTime() - Date.now()) / 86400000) : null
+  if (daysLeft !== null && daysLeft <= 2 && daysLeft > 0 && !profile?.trial_email_sent && user.email) {
+    const firstName = (profile?.name ?? '').split(' ')[0] || 'there'
+    try {
+      await resend.emails.send({
+        from: 'GutHub <hello@guthub.ai>',
+        to: user.email,
+        subject: `Your free trial ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'} — keep your momentum`,
+        html: `
+          <p>Hi ${firstName},</p>
+          <p>Your 7-day free trial ends in <strong>${daysLeft} day${daysLeft === 1 ? '' : 's'}</strong>. You've been making real progress — don't let it stop here.</p>
+          <p>Subscribe now to keep access to your AI gut coach, meal planner, symptom tracker, and personalized insights.</p>
+          <p><a href="https://guthub-website.vercel.app/pricing" style="background:#c16a4a;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Keep my access →</a></p>
+          <p style="color:#888;font-size:13px;">Questions? Just reply to this email.</p>
+          <p>— The GutHub team</p>
+        `,
+      })
+      const service = await createServiceClient()
+      await service.from('profiles').update({ trial_email_sent: true }).eq('id', user.id)
+    } catch { /* non-blocking — don't break the dashboard */ }
+  }
 
   // Gut score
   const { score } = gutScoreRow

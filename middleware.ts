@@ -89,24 +89,36 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // 2. Logged in but no active subscription → pricing (except settings)
-  if (isProtected && user && !pathname.startsWith('/settings')) {
+  // 2. Logged in — check onboarding + subscription
+  if (isProtected && user) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('subscription_status, trial_ends_at, onboarding_completed')
       .eq('id', user.id)
       .single()
 
-    const status = profile?.subscription_status
-    const trialEnds = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
-    const trialActive = trialEnds ? trialEnds > new Date() : false
-    const hasAccess = status === 'active' || status === 'trialing' || trialActive
-
-    if (!hasAccess) {
+    // Redirect to onboarding if not yet completed (except /settings)
+    if (!profile?.onboarding_completed && !pathname.startsWith('/settings')) {
       const target = hostname === APP_DOMAIN
-        ? `https://${WWW_DOMAIN}/pricing?reason=subscription_required`
-        : `/pricing?reason=subscription_required`
+        ? `https://${APP_DOMAIN}/onboarding`
+        : `/onboarding`
       return NextResponse.redirect(target)
+    }
+
+    // Check subscription/trial access (skip /settings so billing portal always works)
+    if (!pathname.startsWith('/settings')) {
+      const status = profile?.subscription_status
+      const trialEnds = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
+      // null trial_ends_at = clock not yet started (pre-onboarding edge case) → allow
+      const trialActive = trialEnds ? trialEnds > new Date() : null
+      const hasAccess = status === 'active' || (status === 'trialing' && trialActive !== false)
+
+      if (!hasAccess) {
+        const target = hostname === APP_DOMAIN
+          ? `https://${WWW_DOMAIN}/pricing?reason=subscription_required`
+          : `/pricing?reason=subscription_required`
+        return NextResponse.redirect(target)
+      }
     }
   }
 

@@ -72,12 +72,13 @@ export async function completeOnboarding() {
     goal_weight_kg: goalResult.goal_weight_kg ?? null,
   }, { onConflict: 'user_id,record_date' })
 
-  // Mark onboarding complete
+  // Mark onboarding complete and start the 7-day trial clock
   await service.from('profiles').update({
     onboarding_completed: true,
     profile_completed: true,
     onboarding_step: 6,
     starting_weight_kg: profile.weight_kg,
+    trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   }).eq('id', user.id)
 
   revalidatePath('/', 'layout')
