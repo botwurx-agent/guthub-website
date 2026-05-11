@@ -98,8 +98,8 @@ export async function completeOnboarding() {
     ...(profile.trial_ends_at ? {} : { trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() }),
   }).eq('id', user.id)
 
-  // Send welcome email (non-blocking)
-  if (user.email) {
+  // Send welcome email only on first completion — not on re-runs
+  if (user.email && !profile.onboarding_completed) {
     const firstName = (profile.name ?? '').split(' ')[0] || 'there'
     const healthProfile = (profile.health_profile as Record<string, unknown>) ?? {}
     const goalsRaw = healthProfile.primary_goals as string[] | string | undefined
