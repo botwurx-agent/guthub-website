@@ -16,6 +16,7 @@ export default async function SettingsPage() {
       profile={profile}
       macroTarget={macroTarget}
       email={user.email ?? ''}
+      isOAuthUser={user.app_metadata?.provider === 'google'}
     />
   )
 }

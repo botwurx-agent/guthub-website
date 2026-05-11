@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { CreditCard, Download, Trash2, ExternalLink, Edit2, Shield, ChevronRight } from 'lucide-react'
+import { CreditCard, Download, Trash2, ExternalLink, Edit2, Shield, ChevronRight, KeyRound, Mail, CheckCircle2 } from 'lucide-react'
 
 type Profile = {
   name: string | null
@@ -29,6 +29,7 @@ const SECTIONS = [
   { id: 'goals',        label: 'Goals & macros' },
   { id: 'coach',        label: 'Coach behavior' },
   { id: 'subscription', label: 'Subscription' },
+  { id: 'account',      label: 'Account & security' },
   { id: 'data',         label: 'Privacy & data' },
 ]
 
@@ -50,14 +51,20 @@ export default function SettingsClient({
   profile,
   macroTarget,
   email,
+  isOAuthUser,
 }: {
   profile: Profile | null
   macroTarget: MacroTarget | null
   email: string
+  isOAuthUser: boolean
 }) {
   const [activeSection, setActiveSection] = useState('profile')
   const [portalLoading, setPortalLoading] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError, setPwError] = useState<string | null>(null)
+  const [pwSuccess, setPwSuccess] = useState(false)
   const [preferences, setPreferences] = useState({
     proactive_nudges:      (profile?.health_profile as Record<string, unknown>)?.proactive_nudges !== false,
     auto_update_meal_plan: (profile?.health_profile as Record<string, unknown>)?.auto_update_meal_plan !== false,
@@ -118,6 +125,23 @@ export default function SettingsClient({
     const { data: existing } = await supabase.from('profiles').select('health_profile').eq('id', user.id).single()
     const hp = (existing?.health_profile ?? {}) as Record<string, unknown>
     await supabase.from('profiles').update({ health_profile: { ...hp, ...next } }).eq('id', user.id)
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault()
+    setPwError(null)
+    setPwSuccess(false)
+    if (pwForm.next.length < 8) { setPwError('New password must be at least 8 characters.'); return }
+    if (pwForm.next !== pwForm.confirm) { setPwError('Passwords do not match.'); return }
+    setPwLoading(true)
+    // Re-authenticate with current password first
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password: pwForm.current })
+    if (signInErr) { setPwError('Current password is incorrect.'); setPwLoading(false); return }
+    const { error: updateErr } = await supabase.auth.updateUser({ password: pwForm.next })
+    setPwLoading(false)
+    if (updateErr) { setPwError(updateErr.message); return }
+    setPwSuccess(true)
+    setPwForm({ current: '', next: '', confirm: '' })
   }
 
   async function handleDeleteAccount() {
@@ -317,6 +341,100 @@ export default function SettingsClient({
             </>
           )}
 
+          {/* ── Account & security ── */}
+          {activeSection === 'account' && (
+            <>
+              <SettingsCard title="Account">
+                <div style={{ display: 'flex', gap: 14, alignItems: 'center', padding: '4px 0 20px' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 9, background: 'var(--cream-100)', border: '1px solid var(--cream-200)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Mail size={16} color="var(--ink-500)" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-400)', marginBottom: 3 }}>Email address</div>
+                    <div style={{ fontSize: 15, color: 'var(--ink-900)' }}>{email}</div>
+                  </div>
+                  {isOAuthUser && (
+                    <span style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 999, padding: '3px 10px' }}>
+                      Google account
+                    </span>
+                  )}
+                </div>
+                <div style={{ height: 1, background: 'var(--cream-100)', marginBottom: 20 }} />
+                <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 9, background: 'var(--cream-100)', border: '1px solid var(--cream-200)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                    <KeyRound size={16} color="var(--ink-500)" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-900)', marginBottom: 4 }}>Password</div>
+                    {isOAuthUser ? (
+                      <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-500)', lineHeight: 1.6 }}>
+                        You signed in with Google. Password login is not available for your account — authentication is managed by Google.
+                      </p>
+                    ) : (
+                      <>
+                        <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--ink-500)', lineHeight: 1.6 }}>
+                          Change your password below. You&apos;ll need to enter your current password to confirm it&apos;s you.
+                        </p>
+                        {pwSuccess && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 9, fontSize: 13, color: '#16a34a', fontWeight: 600 }}>
+                            <CheckCircle2 size={15} /> Password updated successfully.
+                          </div>
+                        )}
+                        <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 400 }}>
+                          <div>
+                            <label style={labelStyle}>Current password</label>
+                            <input
+                              type="password"
+                              value={pwForm.current}
+                              onChange={e => setPwForm(f => ({ ...f, current: e.target.value }))}
+                              required
+                              style={inputStyle}
+                              placeholder="••••••••"
+                            />
+                          </div>
+                          <div>
+                            <label style={labelStyle}>New password</label>
+                            <input
+                              type="password"
+                              value={pwForm.next}
+                              onChange={e => setPwForm(f => ({ ...f, next: e.target.value }))}
+                              required
+                              style={inputStyle}
+                              placeholder="••••••••"
+                            />
+                          </div>
+                          <div>
+                            <label style={labelStyle}>Confirm new password</label>
+                            <input
+                              type="password"
+                              value={pwForm.confirm}
+                              onChange={e => setPwForm(f => ({ ...f, confirm: e.target.value }))}
+                              required
+                              style={inputStyle}
+                              placeholder="••••••••"
+                            />
+                          </div>
+                          {pwError && (
+                            <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 9, fontSize: 13, color: '#dc2626' }}>
+                              {pwError}
+                            </div>
+                          )}
+                          <button
+                            type="submit"
+                            disabled={pwLoading}
+                            style={{ alignSelf: 'flex-start', padding: '9px 20px', borderRadius: 9, border: 'none', background: 'var(--terracotta-500)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: pwLoading ? 'not-allowed' : 'pointer', opacity: pwLoading ? 0.7 : 1 }}
+                          >
+                            {pwLoading ? 'Updating…' : 'Update password'}
+                          </button>
+                        </form>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </SettingsCard>
+            </>
+          )}
+
           {/* ── Privacy & data ── */}
           {activeSection === 'data' && (
             <SettingsCard title="Privacy & data" badge={<span style={{ fontSize: 11, fontWeight: 700, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: 999, padding: '3px 10px' }}>End-to-end encrypted</span>}>
@@ -434,6 +552,19 @@ function ToggleRow({
       </button>
     </div>
   )
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
+  letterSpacing: '0.08em', color: 'var(--ink-500)', marginBottom: 6,
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', boxSizing: 'border-box',
+  padding: '10px 12px', borderRadius: 9,
+  border: '1.5px solid var(--cream-200)', background: '#fff',
+  fontSize: 14, color: 'var(--ink-900)', fontFamily: 'var(--font-body)',
+  outline: 'none',
 }
 
 const ghostBtnStyle: React.CSSProperties = {
