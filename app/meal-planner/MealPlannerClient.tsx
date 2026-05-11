@@ -303,7 +303,7 @@ export default function MealPlannerClient() {
       if (!user) return
       const [{ data: prof }, { data: mac }] = await Promise.all([
         supabase.from('profiles').select('diet_mode, health_profile').eq('id', user.id).single(),
-        supabase.from('macro_targets').select('total_calories, protein_g, carbohydrates_g, fat_g').eq('user_id', user.id).order('target_date', { ascending: false }).limit(1).single(),
+        supabase.from('macro_targets').select('total_calories, protein_g, carbs_g, fat_g').eq('user_id', user.id).order('target_date', { ascending: false }).limit(1).single(),
       ])
       if (prof) setProfile(prof as Profile)
       if (mac) setMacros(mac as MacroTarget)
@@ -463,13 +463,13 @@ export default function MealPlannerClient() {
     setAcceptingSlot(null)
   }
 
-  const dietLabel = profile?.diet_mode
+  const dietLabel = (profile?.diet_mode && profile.diet_mode !== 'default')
     ? profile.diet_mode.replace(/_/g, ' ')
     : 'Balanced'
 
   const allergiesLabel = (() => {
     const h = profile?.health_profile ?? {}
-    const raw = h['allergies'] ?? h['food_allergies'] ?? ''
+    const raw = h['allergens'] ?? h['allergies'] ?? h['food_allergies'] ?? ''
     if (!raw) return 'None listed'
     if (Array.isArray(raw)) return (raw as string[]).join(', ')
     return String(raw)
