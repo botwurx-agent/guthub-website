@@ -166,10 +166,17 @@ export async function completeOnboarding() {
             </table>
 
             <!-- CTA -->
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
               <tr>
                 <td align="center">
                   <a href="${appUrl}/dashboard" style="display:inline-block;background:#DB6F56;color:#FFFFFF;font-family:Arial,sans-serif;font-size:15px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:999px;letter-spacing:0.02em;">Go to my dashboard →</a>
+                </td>
+              </tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
+              <tr>
+                <td align="center">
+                  <a href="${appUrl}/subscribe" style="font-family:Arial,sans-serif;font-size:13px;color:#7A7468;text-decoration:underline;">Or subscribe now to lock in your plan</a>
                 </td>
               </tr>
             </table>

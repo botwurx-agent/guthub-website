@@ -59,7 +59,7 @@ export default async function DashboardPage() {
           <p>Hi ${firstName},</p>
           <p>Your 7-day free trial ends in <strong>${daysLeft} day${daysLeft === 1 ? '' : 's'}</strong>. You've been making real progress — don't let it stop here.</p>
           <p>Subscribe now to keep access to your AI gut coach, meal planner, symptom tracker, and personalized insights.</p>
-          <p><a href="https://guthub-website.vercel.app/pricing" style="background:#c16a4a;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Keep my access →</a></p>
+          <p><a href="https://guthub-website.vercel.app/subscribe" style="background:#c16a4a;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Subscribe now →</a></p>
           <p style="color:#888;font-size:13px;">Questions? Just reply to this email.</p>
           <p>— The GutHub team</p>
         `,

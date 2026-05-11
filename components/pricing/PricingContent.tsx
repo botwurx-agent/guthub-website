@@ -51,28 +51,9 @@ function PricingCard() {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
 
-  async function startCheckout(plan: string) {
-    // If not logged in, open signup modal first
-    // After signup, they'll be redirected back here
+  function startCheckout(plan: string) {
     setLoading(plan);
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
-      });
-      if (res.status === 401) {
-        // Not logged in — open auth modal
-        openAuth('signup');
-        setLoading(null);
-        return;
-      }
-      const data = await res.json();
-      if (data.error) { alert(data.error); setLoading(null); return; }
-      if (data.url) window.location.href = data.url;
-    } catch {
-      setLoading(null);
-    }
+    router.push(`/subscribe?plan=${plan}`);
   }
 
   const plans = [

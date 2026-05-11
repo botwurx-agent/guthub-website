@@ -73,7 +73,7 @@ export default async function PricingPage({
             </p>
             <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
               <tr><td align="center">
-                <a href="${APP_URL}/pricing" style="display:inline-block;background:#DB6F56;color:#FFFFFF;font-family:Arial,sans-serif;font-size:15px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:999px;letter-spacing:0.02em;">Keep my access →</a>
+                <a href="${APP_URL}/subscribe" style="display:inline-block;background:#DB6F56;color:#FFFFFF;font-family:Arial,sans-serif;font-size:15px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:999px;letter-spacing:0.02em;">Keep my access →</a>
               </td></tr>
             </table>
             <p style="margin:0;font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#7A7468;">
