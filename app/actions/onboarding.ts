@@ -16,9 +16,24 @@ export async function saveProfileStep(step: number, data: Record<string, unknown
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'Not authenticated.' }
 
+  let updateData: Record<string, unknown> = { ...data, onboarding_step: step }
+
+  // Merge health_profile instead of replacing — each step only sends its slice
+  if (data.health_profile && typeof data.health_profile === 'object') {
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('health_profile')
+      .eq('id', user.id)
+      .single()
+    updateData.health_profile = {
+      ...((existing?.health_profile as Record<string, unknown>) ?? {}),
+      ...(data.health_profile as Record<string, unknown>),
+    }
+  }
+
   const { error } = await supabase
     .from('profiles')
-    .update({ ...data, onboarding_step: step })
+    .update(updateData)
     .eq('id', user.id)
 
   if (error) return { error: error.message }
