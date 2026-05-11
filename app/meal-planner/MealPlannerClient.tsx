@@ -227,6 +227,8 @@ export default function MealPlannerClient() {
   const [slots, setSlots] = useState<Slot[]>([])
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [generatingCount, setGeneratingCount] = useState(0)
+  const [generatingTotal, setGeneratingTotal] = useState(0)
   const [regeneratingSlot, setRegeneratingSlot] = useState<string | null>(null)
   const [acceptingSlot, setAcceptingSlot] = useState<string | null>(null)
   const [activeDay, setActiveDay] = useState(0)
@@ -331,25 +333,87 @@ export default function MealPlannerClient() {
     } catch { /* clipboard blocked — silently noop */ }
   }
 
+  async function consumeStream(
+    body: ReadableStream<Uint8Array>,
+    onMeal: (meal: Partial<Slot>) => void,
+  ) {
+    const reader = body.getReader()
+    const decoder = new TextDecoder()
+    let sseBuffer = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      sseBuffer += decoder.decode(value, { stream: true })
+      const lines = sseBuffer.split('\n')
+      sseBuffer = lines.pop() ?? ''
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const data = line.slice(6).trim()
+        if (data === '[DONE]') continue
+        try {
+          const meal = JSON.parse(data)
+          if (meal.meal_name) onMeal(meal)
+        } catch { /* skip malformed */ }
+      }
+    }
+  }
+
   async function generateWeek() {
+    const total = planDays * 3
     setGenerating(true)
-    await fetch('/api/meal-planner/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: null, days: planDays }),
-    })
+    setGeneratingCount(0)
+    setGeneratingTotal(total)
+
+    // Clear the slots for the dates being regenerated
+    const datesToClear: string[] = []
+    for (let i = 0; i < planDays; i++) datesToClear.push(toDateStr(addDays(weekStart, i)))
+    setSlots(prev => prev.filter(s => !datesToClear.includes(s.plan_date)))
+
+    try {
+      const res = await fetch('/api/meal-planner/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: null, days: planDays }),
+      })
+      if (res.ok && res.body) {
+        await consumeStream(res.body, meal => {
+          setSlots(prev => {
+            const filtered = prev.filter(
+              s => !(s.plan_date === meal.plan_date && s.meal_type === meal.meal_type)
+            )
+            return [...filtered, { ...meal, id: `tmp-${meal.plan_date}-${meal.meal_type}` } as Slot]
+          })
+          setGeneratingCount(c => c + 1)
+        })
+      }
+    } catch { /* network error — slots will be empty */ }
+
     await fetchSlots()
     setGenerating(false)
+    setGeneratingCount(0)
+    setGeneratingTotal(0)
   }
 
   async function regenerateMeal(date: string, mealType: string) {
     const key = `${date}-${mealType}`
     setRegeneratingSlot(key)
-    await fetch('/api/meal-planner/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: { date, mealType } }),
-    })
+    try {
+      const res = await fetch('/api/meal-planner/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: { date, mealType } }),
+      })
+      if (res.ok && res.body) {
+        await consumeStream(res.body, meal => {
+          setSlots(prev => {
+            const filtered = prev.filter(
+              s => !(s.plan_date === meal.plan_date && s.meal_type === meal.meal_type)
+            )
+            return [...filtered, { ...meal, id: `tmp-${meal.plan_date}-${meal.meal_type}` } as Slot]
+          })
+        })
+      }
+    } catch { /* leave existing slot in place */ }
     await fetchSlots()
     setRegeneratingSlot(null)
   }
@@ -437,17 +501,29 @@ export default function MealPlannerClient() {
         </div>
       </div>
 
-      {/* Generating overlay */}
+      {/* Generating progress banner */}
       {generating && (
         <div style={{
-          background: 'var(--cream-100)', border: '1px solid var(--cream-200)', borderRadius: 16,
-          padding: '40px 32px', textAlign: 'center', marginBottom: 24,
+          background: 'var(--cream-100)', border: '1px solid var(--cream-200)', borderRadius: 12,
+          padding: '14px 20px', marginBottom: 20,
+          display: 'flex', alignItems: 'center', gap: 16,
         }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-            <div style={{ width: 40, height: 40, border: '3px solid var(--cream-200)', borderTopColor: 'var(--terracotta-500)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ width: 18, height: 18, border: '2.5px solid var(--cream-200)', borderTopColor: 'var(--terracotta-500)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>
+              {generatingCount === 0
+                ? 'AI is crafting your meals…'
+                : `Generated ${generatingCount} of ${generatingTotal} meals…`}
+            </div>
+            <div style={{ height: 4, background: 'var(--cream-200)', borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%', borderRadius: 99,
+                background: 'var(--terracotta-400)',
+                width: generatingTotal > 0 ? `${(generatingCount / generatingTotal) * 100}%` : '0%',
+                transition: 'width 400ms ease',
+              }} />
+            </div>
           </div>
-          <p style={{ margin: '0 0 4px', fontWeight: 600, color: 'var(--ink-700)' }}>Building your meal plan…</p>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-400)' }}>AI is crafting {planDays * 3} gut-friendly meals</p>
         </div>
       )}
 
@@ -476,8 +552,8 @@ export default function MealPlannerClient() {
         </div>
       )}
 
-      {/* Main content */}
-      {!generating && hasAnyMeals && (
+      {/* Main content — visible as soon as first meal arrives */}
+      {hasAnyMeals && (
         <div className="plan-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 20, alignItems: 'start' }}>
           {/* LEFT column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
