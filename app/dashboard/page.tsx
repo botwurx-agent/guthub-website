@@ -32,6 +32,7 @@ export default async function DashboardPage() {
     { data: gutScoreHistory },
     { data: recentLogDates },
     { data: tonightSlot },
+    { data: waterLogs },
   ] = await Promise.all([
     supabase.from('profiles').select('name, weight_kg, health_profile, trial_ends_at, trial_email_sent').eq('id', user.id).single(),
     supabase.from('macro_targets').select('*').eq('user_id', user.id).order('target_date', { ascending: false }).limit(1).single(),
@@ -43,6 +44,7 @@ export default async function DashboardPage() {
     supabase.from('gut_scores').select('score, score_date').eq('user_id', user.id).order('score_date', { ascending: false }).limit(8),
     supabase.from('meal_logs').select('log_date').eq('user_id', user.id).order('log_date', { ascending: false }).limit(30),
     supabase.from('meal_plan_slots').select('meal_name, calories, protein_g, carbs_g, fat_g, accepted').eq('user_id', user.id).eq('plan_date', today).eq('meal_type', 'dinner').maybeSingle(),
+    supabase.from('water_logs').select('amount_ml').eq('user_id', user.id).eq('log_date', today),
   ])
 
   // Day 5 trial reminder — fire once when ≤ 2 days remain
@@ -110,6 +112,9 @@ export default async function DashboardPage() {
   const timeOfDay = getTimeOfDay()
   const calPct = targets.calories > 0 ? consumed.calories / targets.calories : 0
   const proteinPct = targets.protein > 0 ? consumed.protein / targets.protein : 0
+  const waterMl = (waterLogs ?? []).reduce((s, w) => s + (w.amount_ml ?? 0), 0)
+  const waterGoalMl = 2000
+  const waterPct = waterMl / waterGoalMl
 
   let nudgeTitle: React.ReactNode
   let nudgeBody: string
@@ -132,6 +137,16 @@ export default async function DashboardPage() {
     nudgePrimaryHref = '/coach?autostart=symptoms'
     nudgeSecondaryLabel = 'Log more meals'
     nudgeSecondaryHref = '/log'
+  } else if (waterPct < 0.5 && timeOfDay !== 'morning') {
+    // Under half daily water goal past morning
+    const cupsLogged = Math.round(waterMl / 250)
+    const cupsGoal = Math.round(waterGoalMl / 250)
+    nudgeTitle = <>You&apos;ve only had <em style={{ fontStyle: 'italic', color: '#e8c870' }}>{cupsLogged} of {cupsGoal} cups</em> of water today.</>
+    nudgeBody = `Hydration has a direct impact on digestion and gut health. Aim to log ${cupsGoal - cupsLogged} more cups before the end of the day.`
+    nudgePrimaryLabel = 'Log water'
+    nudgePrimaryHref = '/log?tab=water'
+    nudgeSecondaryLabel = 'Ask Coach why it matters'
+    nudgeSecondaryHref = '/coach'
   } else if (calPct >= 0.9) {
     // Near or at calorie target
     const remaining = Math.max(0, targets.calories - consumed.calories)
