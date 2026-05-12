@@ -84,6 +84,7 @@ export default function Header() {
           .header-cta-full { display: none !important; }
           .header-cta-short { display: inline !important; }
           .menu-toggle { display: inline-flex !important; }
+          .signin-btn { display: none !important; }
         }
       `}</style>
     </header>
@@ -138,25 +139,27 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
+          <button
+            onClick={() => { setMenuOpen(false); openAuth('signin'); }}
+            style={{
+              fontSize: 22, fontWeight: 500, color: 'var(--ink-500)',
+              textDecoration: 'none', padding: '14px 4px',
+              borderBottom: '1px solid var(--border)',
+              fontFamily: 'var(--font-body)',
+              background: 'none', border: 'none', borderBottom: '1px solid var(--border)',
+              cursor: 'pointer', textAlign: 'left',
+            }}
+          >
+            Sign in
+          </button>
         </nav>
         <div style={{
           marginTop: 'auto', padding: '20px',
-          display: 'flex', flexDirection: 'column', gap: 12,
           borderTop: '1px solid var(--border)',
         }}>
           <Button variant="primary" size="lg" as="a" href="/pricing" onClick={() => setMenuOpen(false)}>
             Start your 7-day free trial
           </Button>
-          <button
-            onClick={() => { setMenuOpen(false); openAuth('signin'); }}
-            style={{
-              fontSize: 16, fontWeight: 500, color: 'var(--ink-700)',
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontFamily: 'var(--font-body)', padding: '8px',
-            }}
-          >
-            Sign in
-          </button>
         </div>
       </div>
     )}
