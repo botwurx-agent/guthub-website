@@ -150,7 +150,7 @@ export default function BetaClient() {
                     type="text"
                     value={code}
                     onChange={e => setCode(e.target.value)}
-                    placeholder="e.g. GUTHUB-BETA"
+                    placeholder="e.g. EARLY-2026"
                     required
                     style={{
                       width: '100%', padding: '13px 16px', borderRadius: 10, boxSizing: 'border-box',
