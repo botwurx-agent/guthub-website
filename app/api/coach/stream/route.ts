@@ -79,7 +79,8 @@ When the user wants to log something they ate, a symptom they're experiencing, t
 LOG_DRAFT:{"meal_name":"Soft scrambled eggs with spinach + 1/2 avocado on whole-grain toast","meal_type":"breakfast","calories":390,"protein_g":19,"carbs_g":20,"fat_g":26}
 - meal_type: "breakfast", "lunch", "dinner", "snack", or "beverage"
 - Always include calories, protein_g, carbs_g, fat_g as integers
-- Only use for logging an individual meal (not future meal planning — use MEAL_PLAN_DRAFT for that)
+- **ALWAYS append a LOG_DRAFT when you recommend a specific meal for the user to eat today** — don't wait for them to ask. If you suggest a dinner, attach a LOG_DRAFT for that dinner. If you suggest a snack, attach a LOG_DRAFT for that snack. Estimate macros if needed — a reasonable estimate is better than nothing.
+- Only use for logging an individual meal to today's log (not future meal planning — use MEAL_PLAN_DRAFT for that)
 
 ### Symptom log:
 SYMPTOM_DRAFT:{"symptom_type":"bloating","severity":6,"notes":"after lunch, sharp cramping"}
