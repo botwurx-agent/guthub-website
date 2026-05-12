@@ -185,17 +185,19 @@ export default function InsightsClient() {
   }
 
   // ── Derived data ───────────────────────────────────────────────────────────
+  const kgToLbs = (kg: number) => Math.round(kg * 2.20462 * 10) / 10
+
   const gutScoreValues  = gutScores.map(g => g.score)
-  const weightValues    = weights.map(w => w.weight_kg)
+  const weightValues    = weights.map(w => kgToLbs(w.weight_kg))
   const latestScore     = gutScores.at(-1)?.score ?? null
-  const latestWeight    = weights.at(-1)?.weight_kg ?? null
+  const latestWeight    = weights.at(-1)?.weight_kg != null ? kgToLbs(weights.at(-1)!.weight_kg) : null
 
   const gutDelta = gutScores.length >= 2
     ? Math.round(gutScores.at(-1)!.score - gutScores[0].score)
     : null
 
   const weightDelta = weights.length >= 2
-    ? Math.round((weights.at(-1)!.weight_kg - weights[0].weight_kg) * 10) / 10
+    ? Math.round((kgToLbs(weights.at(-1)!.weight_kg) - kgToLbs(weights[0].weight_kg)) * 10) / 10
     : null
 
   const bloatingByDate: Record<string, { sum: number; count: number }> = {}
@@ -360,7 +362,7 @@ export default function InsightsClient() {
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-400)' }}>Weight</div>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, letterSpacing: '-0.02em', color: 'var(--ink-900)', lineHeight: 1, marginTop: 4 }}>
-                      {latestWeight !== null ? `${latestWeight} kg` : '—'}
+                      {latestWeight !== null ? `${latestWeight} lbs` : '—'}
                     </div>
                   </div>
                   <span style={{ fontSize: 12, color: 'var(--ink-300)' }}>30-day</span>
@@ -368,7 +370,7 @@ export default function InsightsClient() {
                 <TrendChart data={weightValues} color="var(--forest-400)" height={70} />
                 {weightDelta !== null && (
                   <div style={{ marginTop: 8, fontSize: 13, color: 'var(--ink-400)' }}>
-                    {weightDelta > 0 ? '+' : ''}{weightDelta} kg in 30 days
+                    {weightDelta > 0 ? '+' : ''}{weightDelta} lbs in 30 days
                   </div>
                 )}
                 {weightValues.length < 2 && <div style={{ marginTop: 8, fontSize: 13, color: 'var(--ink-300)' }}>Log weight to see trend</div>}
