@@ -193,7 +193,7 @@ button { font-family: var(--font-body); }
 /* Mobile */
 @media (max-width: 767px) {
   /* Generic stacking helpers */
-  .stack-to-one { grid-template-columns: 1fr !important; gap: 48px !important; }
+  .stack-to-one { grid-template-columns: minmax(0, 1fr) !important; gap: 48px !important; }
   .cards-3-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
   .cards-2-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
 

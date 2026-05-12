@@ -303,7 +303,7 @@ function MockPlanner() {
   const meals = plan.meals[mealRow];
 
   return (
-    <div ref={ref} style={{ width: 430, background: '#fff', borderRadius: 20, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden', fontFamily: 'var(--font-body)' }}>
+    <div ref={ref} style={{ width: '100%', maxWidth: 430, background: '#fff', borderRadius: 20, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden', fontFamily: 'var(--font-body)' }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* Header */}
@@ -332,9 +332,9 @@ function MockPlanner() {
         ))}
       </div>
 
-      {/* 7-day grid */}
-      <div style={{ padding: '12px 14px 8px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 5 }}>
+      {/* 7-day grid — scrolls horizontally on narrow screens */}
+      <div style={{ padding: '12px 14px 8px', overflowX: 'auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(52px, 1fr))', gap: 5, minWidth: 380 }}>
           {PLANNER_DAYS.map((d, i) => (
             <div key={d} style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', color: i === 0 ? 'var(--terracotta-500)' : 'var(--ink-400)', paddingBottom: 5 }}>
               {d.toUpperCase()}
