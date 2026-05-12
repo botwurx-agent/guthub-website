@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return new Response('Unauthorized', { status: 401 })
 
-  const { weekStart, regenerate, days = 7 } = await request.json()
+  const { weekStart, regenerate, days = 7, dietOverride } = await request.json()
 
   const [{ data: profile }, { data: macroTarget }] = await Promise.all([
     supabase.from('profiles').select('diet_mode, health_profile').eq('id', user.id).single(),
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   const carbs    = macroTarget?.carbohydrates_g ?? 200
   const fat      = macroTarget?.fat_g ?? 65
 
-  const dietMode   = profile?.diet_mode ?? 'default'
+  const dietMode   = dietOverride ?? profile?.diet_mode ?? 'default'
   const healthInfo = profile?.health_profile ?? {}
   const allergies  = healthInfo.allergies ?? healthInfo.food_allergies ?? ''
   const conditions = healthInfo.conditions ?? healthInfo.health_conditions ?? ''

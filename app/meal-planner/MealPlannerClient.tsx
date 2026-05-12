@@ -252,6 +252,17 @@ const LOADING_MESSAGES = [
   'Almost done — just plating the salmon nicely…',
 ]
 
+const DIET_OPTIONS: { label: string; value: string }[] = [
+  { label: 'Low-FODMAP', value: 'low-fodmap' },
+  { label: 'Carnivore', value: 'carnivore' },
+  { label: 'High Protein', value: 'high-protein' },
+  { label: 'Mediterranean', value: 'mediterranean' },
+  { label: 'Paleo', value: 'paleo' },
+  { label: 'Keto', value: 'keto' },
+  { label: 'Vegan', value: 'vegan' },
+  { label: 'Balanced', value: 'balanced' },
+]
+
 export default function MealPlannerClient() {
   const [weekStart, setWeekStart] = useState<Date>(() => getMondayOf(new Date()))
   const [slots, setSlots] = useState<Slot[]>([])
@@ -270,6 +281,7 @@ export default function MealPlannerClient() {
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<'plan' | 'favourites'>('plan')
+  const [dietOverride, setDietOverride] = useState<string | null>(null)
   const [likedMeals, setLikedMeals] = useState<LikedMeal[]>([])
   const [unlikingId, setUnlikingId] = useState<string | null>(null)
   const supabase = createClient()
@@ -432,7 +444,7 @@ export default function MealPlannerClient() {
       const res = await fetch('/api/meal-planner/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weekStart: toDateStr(genStart), regenerate: null, days: planDays }),
+        body: JSON.stringify({ weekStart: toDateStr(genStart), regenerate: null, days: planDays, dietOverride }),
       })
       if (res.ok && res.body) {
         await consumeStream(res.body, meal => {
@@ -460,7 +472,7 @@ export default function MealPlannerClient() {
       const res = await fetch('/api/meal-planner/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: { date, mealType } }),
+        body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: { date, mealType }, dietOverride }),
       })
       if (res.ok && res.body) {
         await consumeStream(res.body, meal => {
@@ -659,6 +671,43 @@ export default function MealPlannerClient() {
                 </button>
               ))}
             </div>
+
+            {/* Diet style override chips */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end', maxWidth: 360 }}>
+              {/* "My default" chip */}
+              <button
+                onClick={() => setDietOverride(null)}
+                style={{
+                  padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
+                  fontSize: 12.5, fontWeight: 600, transition: 'all 140ms',
+                  background: dietOverride === null ? 'var(--forest-500)' : 'var(--cream-100)',
+                  color: dietOverride === null ? '#fff' : 'var(--ink-500)',
+                  boxShadow: dietOverride === null ? '0 1px 4px rgba(31,45,42,0.15)' : 'none',
+                  border: `1px solid ${dietOverride === null ? 'transparent' : 'var(--cream-200)'}`,
+                }}
+              >
+                My default ({dietLabel})
+              </button>
+              {DIET_OPTIONS
+                .filter(opt => opt.value !== (profile?.diet_mode ?? 'balanced').replace(/_/g, '-').toLowerCase())
+                .map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setDietOverride(prev => prev === opt.value ? null : opt.value)}
+                    style={{
+                      padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
+                      fontSize: 12.5, fontWeight: 600, transition: 'all 140ms',
+                      background: dietOverride === opt.value ? 'var(--terracotta-400)' : 'var(--cream-100)',
+                      color: dietOverride === opt.value ? '#fff' : 'var(--ink-500)',
+                      boxShadow: dietOverride === opt.value ? '0 1px 4px rgba(180,66,44,0.2)' : 'none',
+                      border: `1px solid ${dietOverride === opt.value ? 'transparent' : 'var(--cream-200)'}`,
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+            </div>
+
             <button
               onClick={generateWeek}
               disabled={generating}
@@ -673,8 +722,8 @@ export default function MealPlannerClient() {
             >
               <Sparkles size={15} />
               {generating ? 'Generating…' : hasAnyMeals
-                ? `Regenerate ${planDays === 1 ? DAY_LABELS[activeDay] : `${planDays} days`}`
-                : `Generate ${planDays === 1 ? DAY_LABELS[activeDay] : `${planDays} days`}`}
+                ? `Regenerate ${planDays === 1 ? DAY_LABELS[activeDay] : `${planDays} days`}${dietOverride ? ` · ${DIET_OPTIONS.find(o => o.value === dietOverride)?.label}` : ''}`
+                : `Generate ${planDays === 1 ? DAY_LABELS[activeDay] : `${planDays} days`}${dietOverride ? ` · ${DIET_OPTIONS.find(o => o.value === dietOverride)?.label}` : ''}`}
             </button>
           </div>
         </div>
@@ -1152,7 +1201,9 @@ export default function MealPlannerClient() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14, fontSize: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: 'var(--ink-500)' }}>Eating style</span>
-                  <span style={{ fontWeight: 600, color: 'var(--ink-800)', textTransform: 'capitalize' }}>{dietLabel}</span>
+                  <span style={{ fontWeight: 600, color: dietOverride ? 'var(--terracotta-500)' : 'var(--ink-800)', textTransform: 'capitalize' }}>
+                    {dietOverride ? `${DIET_OPTIONS.find(o => o.value === dietOverride)?.label} (override)` : dietLabel}
+                  </span>
                 </div>
                 <div style={{ height: 1, background: 'var(--cream-200)' }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
