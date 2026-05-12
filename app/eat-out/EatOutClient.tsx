@@ -90,7 +90,7 @@ function LogButton({ itemName, calories }: { itemName: string; calories?: number
   )
 }
 
-export default function EatOutClient({ topTriggers, allergens }: { topTriggers: Trigger[]; allergens: string[] }) {
+export default function EatOutClient({ topTriggers, allergens, dietMode }: { topTriggers: Trigger[]; allergens: string[]; dietMode: string }) {
   const [mode, setMode]           = useState<'photo' | 'search'>('photo')
   const [restaurant, setRestaurant] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -174,6 +174,8 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
 
   const canAnalyze = mode === 'photo' ? !!imageFile && !converting : !!restaurant.trim()
   const verdictCfg = result ? VERDICT_CONFIG[result.overall_verdict] : null
+  const dietLabel = dietMode !== 'default' ? dietMode.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Balanced'
+  const hasProfile = topTriggers.length > 0 || allergens.length > 0 || dietMode !== 'default'
 
   return (
     <div className="app-page-content" style={{ padding: '32px 28px', maxWidth: 900, margin: '0 auto' }}>
@@ -191,25 +193,26 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
         </p>
       </div>
 
-      {/* Trigger pills */}
-      {(topTriggers.length > 0 || allergens.length > 0) && (
+      {/* Profile pills — diet + allergens + triggers */}
+      {hasProfile && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
             Checking against:
+          </span>
+          {/* Diet chip — always shown */}
+          <span style={{ fontSize: 12, fontWeight: 600, background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 999, padding: '3px 10px' }}>
+            {dietLabel} diet
           </span>
           {allergens.map(a => (
             <span key={a} style={{ fontSize: 12, fontWeight: 600, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 999, padding: '3px 10px' }}>
-              {a} allergy
+              No {a}
             </span>
           ))}
           {topTriggers.slice(0, 4).map(t => (
             <span key={t.food} style={{ fontSize: 12, fontWeight: 600, background: '#fffbeb', color: '#92400e', border: '1px solid #fde68a', borderRadius: 999, padding: '3px 10px' }}>
-              {t.food} ({t.score}%)
+              {t.food} trigger ({t.score}%)
             </span>
           ))}
-          {topTriggers.length === 0 && allergens.length === 0 && (
-            <span style={{ fontSize: 12, color: 'var(--ink-400)' }}>Log meals &amp; symptoms to build your personal trigger profile.</span>
-          )}
         </div>
       )}
 
@@ -436,6 +439,21 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--ink-500)', marginTop: 4 }}>
                   {result.verdict_summary}
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 999, padding: '2px 8px', color: 'var(--ink-600)' }}>
+                    {dietLabel} diet
+                  </span>
+                  {allergens.slice(0, 3).map(a => (
+                    <span key={a} style={{ fontSize: 11, fontWeight: 600, background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 999, padding: '2px 8px', color: 'var(--ink-600)' }}>
+                      No {a}
+                    </span>
+                  ))}
+                  {topTriggers.length > 0 && (
+                    <span style={{ fontSize: 11, fontWeight: 600, background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 999, padding: '2px 8px', color: 'var(--ink-600)' }}>
+                      {topTriggers.length} personal trigger{topTriggers.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

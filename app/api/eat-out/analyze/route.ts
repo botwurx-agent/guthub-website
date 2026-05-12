@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   // Fetch user's trigger profile
   const [{ data: profile }, { data: correlations }] = await Promise.all([
-    supabase.from('profiles').select('health_profile').eq('id', user.id).single(),
+    supabase.from('profiles').select('health_profile, diet_mode').eq('id', user.id).single(),
     supabase.from('correlations')
       .select('food_item, symptom_type, correlation_score, llm_synthesis')
       .eq('user_id', user.id)
@@ -34,9 +34,11 @@ export async function POST(req: NextRequest) {
     ? (hp.allergens as string[]).join(', ')
     : (hp.allergens as string | null) ?? 'none'
   const conditions = hp.medical_conditions as string | null
+  const dietMode = profile?.diet_mode ?? 'default'
+  const dietLabel = dietMode !== 'default' ? dietMode.replace(/_/g, ' ') : 'balanced (no specific diet restriction)'
   const eatingStyle = Array.isArray(hp.eating_style)
     ? (hp.eating_style as string[]).join(', ')
-    : (hp.eating_style as string | null) ?? 'no specific diet'
+    : (hp.eating_style as string | null) ?? ''
 
   const triggerLines = (correlations ?? [])
     .map(c => `- ${c.food_item} → ${c.symptom_type} (${Math.round(c.correlation_score * 100)}% correlation)`)
@@ -45,11 +47,13 @@ export async function POST(req: NextRequest) {
   const systemPrompt = `You are a gut health nutrition expert. A user with gut health issues wants personalized menu recommendations based on their specific trigger history.
 
 USER PROFILE:
-- Known allergens: ${allergens}
+- Primary diet: ${dietLabel}${eatingStyle ? `\n- Eating preferences: ${eatingStyle}` : ''}
+- Known allergens / must avoid: ${allergens || 'none'}
 - Medical conditions: ${conditions || 'none specified'}
-- Eating style / diet: ${eatingStyle}
 - Confirmed food triggers from their logged data:
 ${triggerLines}
+
+IMPORTANT: Filter ALL recommendations through the user's primary diet first. A keto user must not receive high-carb items as "safe". A low-FODMAP user must not receive high-FODMAP items. A vegan user must not receive animal products. Apply diet rules strictly before applying trigger history.
 
 TASK:
 1. Identify 3-6 SAFE menu items (unlikely to trigger symptoms)

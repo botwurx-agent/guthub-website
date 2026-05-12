@@ -8,7 +8,7 @@ export default async function EatOutPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const [{ data: profile }, { data: correlations }] = await Promise.all([
-    supabase.from('profiles').select('health_profile').eq('id', user?.id ?? '').single(),
+    supabase.from('profiles').select('health_profile, diet_mode').eq('id', user?.id ?? '').single(),
     supabase.from('correlations')
       .select('food_item, symptom_type, correlation_score')
       .eq('user_id', user?.id ?? '')
@@ -21,6 +21,7 @@ export default async function EatOutPage() {
   const allergens = Array.isArray(hp.allergens)
     ? (hp.allergens as string[])
     : hp.allergens ? [hp.allergens as string] : []
+  const dietMode = (profile?.diet_mode ?? 'default') as string
 
   return (
     <AppShell>
@@ -32,6 +33,7 @@ export default async function EatOutPage() {
             score: Math.round(c.correlation_score * 100),
           }))}
           allergens={allergens}
+          dietMode={dietMode}
         />
       </Suspense>
     </AppShell>
