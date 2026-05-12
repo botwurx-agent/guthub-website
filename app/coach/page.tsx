@@ -121,19 +121,40 @@ function buildWelcomeMessage(profile: Record<string, unknown> | null, firstName:
   const nickname = hp.nickname as string | null
   const displayName = nickname || firstName
 
-  const conditions = hp.medical_conditions as string | null
-  const goals = Array.isArray(hp.primary_goals)
-    ? (hp.primary_goals as string[]).slice(0, 2).join(' and ')
-    : (hp.primary_goals as string | null) ?? (hp.primary_goal as string | null)
+  // Filter out non-values like "None of These", "none", "n/a", empty strings
+  const NONE_VALUES = new Set(['none', 'none of these', 'none of the above', 'n/a', 'na', 'no', 'not applicable', 'other'])
+  const isReal = (v: string) => v && !NONE_VALUES.has(v.toLowerCase().trim())
+
+  const rawConditions = hp.medical_conditions
+  const conditionsList = Array.isArray(rawConditions)
+    ? (rawConditions as string[]).filter(isReal)
+    : typeof rawConditions === 'string' && isReal(rawConditions) ? [rawConditions] : []
+
+  const rawGoals = hp.primary_goals
+  const goalsList = Array.isArray(rawGoals)
+    ? (rawGoals as string[]).filter(isReal).slice(0, 2)
+    : typeof rawGoals === 'string' && isReal(rawGoals) ? [rawGoals]
+    : typeof hp.primary_goal === 'string' && isReal(hp.primary_goal as string) ? [hp.primary_goal as string] : []
+
+  // Clean up goal phrasing: "reduce_brain_fog" → "reducing brain fog", "improve_X" → "improving X"
+  const formatGoal = (g: string) => g
+    .replace(/_/g, ' ')
+    .replace(/^reduce\b/, 'reducing')
+    .replace(/^improve\b/, 'improving')
+    .replace(/^lose\b/, 'losing')
+    .replace(/^build\b/, 'building')
+    .replace(/^manage\b/, 'managing')
+    .replace(/^increase\b/, 'increasing')
+    .replace(/^decrease\b/, 'decreasing')
+
   const eatingStyle = Array.isArray(hp.eating_style)
-    ? (hp.eating_style as string[]).join(', ')
-    : (hp.eating_style as string | null)
+    ? (hp.eating_style as string[]).filter(isReal).join(', ')
+    : typeof hp.eating_style === 'string' && isReal(hp.eating_style as string) ? (hp.eating_style as string) : null
   const concerns = hp.specific_concerns as string | null
 
   const parts: string[] = []
-
-  if (conditions) parts.push(`managing ${conditions}`)
-  if (goals) parts.push(`working toward ${goals.replace(/_/g, ' ')}`)
+  if (conditionsList.length > 0) parts.push(`managing ${conditionsList.join(' and ')}`)
+  if (goalsList.length > 0) parts.push(`working toward ${goalsList.map(formatGoal).join(' and ')}`)
   if (eatingStyle) parts.push(`following a ${eatingStyle} approach`)
 
   const contextLine = parts.length > 0
