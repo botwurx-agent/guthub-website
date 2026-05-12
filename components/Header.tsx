@@ -30,8 +30,9 @@ export default function Header() {
   }, [menuOpen]);
 
   return (
+    <>
     <header style={{
-      position: 'sticky', top: 0, zIndex: 50,
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
       background: scrolled ? 'rgba(253,250,243,0.82)' : 'transparent',
       backdropFilter: scrolled ? 'blur(12px)' : 'none',
       WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
@@ -158,6 +159,8 @@ export default function Header() {
         }
       `}</style>
     </header>
+    <div style={{ height: 60 }} aria-hidden="true" />
+    </>
   );
 }
 
