@@ -207,15 +207,17 @@ export async function savePlanFromCoach(
     const d = new Date()
     d.setDate(d.getDate() + startOffset + (m.day_index ?? 0))
     return {
-      user_id:   user.id,
-      plan_date: d.toISOString().split('T')[0],
-      meal_type: m.meal_type,
-      meal_name: m.meal_name,
-      calories:  m.calories ?? null,
-      protein_g: m.protein_g ?? null,
-      carbs_g:   m.carbs_g ?? null,
-      fat_g:     m.fat_g ?? null,
-      accepted:  false,
+      user_id:     user.id,
+      plan_date:   d.toISOString().split('T')[0],
+      meal_type:   m.meal_type,
+      meal_name:   m.meal_name,
+      calories:    m.calories ?? null,
+      protein_g:   m.protein_g ?? null,
+      carbs_g:     m.carbs_g ?? null,
+      fat_g:       m.fat_g ?? null,
+      ingredients: [],
+      directions:  '',
+      accepted:    false,
     }
   })
 
