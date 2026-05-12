@@ -482,17 +482,21 @@ export default function MealPlannerClient() {
     const nowSaving = !slot.accepted
     await supabase.from('meal_plan_slots').update({ accepted: nowSaving }).eq('id', slot.id)
     if (nowSaving) {
-      await supabase.from('liked_meals').upsert({
-        meal_name: slot.meal_name,
-        meal_type: slot.meal_type,
-        calories: slot.calories,
-        protein_g: slot.protein_g,
-        fat_g: slot.fat_g,
-        carbs_g: slot.carbs_g,
-        source: 'meal_planner',
-        liked_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,meal_name' })
-      fetchLikedMeals()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.from('liked_meals').upsert({
+          user_id: user.id,
+          meal_name: slot.meal_name,
+          meal_type: slot.meal_type,
+          calories: slot.calories,
+          protein_g: slot.protein_g,
+          fat_g: slot.fat_g,
+          carbs_g: slot.carbs_g,
+          source: 'meal_planner',
+          liked_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,meal_name' })
+        fetchLikedMeals()
+      }
     }
     setSlots(prev => prev.map(s => s.id === slot.id ? { ...s, accepted: nowSaving } : s))
     setAcceptingSlot(null)
