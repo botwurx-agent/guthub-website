@@ -144,7 +144,6 @@ export default function Header() {
             style={{
               fontSize: 22, fontWeight: 500, color: 'var(--ink-500)',
               textDecoration: 'none', padding: '14px 4px',
-              borderBottom: '1px solid var(--border)',
               fontFamily: 'var(--font-body)',
               background: 'none', border: 'none', borderBottom: '1px solid var(--border)',
               cursor: 'pointer', textAlign: 'left',

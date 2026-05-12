@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Utensils, Frown, Circle, Droplets, Scale, StickyNote,
@@ -326,13 +326,6 @@ export default function LogPageClient({
 }) {
   const router = useRouter()
   const quickAddRef = useRef<HTMLDivElement>(null)
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 767)
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
-  }, [])
   // Compute today/yesterday in the browser so the user's local timezone is used
   const clientToday = new Date().toLocaleDateString('en-CA')
   const _yd = new Date(); _yd.setDate(_yd.getDate() - 1)
@@ -395,8 +388,8 @@ export default function LogPageClient({
 
   return (
     <>
-    {/* Mobile form overlay — renders above the bottom nav */}
-    {isMobile && activeForm && (
+    {/* Form overlay — full-screen on mobile, dismissible on desktop */}
+    {activeForm && (
       <div style={{
         position: 'fixed', inset: 0, zIndex: 50,
         background: 'var(--cream-50)',
@@ -520,43 +513,21 @@ export default function LogPageClient({
         {/* RIGHT — quick add + stats + coach */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Quick add / active form */}
+          {/* Quick add tiles */}
           <div ref={quickAddRef} style={{ background: '#fff', borderRadius: 16, border: '1px solid var(--cream-200)', padding: '20px 20px 24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink-900)' }}>
-                {activeForm ? (
-                  (() => {
-                    const labels: Record<FormId, string> = {
-                      meal: 'Log a meal', 'photo-meal': 'Photo meal', symptom: 'Log a symptom', bm: 'Log bowel movement',
-                      water: 'Log water', weight: 'Log weight', note: 'Add a note', supplement: 'Log supplement',
-                    }
-                    return labels[activeForm]
-                  })()
-                ) : 'Quick add'}
-              </h3>
-              {activeForm && (
-                <button onClick={() => setActiveForm(null)} style={{
-                  fontSize: 12, color: 'var(--ink-400)', background: 'none', border: 'none',
-                  cursor: 'pointer', padding: '4px 8px', borderRadius: 6,
-                }}>← Back</button>
-              )}
-            </div>
+            <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700, color: 'var(--ink-900)' }}>Quick add</h3>
 
-            {/* Always show tiles; on mobile the form opens in the overlay above */}
-            {(!activeForm || isMobile) ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <QuickAddTile icon={Camera} label="Photo meal" onClick={() => setActiveForm('photo-meal')} color="#DB6F56" />
-                <QuickAddTile icon={Utensils} label="Type meal" onClick={() => setActiveForm('meal')} color="#DB6F56" />
-                <QuickAddTile icon={Frown} label="Symptom" onClick={() => setActiveForm('symptom')} color="#C98A1E" />
-                <QuickAddTile icon={Circle} label="Bowel" onClick={() => setActiveForm('bm')} color="#6F9477" />
-                <QuickAddTile icon={Scale} label="Weight" onClick={() => setActiveForm('weight')} color="#9D978A" />
-                <QuickAddTile icon={Droplets} label="Water" onClick={() => setActiveForm('water')} color="#6FB8A8" />
-                <QuickAddTile icon={StickyNote} label="Note" onClick={() => setActiveForm('note')} color="#7A7468" />
-                <QuickAddTile icon={Pill} label="Supplement" onClick={() => setActiveForm('supplement')} color="#8B5CF6" />
-              </div>
-            ) : (
-              activeFormContent
-            )}
+            {/* Tiles always visible — form opens in the overlay above */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <QuickAddTile icon={Camera} label="Photo meal" onClick={() => setActiveForm('photo-meal')} color="#DB6F56" />
+              <QuickAddTile icon={Utensils} label="Type meal" onClick={() => setActiveForm('meal')} color="#DB6F56" />
+              <QuickAddTile icon={Frown} label="Symptom" onClick={() => setActiveForm('symptom')} color="#C98A1E" />
+              <QuickAddTile icon={Circle} label="Bowel" onClick={() => setActiveForm('bm')} color="#6F9477" />
+              <QuickAddTile icon={Scale} label="Weight" onClick={() => setActiveForm('weight')} color="#9D978A" />
+              <QuickAddTile icon={Droplets} label="Water" onClick={() => setActiveForm('water')} color="#6FB8A8" />
+              <QuickAddTile icon={StickyNote} label="Note" onClick={() => setActiveForm('note')} color="#7A7468" />
+              <QuickAddTile icon={Pill} label="Supplement" onClick={() => setActiveForm('supplement')} color="#8B5CF6" />
+            </div>
           </div>
 
           {/* Today's progress */}
