@@ -42,10 +42,10 @@ export default function ContactPage() {
                     <a href="mailto:support@guthub.ai" style={emailLink}>support@guthub.ai</a>
                   </ContactRow>
                   <ContactRow label="For privacy and data requests">
-                    <a href="mailto:support@guthub.ai" style={emailLink}>support@guthub.ai</a>
+                    <a href="mailto:data@guthub.ai" style={emailLink}>data@guthub.ai</a>
                   </ContactRow>
                   <ContactRow label="For press inquiries">
-                    <a href="mailto:support@guthub.ai" style={emailLink}>support@guthub.ai</a>
+                    <a href="mailto:press@guthub.ai" style={emailLink}>press@guthub.ai</a>
                   </ContactRow>
                 </div>
                 <p style={{ marginTop: 28, fontSize: 14, color: 'var(--ink-500)' }}>
