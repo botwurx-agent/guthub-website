@@ -263,6 +263,42 @@ const DIET_OPTIONS: { label: string; value: string }[] = [
   { label: 'Balanced', value: 'balanced' },
 ]
 
+// ── Dynamic meal tag detection ─────────────────────────────────────────────
+const HIGH_FODMAP_KW  = ['garlic','onion','leek','shallot','apple','pear','mango','watermelon','honey','wheat','rye','barley','cashew','pistachio','kidney bean','black bean','lentil','chickpea','cauliflower','mushroom','artichoke','asparagus','beetroot']
+const ANTI_INFLAM_KW  = ['salmon','sardine','mackerel','tuna','turmeric','ginger','spinach','kale','blueberr','strawberr','cherry','berry','olive oil','walnut','flaxseed','chia','broccoli','avocado','beet','pomegranate','green tea','almond']
+const DAIRY_KW        = ['milk','cheese','butter','cream','yogurt','yoghurt','kefir','ghee','whey','lactose','mozzarella','cheddar','parmesan','ricotta','feta','cottage','buttermilk','sour cream','half-and-half']
+const GLUTEN_KW       = ['wheat','bread','pasta','flour','noodle','tortilla','cracker','pita','bagel','bun','roll','barley','rye','couscous','bulgur','sourdough','panko','breadcrumb','farro','soy sauce']
+const VEGAN_EXCLUDE   = ['chicken','beef','steak','salmon','tuna','shrimp','turkey','pork','bacon','ham','sausage','fish','seafood','lamb','duck','crab','lobster','sardine','mackerel','cod','tilapia','halibut','trout','anchov','liver','venison','egg','milk','cheese','butter','cream','yogurt','honey']
+
+type TagStyle = { bg: string; color: string; border: string }
+const TAG_STYLES: Record<string, TagStyle> = {
+  'Gut-friendly':       { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
+  'Keto':               { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+  'Low-FODMAP':         { bg: '#f0fdf4', color: '#15803d', border: '#86efac' },
+  'High protein':       { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
+  'Anti-inflammatory':  { bg: '#faf5ff', color: '#7e22ce', border: '#e9d5ff' },
+  'Dairy-free':         { bg: '#fefce8', color: '#a16207', border: '#fde68a' },
+  'Gluten-free':        { bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' },
+  'Vegan':              { bg: '#f0fdf4', color: '#15803d', border: '#86efac' },
+  'Low-calorie':        { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
+}
+
+function getMealTags(slot: Slot): string[] {
+  const text = [...(slot.ingredients ?? []), slot.meal_name].join(' ').toLowerCase()
+  const tags: string[] = ['Gut-friendly']
+
+  if (slot.carbs_g != null && slot.carbs_g < 20)                        tags.push('Keto')
+  if (!HIGH_FODMAP_KW.some(kw => text.includes(kw)))                    tags.push('Low-FODMAP')
+  if (slot.protein_g != null && slot.protein_g >= 30)                   tags.push('High protein')
+  if (ANTI_INFLAM_KW.some(kw => text.includes(kw)))                     tags.push('Anti-inflammatory')
+  if (!DAIRY_KW.some(kw => text.includes(kw)))                          tags.push('Dairy-free')
+  if (!GLUTEN_KW.some(kw => text.includes(kw)))                         tags.push('Gluten-free')
+  if (!VEGAN_EXCLUDE.some(kw => text.includes(kw)))                     tags.push('Vegan')
+  if (slot.calories != null && slot.calories < 450)                     tags.push('Low-calorie')
+
+  return tags.slice(0, 5)
+}
+
 export default function MealPlannerClient() {
   const [weekStart, setWeekStart] = useState<Date>(() => getMondayOf(new Date()))
   const [slots, setSlots] = useState<Slot[]>([])
@@ -1055,16 +1091,19 @@ export default function MealPlannerClient() {
                       ))}
                     </div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {['Low FODMAP', 'Gut-friendly', 'Anti-inflammatory'].map(tag => (
-                        <span key={tag} style={{
-                          fontSize: 12, fontWeight: 600,
-                          background: '#f0fdf4', color: '#16a34a',
-                          border: '1px solid #bbf7d0',
-                          borderRadius: 999, padding: '3px 10px',
-                        }}>
-                          {tag}
-                        </span>
-                      ))}
+                      {getMealTags(activeSlot).map(tag => {
+                        const s = TAG_STYLES[tag] ?? TAG_STYLES['Gut-friendly']
+                        return (
+                          <span key={tag} style={{
+                            fontSize: 12, fontWeight: 600,
+                            background: s.bg, color: s.color,
+                            border: `1px solid ${s.border}`,
+                            borderRadius: 999, padding: '3px 10px',
+                          }}>
+                            {tag}
+                          </span>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
