@@ -9,6 +9,13 @@ export type TimelineItem = {
   meta: string
   loggedAt: string
   logDate: string
+  // Meal-only fields used for saving to favourites
+  mealName?: string
+  mealType?: string | null
+  calories?: number | null
+  protein_g?: number | null
+  fat_g?: number | null
+  carbs_g?: number | null
 }
 
 export type TimelineDay = {
@@ -87,6 +94,12 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
       id: m.id, kind: 'meal' as const, loggedAt: m.logged_at, logDate: m.log_date,
       title: m.meal_name,
       meta: [MEAL_TYPE[m.meal_type ?? ''], m.calories ? `${Math.round(m.calories)} kcal` : ''].filter(Boolean).join(' · '),
+      mealName: m.meal_name,
+      mealType: m.meal_type ?? null,
+      calories: m.calories ?? null,
+      protein_g: m.protein_g ?? null,
+      fat_g: m.fat_g ?? null,
+      carbs_g: m.carbs_g ?? null,
     })),
     ...(symptoms ?? []).map(s => ({
       id: s.id, kind: 'symptom' as const, loggedAt: s.logged_at, logDate: s.log_date,

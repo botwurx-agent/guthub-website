@@ -67,10 +67,12 @@ function formatTime(iso: string) {
   return `${h}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
-function EventRow({ item, onDelete, onLogAgain }: {
+function EventRow({ item, onDelete, onLogAgain, isFavourited, onFavourite }: {
   item: TimelineDay['items'][number]
   onDelete?: (id: string) => void
   onLogAgain?: (id: string) => Promise<void>
+  isFavourited?: boolean
+  onFavourite?: () => Promise<void>
 }) {
   const style = KIND_STYLE[item.kind] ?? KIND_STYLE.note
   const Icon = KIND_ICON[item.kind] ?? StickyNote
@@ -78,6 +80,7 @@ function EventRow({ item, onDelete, onLogAgain }: {
   const [pending, startTransition] = useTransition()
   const [logging, setLogging] = useState(false)
   const [logged, setLogged] = useState(false)
+  const [favouriting, setFavouring] = useState(false)
 
   function handleDelete() {
     if (!onDelete) return
@@ -91,6 +94,13 @@ function EventRow({ item, onDelete, onLogAgain }: {
     setLogging(false)
     setLogged(true)
     setTimeout(() => setLogged(false), 1800)
+  }
+
+  async function handleFavourite() {
+    if (!onFavourite || favouriting) return
+    setFavouring(true)
+    await onFavourite()
+    setFavouring(false)
   }
 
   return (
@@ -134,6 +144,23 @@ function EventRow({ item, onDelete, onLogAgain }: {
           }}
         >
           {logged ? <Check size={14} /> : <RotateCcw size={14} />}
+        </button>
+      )}
+      {onFavourite && !confirming && (
+        <button
+          onClick={handleFavourite}
+          disabled={favouriting}
+          title={isFavourited ? 'Remove from favourites' : 'Save to favourites'}
+          style={{
+            background: isFavourited ? 'rgba(219,111,86,0.1)' : 'none',
+            border: 'none', padding: 6, borderRadius: 6,
+            cursor: favouriting ? 'wait' : 'pointer',
+            color: isFavourited ? 'var(--terracotta-500)' : 'var(--ink-400)',
+            flexShrink: 0, display: 'flex', alignItems: 'center',
+            transition: 'all 160ms',
+          }}
+        >
+          <Heart size={14} fill={isFavourited ? 'currentColor' : 'none'} />
         </button>
       )}
       {onDelete && (
@@ -379,6 +406,30 @@ export default function LogPageClient({
     router.refresh()
   }
 
+  async function handleFavourite(item: TimelineDay['items'][number]) {
+    if (item.kind !== 'meal' || !item.mealName) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const existing = likedMeals.find(m => m.meal_name === item.mealName)
+    if (existing) {
+      await supabase.from('liked_meals').delete().eq('id', existing.id)
+      setLikedMeals(prev => prev.filter(m => m.id !== existing.id))
+    } else {
+      const { data } = await supabase.from('liked_meals').upsert({
+        user_id: user.id,
+        meal_name: item.mealName,
+        meal_type: item.mealType ?? null,
+        calories: item.calories ?? null,
+        protein_g: item.protein_g ?? null,
+        fat_g: item.fat_g ?? null,
+        carbs_g: item.carbs_g ?? null,
+        source: 'log',
+        liked_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,meal_name' }).select().single()
+      if (data) setLikedMeals(prev => [...prev, data as LikedMeal])
+    }
+  }
+
   const totalItems = timeline.reduce((s, d) => s + d.items.length, 0)
   const summaryParts = [
     weekStats.meals ? `${weekStats.meals} meal${weekStats.meals !== 1 ? 's' : ''}` : null,
@@ -572,6 +623,8 @@ export default function LogPageClient({
                           item={item}
                           onDelete={item.kind === 'meal' ? handleDeleteMeal : undefined}
                           onLogAgain={item.kind === 'meal' ? handleLogAgain : undefined}
+                          isFavourited={item.kind === 'meal' ? likedMeals.some(m => m.meal_name === item.mealName) : undefined}
+                          onFavourite={item.kind === 'meal' ? () => handleFavourite(item) : undefined}
                         />
                       ))}
                     </div>
