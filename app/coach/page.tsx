@@ -144,7 +144,11 @@ function buildWelcomeMessage(profile: Record<string, unknown> | null, firstName:
     ? ` Your specific concern — "${concerns}" — is something I'll keep in mind as we work together.`
     : ''
 
-  return `Hi ${displayName}! ${contextLine}${concernLine} I have your full health profile and logs in front of me, so every answer I give you will be personalized to *you*, not generic advice. What would you like to work on today?`.trim()
+  const opener = contextLine
+    ? `Hi ${displayName}! ${contextLine}${concernLine} I have your full health profile and recent logs right in front of me — so everything I tell you will be specific to *you*, not generic advice.`
+    : `Hi ${displayName}! I'm your GutHub Coach, and I have your full health profile and logs in front of me. Every answer I give you will be tailored specifically to you — not generic advice.`
+
+  return `${opener} What would you like to work on today?`
 }
 
 export default async function CoachPage({ searchParams }: { searchParams: Promise<{ autostart?: string }> }) {
