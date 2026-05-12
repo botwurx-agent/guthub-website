@@ -37,22 +37,26 @@ function MockSnap() {
   return (
     <div ref={ref} style={{ width: 280, background: '#fff', borderRadius: 20, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden', fontFamily: 'var(--font-body)' }}>
       {/* Photo area */}
-      <div style={{ position: 'relative', height: 160, background: 'linear-gradient(135deg, #d4956a 0%, #c87a4e 50%, #a5602e 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\'%3E%3Ccircle cx=\'20\' cy=\'20\' r=\'14\' fill=\'rgba(255,255,255,0.06)\'/%3E%3C/svg%3E") center/cover' }} />
-        <div style={{ textAlign: 'center', color: '#fff' }}>
-          <div style={{ fontSize: 40, marginBottom: 6 }}>🍝</div>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', opacity: 0.9 }}>Pasta Arrabiata</div>
+      <div style={{ position: 'relative', height: 160, background: 'linear-gradient(160deg, #2a2118 0%, #3d2e1e 60%, #1e1810 100%)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {/* SVG plate illustration */}
+        <div style={{ position: 'relative', width: 110, height: 110, borderRadius: '50%', background: 'radial-gradient(circle at 35% 30%, #F5EEDF 0%, #E8D9BC 55%, #B8A47B 100%)', boxShadow: '0 8px 28px rgba(0,0,0,.5)' }}>
+          <div style={{ position: 'absolute', inset: '12%', borderRadius: '50%', background: 'radial-gradient(circle at 30% 35%, #7FB77E 0 18%, transparent 20%), radial-gradient(circle at 65% 28%, #E87A6B 0 14%, transparent 17%), radial-gradient(circle at 45% 65%, #F2C94C 0 16%, transparent 19%), radial-gradient(circle at 72% 70%, #6FB8A8 0 15%, transparent 18%), radial-gradient(circle at 20% 72%, #D97757 0 12%, transparent 15%), radial-gradient(circle at 55% 48%, #B8E0A0 0 14%, transparent 17%), #4a7a52' }} />
         </div>
-        {/* Scanner overlay */}
-        {phase === 1 && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ width: 120, height: 120, border: '2px solid var(--terracotta-300)', borderRadius: 12, position: 'relative' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'var(--terracotta-400)', animation: 'scanMove 0.9s ease-in-out infinite alternate' }} />
-            </div>
+        {/* Viewfinder corners */}
+        {([{ top: 8, left: 8 }, { top: 8, right: 8 }, { bottom: 8, left: 8 }, { bottom: 8, right: 8 }] as React.CSSProperties[]).map((pos, i) => (
+          <div key={i} style={{ position: 'absolute', width: 16, height: 16, ...pos }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'rgba(255,255,255,0.75)', borderRadius: 1 }} />
+            <div style={{ position: 'absolute', top: 0, bottom: 0, [i % 2 === 1 ? 'right' : 'left']: 0, width: 2, background: 'rgba(255,255,255,0.75)', borderRadius: 1 }} />
           </div>
+        ))}
+        {/* AI badge */}
+        <div style={{ position: 'absolute', top: 10, right: 10, background: 'var(--terracotta-400)', borderRadius: 5, padding: '2px 7px', fontSize: 9, fontWeight: 700, color: '#fff', letterSpacing: '0.08em' }}>AI</div>
+        {/* Scanner line */}
+        {phase === 1 && (
+          <div style={{ position: 'absolute', left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, var(--terracotta-300), transparent)', boxShadow: '0 0 12px var(--terracotta-400)', animation: 'scanMove 0.9s ease-in-out infinite alternate' }} />
         )}
         {phase >= 2 && (
-          <div style={{ position: 'absolute', top: 10, right: 10, background: 'var(--forest-500)', color: '#fff', borderRadius: 8, padding: '4px 8px', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', background: 'var(--forest-500)', color: '#fff', borderRadius: 8, padding: '4px 10px', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
             <Check size={10} /> Analyzed
           </div>
         )}
