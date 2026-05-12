@@ -23,6 +23,32 @@ export default function FeaturesHero() {
         <p style={{ fontSize: 20, lineHeight: 1.55, color: 'var(--ink-700)', maxWidth: 640, margin: '0 auto' }}>
           Your intake is the seed. From there, every Guthub tool learns who you are and works together — no settings to tweak, no profiles to maintain.
         </p>
+        <div style={{ marginTop: 48, display: 'flex', justifyContent: 'center' }}>
+          <svg width="120" height="100" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            {/* crack in the ground */}
+            <path d="M10 88 L38 88 L44 82 L50 88 L78 88" stroke="#C2BDB1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M44 82 L46 74 L43 66" stroke="#C2BDB1" strokeWidth="1.2" strokeLinecap="round"/>
+            {/* stem */}
+            <path d="M43 66 Q41 54 44 40 Q46 28 44 18" stroke="#3F6A4A" strokeWidth="1.5" strokeLinecap="round"/>
+            {/* left leaf */}
+            <path d="M43 50 Q34 44 30 36 Q38 36 43 44" stroke="#3F6A4A" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="rgba(63,106,74,0.12)"/>
+            {/* right leaf */}
+            <path d="M44 40 Q54 34 58 26 Q50 27 44 36" stroke="#3F6A4A" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="rgba(63,106,74,0.12)"/>
+            {/* flower center */}
+            <circle cx="44" cy="16" r="4" fill="#DB6F56" opacity="0.85"/>
+            {/* petals */}
+            <ellipse cx="44" cy="8"  rx="2.5" ry="4" fill="#E5917A" opacity="0.7"/>
+            <ellipse cx="44" cy="24" rx="2.5" ry="4" fill="#E5917A" opacity="0.7"/>
+            <ellipse cx="36" cy="16" rx="4" ry="2.5" fill="#E5917A" opacity="0.7"/>
+            <ellipse cx="52" cy="16" rx="4" ry="2.5" fill="#E5917A" opacity="0.7"/>
+            <ellipse cx="38.5" cy="10.5" rx="2.5" ry="4" transform="rotate(-45 38.5 10.5)" fill="#E5917A" opacity="0.6"/>
+            <ellipse cx="49.5" cy="10.5" rx="2.5" ry="4" transform="rotate(45 49.5 10.5)"  fill="#E5917A" opacity="0.6"/>
+            <ellipse cx="38.5" cy="21.5" rx="2.5" ry="4" transform="rotate(45 38.5 21.5)"  fill="#E5917A" opacity="0.6"/>
+            <ellipse cx="49.5" cy="21.5" rx="2.5" ry="4" transform="rotate(-45 49.5 21.5)" fill="#E5917A" opacity="0.6"/>
+            {/* flower center dot */}
+            <circle cx="44" cy="16" r="2.5" fill="#C85A44"/>
+          </svg>
+        </div>
       </Reveal>
     </section>
   );
