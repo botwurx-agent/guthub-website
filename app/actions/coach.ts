@@ -205,7 +205,7 @@ export async function savePlanFromCoach(
 
   const rows = meals.map(m => {
     const d = new Date()
-    d.setDate(d.getDate() + 1 + startOffset + (m.day_index ?? 0))
+    d.setDate(d.getDate() + startOffset + (m.day_index ?? 0))
     return {
       user_id:   user.id,
       plan_date: d.toISOString().split('T')[0],

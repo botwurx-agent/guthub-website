@@ -813,15 +813,16 @@ function MealPlanDraftCard({ slots, startOffset, conflicts, saving, saved, onOff
 
   const actualDate = (dayIndex: number) => {
     const d = new Date()
-    d.setDate(d.getDate() + 1 + startOffset + dayIndex)
+    d.setDate(d.getDate() + startOffset + dayIndex)
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
   }
 
   const startLabel = () => {
     const d = new Date()
-    d.setDate(d.getDate() + 1 + startOffset)
-    if (startOffset === 0) return 'Tomorrow'
-    if (startOffset === 1) return 'In 2 days'
+    d.setDate(d.getDate() + startOffset)
+    if (startOffset === 0) return 'Today'
+    if (startOffset === 1) return 'Tomorrow'
+    if (startOffset === 2) return 'In 2 days'
     return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
   }
 
@@ -851,7 +852,7 @@ function MealPlanDraftCard({ slots, startOffset, conflicts, saving, saved, onOff
       {/* Start date picker */}
       <div style={{ padding: '10px 16px 8px', borderBottom: '1px solid #d4e6da', display: 'flex', alignItems: 'center', gap: 10 }}>
         <span style={{ fontSize: 12.5, color: 'var(--ink-600)', fontWeight: 500 }}>Starting:</span>
-        <button style={iconBtn()} onClick={() => onOffsetChange(Math.max(0, startOffset - 1))} disabled={startOffset === 0}>
+        <button style={iconBtn()} onClick={() => onOffsetChange(Math.max(0, startOffset - 1))} disabled={startOffset <= 0}>
           <ChevronLeft size={14} />
         </button>
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--forest-700)', minWidth: 120, textAlign: 'center' }}>

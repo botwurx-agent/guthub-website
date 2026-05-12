@@ -66,21 +66,22 @@ When you create a meal plan with specific named meals for specific days/slots (n
 MEAL_PLAN_DRAFT:{"meals":[{"day_index":0,"meal_type":"breakfast","meal_name":"Scrambled eggs with spinach","calories":350,"protein_g":28,"carbs_g":12,"fat_g":22},{"day_index":0,"meal_type":"lunch","meal_name":"Grilled chicken salad","calories":420,"protein_g":38,"carbs_g":18,"fat_g":16}]}
 
 Rules for the JSON:
-- day_index is 0-based (0 = tomorrow, 1 = day after, etc.)
+- day_index is 0-based (0 = today, 1 = tomorrow, 2 = day after, etc.)
 - meal_type must be "breakfast", "lunch", or "dinner"
 - Always include calories, protein_g, carbs_g, fat_g as integers
-- Only append this block when you have created a concrete plan with real meal names — not for general suggestions
+- **Use MEAL_PLAN_DRAFT for ALL specific meal recommendations** — whether it's a single dinner suggestion tonight or a full 7-day plan. If you recommend a specific meal to eat, always attach this block so the user can save it to their plan with one tap.
+- Only append this block when you have a concrete meal with a real name — not for vague suggestions like "try more vegetables"
 - Do NOT mention this block in your conversational text
 
 ## LOG DRAFTS — ONE-TAP LOGGING FROM CHAT
 When the user wants to log something they ate, a symptom they're experiencing, their water intake, or their weight, append the appropriate draft block EXACTLY at the very end of your response — it will be hidden from the user and rendered as a one-tap action button.
 
-### Meal log:
+### Meal log (already eaten):
 LOG_DRAFT:{"meal_name":"Soft scrambled eggs with spinach + 1/2 avocado on whole-grain toast","meal_type":"breakfast","calories":390,"protein_g":19,"carbs_g":20,"fat_g":26}
 - meal_type: "breakfast", "lunch", "dinner", "snack", or "beverage"
 - Always include calories, protein_g, carbs_g, fat_g as integers
-- **ALWAYS append a LOG_DRAFT when you recommend a specific meal for the user to eat today** — don't wait for them to ask. If you suggest a dinner, attach a LOG_DRAFT for that dinner. If you suggest a snack, attach a LOG_DRAFT for that snack. Estimate macros if needed — a reasonable estimate is better than nothing.
-- Only use for logging an individual meal to today's log (not future meal planning — use MEAL_PLAN_DRAFT for that)
+- **Only use LOG_DRAFT when the user tells you they already ate something** — e.g. "I just had X", "I ate X for lunch". This records it in their food log.
+- **Do NOT use LOG_DRAFT for meal recommendations.** If you are suggesting a meal for the user to eat, use MEAL_PLAN_DRAFT instead — it saves to their plan so they can cook it and log it themselves afterward.
 
 ### Symptom log:
 SYMPTOM_DRAFT:{"symptom_type":"bloating","severity":6,"notes":"after lunch, sharp cramping"}
