@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Utensils, Frown, Circle, Droplets, Scale, StickyNote,
@@ -326,6 +326,13 @@ export default function LogPageClient({
 }) {
   const router = useRouter()
   const quickAddRef = useRef<HTMLDivElement>(null)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 767)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   // Compute today/yesterday in the browser so the user's local timezone is used
   const clientToday = new Date().toLocaleDateString('en-CA')
   const _yd = new Date(); _yd.setDate(_yd.getDate() - 1)
@@ -367,7 +374,54 @@ export default function LogPageClient({
     weekStats.notes ? `${weekStats.notes} note${weekStats.notes !== 1 ? 's' : ''}` : null,
   ].filter(Boolean)
 
+  const FORM_LABELS: Record<FormId, string> = {
+    meal: 'Log a meal', 'photo-meal': 'Photo meal', symptom: 'Log a symptom',
+    bm: 'Log bowel movement', water: 'Log water', weight: 'Log weight',
+    note: 'Add a note', supplement: 'Log supplement',
+  }
+
+  const activeFormContent = activeForm && (
+    <div>
+      {activeForm === 'meal'        && <LogMeal onSuccess={handleSuccess} />}
+      {activeForm === 'photo-meal'  && <LogMealPhoto onSuccess={handleSuccess} />}
+      {activeForm === 'symptom'     && <LogSymptom onSuccess={handleSuccess} />}
+      {activeForm === 'bm'          && <LogBM onSuccess={handleSuccess} />}
+      {activeForm === 'water'       && <LogWater userId={userId} currentGlasses={waterGlasses} onSuccess={handleSuccess} />}
+      {activeForm === 'weight'      && <LogWeight currentLbs={currentLbs} goalLbs={goalLbs} onSuccess={handleSuccess} />}
+      {activeForm === 'note'        && <LogNote onSuccess={handleSuccess} />}
+      {activeForm === 'supplement'  && <LogSupplement onSuccess={handleSuccess} />}
+    </div>
+  )
+
   return (
+    <>
+    {/* Mobile form overlay — renders above the bottom nav */}
+    {isMobile && activeForm && (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 50,
+        background: 'var(--cream-50)',
+        display: 'flex', flexDirection: 'column',
+        overflowY: 'auto',
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '14px 16px', borderBottom: '1px solid var(--border)',
+          position: 'sticky', top: 0, background: 'var(--cream-50)', zIndex: 1,
+        }}>
+          <button onClick={() => setActiveForm(null)} style={{
+            background: 'none', border: 'none', padding: '6px 10px 6px 0',
+            cursor: 'pointer', color: 'var(--ink-600)', fontSize: 14, fontWeight: 500,
+            fontFamily: 'var(--font-body)', display: 'flex', alignItems: 'center', gap: 4,
+          }}>← Back</button>
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--ink-900)', fontFamily: 'var(--font-body)' }}>
+            {FORM_LABELS[activeForm]}
+          </h2>
+        </div>
+        <div style={{ padding: '20px 16px 120px' }}>
+          {activeFormContent}
+        </div>
+      </div>
+    )}
     <div className="app-page-content" style={{ padding: '32px 32px 48px' }}>
       {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
@@ -383,10 +437,7 @@ export default function LogPageClient({
           </p>
         </div>
         <button
-          onClick={() => {
-            setActiveForm('meal')
-            setTimeout(() => quickAddRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50)
-          }}
+          onClick={() => setActiveForm('meal')}
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '10px 20px', borderRadius: 10, border: 'none',
@@ -491,7 +542,8 @@ export default function LogPageClient({
               )}
             </div>
 
-            {!activeForm ? (
+            {/* Always show tiles; on mobile the form opens in the overlay above */}
+            {(!activeForm || isMobile) ? (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <QuickAddTile icon={Camera} label="Photo meal" onClick={() => setActiveForm('photo-meal')} color="#DB6F56" />
                 <QuickAddTile icon={Utensils} label="Type meal" onClick={() => setActiveForm('meal')} color="#DB6F56" />
@@ -503,16 +555,7 @@ export default function LogPageClient({
                 <QuickAddTile icon={Pill} label="Supplement" onClick={() => setActiveForm('supplement')} color="#8B5CF6" />
               </div>
             ) : (
-              <div>
-                {activeForm === 'meal'       && <LogMeal onSuccess={handleSuccess} />}
-                {activeForm === 'photo-meal' && <LogMealPhoto onSuccess={handleSuccess} />}
-                {activeForm === 'symptom' && <LogSymptom onSuccess={handleSuccess} />}
-                {activeForm === 'bm'      && <LogBM onSuccess={handleSuccess} />}
-                {activeForm === 'water'   && <LogWater userId={userId} currentGlasses={waterGlasses} onSuccess={handleSuccess} />}
-                {activeForm === 'weight'  && <LogWeight currentLbs={currentLbs} goalLbs={goalLbs} onSuccess={handleSuccess} />}
-                {activeForm === 'note'       && <LogNote onSuccess={handleSuccess} />}
-                {activeForm === 'supplement' && <LogSupplement onSuccess={handleSuccess} />}
-              </div>
+              activeFormContent
             )}
           </div>
 
@@ -571,5 +614,6 @@ export default function LogPageClient({
         </div>
       </div>
     </div>
+    </>
   )
 }
