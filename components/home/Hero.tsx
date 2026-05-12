@@ -7,7 +7,15 @@ import { CheckCircle, XCircle, Stethoscope } from 'lucide-react';
 
 export default function Hero() {
   return (
-    <section className="hero-section" style={{ position: 'relative', padding: '40px 32px 96px', background: 'var(--cream-50)' }}>
+    <section className="hero-section" style={{
+      position: 'relative', padding: '40px 32px 96px',
+      background: `
+        radial-gradient(ellipse 80% 70% at 15% 110%, rgba(219,111,86,0.18) 0%, transparent 65%),
+        radial-gradient(ellipse 60% 80% at 90% -10%, rgba(63,106,74,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 100% 60% at 50% 50%, rgba(244,236,223,0.6) 0%, transparent 100%),
+        var(--cream-50)
+      `,
+    }}>
       <div className="hero-grid" style={{
         maxWidth: 'var(--maxw-wide)', margin: '0 auto',
         display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1fr)', gap: 80,
