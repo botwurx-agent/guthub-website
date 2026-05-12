@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Utensils, Frown, Circle, Droplets, Scale, StickyNote,
@@ -325,6 +325,7 @@ export default function LogPageClient({
   targets: MacroTargets
 }) {
   const router = useRouter()
+  const quickAddRef = useRef<HTMLDivElement>(null)
   // Compute today/yesterday in the browser so the user's local timezone is used
   const clientToday = new Date().toLocaleDateString('en-CA')
   const _yd = new Date(); _yd.setDate(_yd.getDate() - 1)
@@ -382,7 +383,10 @@ export default function LogPageClient({
           </p>
         </div>
         <button
-          onClick={() => setActiveForm('meal')}
+          onClick={() => {
+            setActiveForm('meal')
+            setTimeout(() => quickAddRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50)
+          }}
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '10px 20px', borderRadius: 10, border: 'none',
@@ -466,7 +470,7 @@ export default function LogPageClient({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Quick add / active form */}
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid var(--cream-200)', padding: '20px 20px 24px' }}>
+          <div ref={quickAddRef} style={{ background: '#fff', borderRadius: 16, border: '1px solid var(--cream-200)', padding: '20px 20px 24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink-900)' }}>
                 {activeForm ? (
