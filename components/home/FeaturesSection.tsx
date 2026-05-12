@@ -153,10 +153,10 @@ function PhotoMacroVisual() {
           </div>
           {/* Phase 1+: plate photo */}
           <div style={{ position: 'absolute', inset: 0, opacity: phase >= 1 ? 1 : 0, transition: 'opacity 400ms' }}>
-            <div style={{ position: 'absolute', inset: 16, borderRadius: 18, overflow: 'hidden', background: 'linear-gradient(135deg, #C9A96B 0%, #8B6F3A 100%)', boxShadow: 'inset 0 0 40px rgba(0,0,0,.25)' }}>
-              {/* Plate */}
-              <div style={{ position: 'absolute', inset: '18% 14%', borderRadius: '50%', background: 'radial-gradient(circle at 35% 30%, #F5EEDF 0%, #E8D9BC 55%, #B8A47B 100%)', boxShadow: '0 8px 24px rgba(0,0,0,.3), inset -12px -12px 20px rgba(0,0,0,.15)' }}>
-                <div style={{ position: 'absolute', inset: '14%', borderRadius: '50%', background: `radial-gradient(circle at 30% 35%, #7FB77E 0 18%, transparent 20%), radial-gradient(circle at 65% 28%, #E87A6B 0 14%, transparent 17%), radial-gradient(circle at 45% 65%, #F2C94C 0 16%, transparent 19%), radial-gradient(circle at 72% 70%, #6FB8A8 0 15%, transparent 18%), radial-gradient(circle at 20% 72%, #D97757 0 12%, transparent 15%), radial-gradient(circle at 55% 48%, #B8E0A0 0 14%, transparent 17%), #3F6A4A` }} />
+            <div style={{ position: 'absolute', inset: 16, borderRadius: 18, overflow: 'hidden', background: 'linear-gradient(160deg, #2a2118 0%, #3d2e1e 60%, #1e1810 100%)', boxShadow: 'inset 0 0 40px rgba(0,0,0,.25)' }}>
+              {/* Plate — fixed square dimensions so borderRadius 50% stays circular */}
+              <div style={{ position: 'absolute', width: 180, height: 180, top: '42%', left: '50%', transform: 'translate(-50%, -50%)', borderRadius: '50%', background: 'radial-gradient(circle at 35% 30%, #F5EEDF 0%, #E8D9BC 55%, #B8A47B 100%)', boxShadow: '0 8px 24px rgba(0,0,0,.4), inset -8px -8px 16px rgba(0,0,0,.2)' }}>
+                <div style={{ position: 'absolute', inset: '12%', borderRadius: '50%', background: `radial-gradient(circle at 30% 35%, #7FB77E 0 18%, transparent 20%), radial-gradient(circle at 65% 28%, #E87A6B 0 14%, transparent 17%), radial-gradient(circle at 45% 65%, #F2C94C 0 16%, transparent 19%), radial-gradient(circle at 72% 70%, #6FB8A8 0 15%, transparent 18%), radial-gradient(circle at 20% 72%, #D97757 0 12%, transparent 15%), radial-gradient(circle at 55% 48%, #B8E0A0 0 14%, transparent 17%), #4a7a52` }} />
               </div>
               {phase === 2 && (
                 <div style={{ position: 'absolute', left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, transparent, var(--terracotta-300), transparent)', boxShadow: '0 0 20px var(--terracotta-400)', animation: 'scanMove 1.5s ease-in-out infinite' }} />
