@@ -340,6 +340,7 @@ export default function LogPageClient({
   const [activeForm, setActiveForm] = useState<FormId | null>(
     (initialType && initialType !== 'all') ? initialType as FormId : null
   )
+  const [showAllDays, setShowAllDays] = useState(false)
 
   function handleSuccess() {
     router.refresh()
@@ -478,36 +479,60 @@ export default function LogPageClient({
               <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 4 }}>No entries yet</div>
               <div style={{ fontSize: 13 }}>Add your first entry using the quick add panel →</div>
             </div>
-          ) : (
-            <div style={{ padding: '4px 24px' }}>
-              {timeline.map(day => {
-                const visible = day.items.filter(it =>
-                  filter === 'all' || it.kind === filter
-                )
-                if (!visible.length) return null
-                return (
-                  <div key={day.dateStr} style={{ paddingTop: 20, paddingBottom: 8 }}>
-                    <div style={{ marginBottom: 12 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-900)' }}>{dayLabel(day.dateStr)}</div>
-                      {day.dateStr !== clientToday && day.dateStr !== clientYesterday && (
-                        <div style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 1 }}>
-                          {new Date(day.dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                        </div>
-                      )}
+          ) : (() => {
+            const todayDays  = timeline.filter(d => d.dateStr === clientToday)
+            const olderDays  = timeline.filter(d => d.dateStr !== clientToday)
+            const visibleDays = showAllDays ? timeline : todayDays
+            const hiddenCount = olderDays.reduce((s, d) => s + d.items.filter(it => filter === 'all' || it.kind === filter).length, 0)
+            return (
+              <div style={{ padding: '4px 24px' }}>
+                {visibleDays.map(day => {
+                  const visible = day.items.filter(it => filter === 'all' || it.kind === filter)
+                  if (!visible.length) return null
+                  return (
+                    <div key={day.dateStr} style={{ paddingTop: 20, paddingBottom: 8 }}>
+                      <div style={{ marginBottom: 12 }}>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-900)' }}>{dayLabel(day.dateStr)}</div>
+                        {day.dateStr !== clientToday && day.dateStr !== clientYesterday && (
+                          <div style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 1 }}>
+                            {new Date(day.dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                          </div>
+                        )}
+                      </div>
+                      {visible.map(item => (
+                        <EventRow
+                          key={item.id}
+                          item={item}
+                          onDelete={item.kind === 'meal' ? handleDeleteMeal : undefined}
+                          onLogAgain={item.kind === 'meal' ? handleLogAgain : undefined}
+                        />
+                      ))}
                     </div>
-                    {visible.map(item => (
-                      <EventRow
-                        key={item.id}
-                        item={item}
-                        onDelete={item.kind === 'meal' ? handleDeleteMeal : undefined}
-                        onLogAgain={item.kind === 'meal' ? handleLogAgain : undefined}
-                      />
-                    ))}
+                  )
+                })}
+                {/* Show more / collapse */}
+                {olderDays.length > 0 && (
+                  <div style={{ padding: '12px 0 16px', borderTop: showAllDays ? '1px solid var(--cream-200)' : 'none', marginTop: showAllDays ? 8 : 0 }}>
+                    <button
+                      onClick={() => setShowAllDays(v => !v)}
+                      style={{
+                        width: '100%', padding: '11px 16px', borderRadius: 10,
+                        border: '1px dashed var(--cream-300)',
+                        background: 'var(--cream-50)', cursor: 'pointer',
+                        fontSize: 13, fontWeight: 500, color: 'var(--ink-500)',
+                        fontFamily: 'var(--font-body)', transition: 'all 140ms',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      }}
+                    >
+                      {showAllDays
+                        ? '↑ Show today only'
+                        : `↓ Show previous days${hiddenCount > 0 ? ` · ${hiddenCount} entries` : ''}`}
+                    </button>
                   </div>
-                )
-              })}
-            </div>
-          )}
+                )}
+              </div>
+            )
+          })()}
         </div>
 
         {/* RIGHT — quick add + stats + coach */}
