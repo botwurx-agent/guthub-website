@@ -57,22 +57,22 @@ function LogButton({ itemName, calories }: { itemName: string; calories?: number
 
   if (open) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+      <div className="eat-out-log-open" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <select
           value={mealType}
           onChange={e => setMealType(e.target.value)}
-          style={{ fontSize: 12, padding: '4px 8px', borderRadius: 7, border: '1px solid var(--cream-300)', background: '#fff', color: 'var(--ink-700)', fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+          style={{ fontSize: 12, padding: '4px 8px', borderRadius: 7, border: '1px solid var(--cream-300)', background: '#fff', color: 'var(--ink-700)', fontFamily: 'var(--font-body)', cursor: 'pointer', flex: 1, minWidth: 0 }}
         >
           {MEAL_TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
         </select>
         <button
           onClick={submit}
           disabled={logging}
-          style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: 'var(--forest-500)', border: 'none', padding: '5px 10px', borderRadius: 7, cursor: logging ? 'wait' : 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}
+          style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: 'var(--forest-500)', border: 'none', padding: '5px 12px', borderRadius: 7, cursor: logging ? 'wait' : 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap', flexShrink: 0 }}
         >
           {logging ? '…' : 'Log it'}
         </button>
-        <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: 'var(--ink-400)' }}>
+        <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: 'var(--ink-400)', flexShrink: 0 }}>
           <X size={12} />
         </button>
       </div>
@@ -196,7 +196,7 @@ export default function EatOutClient({ topTriggers, allergens, dietMode }: { top
       {/* Profile pills — diet + allergens + triggers */}
       {hasProfile && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
+          <span className="eat-out-profile-label" style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
             Checking against:
           </span>
           {/* Diet chip — always shown */}
