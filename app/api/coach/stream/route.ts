@@ -88,6 +88,7 @@ SYMPTOM_DRAFT:{"symptom_type":"bloating","severity":6,"notes":"after lunch, shar
 - symptom_type: use one of: bloating, gas, cramping, nausea, diarrhea, constipation, reflux, heartburn, fatigue, brain fog, headache, pain, other
 - severity: integer 1–10
 - notes: optional, brief description
+- **ALWAYS append a SYMPTOM_DRAFT when the user mentions a symptom they are currently experiencing or had today** — e.g. "I've been bloated all morning", "my stomach is cramping", "I feel nauseous". Don't wait for them to ask to log it. Estimate severity from the language they use (mild = 1–3, moderate = 4–6, severe = 7–10). Include any timing or context they mentioned in the notes field.
 
 ### Water log:
 WATER_DRAFT:{"amount_ml":480}
