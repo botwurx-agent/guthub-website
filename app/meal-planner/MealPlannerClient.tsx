@@ -394,7 +394,7 @@ export default function MealPlannerClient() {
   // Auto-fetch recipe when selection changes and slot has no ingredients yet
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (activeSlot && (!activeSlot.ingredients || activeSlot.ingredients.length === 0) && !loadingRecipe) {
+    if (activeSlot && (!activeSlot.ingredients || activeSlot.ingredients.length === 0)) {
       fetchRecipe(activeSlot)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -541,7 +541,9 @@ export default function MealPlannerClient() {
   const fetchingRecipeRef = useRef<string | null>(null)
   async function fetchRecipe(slot: Slot) {
     const key = `${slot.plan_date}-${slot.meal_type}`
-    if (fetchingRecipeRef.current === key) return
+    // Allow re-fetch if this is a regenerated slot (same date+type, different meal name)
+    // by only skipping if the ref matches AND ingredients are already loading
+    if (fetchingRecipeRef.current === key && loadingRecipe) return
     fetchingRecipeRef.current = key
     setLoadingRecipe(true)
     try {
