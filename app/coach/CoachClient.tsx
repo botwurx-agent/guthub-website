@@ -442,19 +442,32 @@ export default function CoachClient({
           )}
 
           <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-400)', padding: '20px 6px 6px' }}>
-            Saved by Coach
+            Explore
           </div>
-          {[
-            { title: 'Your trigger food summary', sub: 'Living document · updated weekly' },
-            { title: 'Your first 30 days', sub: 'Auto-generated recap' },
-          ].map(item => (
-            <div key={item.title} style={{
-              padding: '9px 10px', borderRadius: 8, cursor: 'default', marginBottom: 1,
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 1 }}>{item.sub}</div>
+          <a href="/insights" style={{ textDecoration: 'none' }}>
+            <div style={{
+              padding: '9px 10px', borderRadius: 8, marginBottom: 1, cursor: 'pointer',
+              transition: 'background 120ms',
+            }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream-100)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>Food-symptom patterns</div>
+              <div style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 1 }}>View your 30-day insights →</div>
             </div>
-          ))}
+          </a>
+          <a href="/meal-planner" style={{ textDecoration: 'none' }}>
+            <div style={{
+              padding: '9px 10px', borderRadius: 8, marginBottom: 1, cursor: 'pointer',
+              transition: 'background 120ms',
+            }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream-100)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>Weekly meal plan</div>
+              <div style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 1 }}>View or update your plan →</div>
+            </div>
+          </a>
         </div>
       </aside>
 
