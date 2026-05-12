@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, CSSProperties } from 'react';
-import { Check, ShoppingBasket, TrendingUp, RefreshCw, Sparkles, ShieldCheck } from 'lucide-react';
+import { Check, ShoppingBasket, TrendingUp, RefreshCw, Sparkles, ShieldCheck, Camera } from 'lucide-react';
 import { Eyebrow, Reveal } from '../ui';
 import CoachChat, { CoachScriptItem } from '../CoachChat';
 
@@ -109,20 +109,47 @@ function PhotoMacroVisual() {
           <span>9:41</span>
         </div>
         <div style={{ padding: '10px 18px 12px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--ink-100)', flexShrink: 0 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--terracotta-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
-          </svg>
+          <Camera size={18} color="var(--terracotta-500)" strokeWidth={1.75} />
           <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-900)' }}>Log a meal</div>
         </div>
         <div style={{ flex: 1, position: 'relative', background: 'var(--cream-100)' }}>
-          {/* Phase 0: camera prompt */}
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, opacity: phase === 0 ? 1 : 0, transition: 'opacity 400ms' }}>
-            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--terracotta-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'pulse 1.8s infinite' }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
-              </svg>
+          {/* Phase 0: camera viewfinder */}
+          <div style={{ position: 'absolute', inset: 0, opacity: phase === 0 ? 1 : 0, transition: 'opacity 400ms', overflow: 'hidden' }}>
+            {/* Food scene background */}
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, #2a2118 0%, #3d2e1e 60%, #1e1810 100%)' }} />
+            {/* Plate illustration */}
+            <div style={{ position: 'absolute', top: '18%', left: '50%', transform: 'translateX(-50%)', width: 140, height: 140 }}>
+              <div style={{ width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle at 38% 32%, #f5eedf 0%, #e6d8be 55%, #b8a47b 100%)', boxShadow: '0 12px 32px rgba(0,0,0,.5)' }}>
+                <div style={{ position: 'absolute', inset: '12%', borderRadius: '50%', background: 'radial-gradient(circle at 30% 35%, #7fb77e 0 18%, transparent 20%), radial-gradient(circle at 65% 28%, #e87a6b 0 14%, transparent 17%), radial-gradient(circle at 45% 65%, #f2c94c 0 16%, transparent 19%), radial-gradient(circle at 72% 70%, #6fb8a8 0 15%, transparent 18%), radial-gradient(circle at 20% 72%, #d97757 0 12%, transparent 15%), radial-gradient(circle at 55% 48%, #b8e0a0 0 14%, transparent 17%), #4a7a52' }} />
+              </div>
             </div>
-            <div style={{ fontSize: 13, color: 'var(--ink-500)' }}>Tap to snap your meal</div>
+            {/* Viewfinder corners */}
+            {[
+              { top: 20, left: 20 },
+              { top: 20, right: 20 },
+              { bottom: 72, left: 20 },
+              { bottom: 72, right: 20 },
+            ].map((pos, i) => {
+              const isRight = 'right' in pos
+              const isBottom = 'bottom' in pos
+              return (
+                <div key={i} style={{ position: 'absolute', width: 22, height: 22, ...pos }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'rgba(255,255,255,0.85)', borderRadius: isRight ? '0 2px 0 0' : '2px 0 0 0' }} />
+                  <div style={{ position: 'absolute', top: 0, bottom: 0, [isRight ? 'right' : 'left']: 0, width: 3, background: 'rgba(255,255,255,0.85)', borderRadius: isBottom ? '0 0 0 2px' : '2px 0 0 0' }} />
+                </div>
+              )
+            })}
+            {/* AI label */}
+            <div style={{ position: 'absolute', top: 14, right: 56, background: 'var(--terracotta-400)', borderRadius: 6, padding: '3px 8px', fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.08em' }}>AI</div>
+            {/* Bottom bar with shutter */}
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 68, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.3)' }} />
+              {/* Shutter button */}
+              <div style={{ width: 54, height: 54, borderRadius: '50%', background: 'rgba(255,255,255,0.92)', border: '3px solid rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 2px rgba(255,255,255,0.2)' }}>
+                <div style={{ width: 42, height: 42, borderRadius: '50%', background: '#fff' }} />
+              </div>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.3)' }} />
+            </div>
           </div>
           {/* Phase 1+: plate photo */}
           <div style={{ position: 'absolute', inset: 0, opacity: phase >= 1 ? 1 : 0, transition: 'opacity 400ms' }}>
