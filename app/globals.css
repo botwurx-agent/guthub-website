@@ -337,7 +337,13 @@ button { font-family: var(--font-body); }
   }
   .plan-stats-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
   .plan-hero-grid  { grid-template-columns: minmax(0, 1fr) !important; }
+  .plan-hero-img   { height: 160px !important; }
+  .plan-macro-grid { grid-template-columns: repeat(2, 1fr) !important; }
   .plan-recipe-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 20px !important; }
+  /* Diet bar: wrap chips instead of scrolling (avoids overflow-x:hidden conflict) */
+  .plan-diet-bar   { flex-wrap: wrap !important; overflow-x: visible !important; padding-bottom: 0 !important; }
+  /* Generate button: full width when it wraps onto its own row */
+  .plan-generate-btn { width: 100% !important; justify-content: center !important; }
 
   /* ── Insights page ── */
   .insights-main-grid    { grid-template-columns: minmax(0, 1fr) !important; }

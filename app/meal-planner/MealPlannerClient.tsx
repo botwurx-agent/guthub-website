@@ -756,6 +756,7 @@ export default function MealPlannerClient() {
             <button
               onClick={generateWeek}
               disabled={generating}
+              className="plan-generate-btn"
               style={{
                 display: 'flex', alignItems: 'center', gap: 7,
                 background: generating ? 'var(--cream-100)' : 'var(--terracotta-500)',
@@ -775,7 +776,7 @@ export default function MealPlannerClient() {
       </div>
 
       {/* ── Diet style bar ── full-width, between header and content ── */}
-      <div style={{
+      <div className="plan-diet-bar" style={{
         display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20,
         overflowX: 'auto', paddingBottom: 2,
       }}>
@@ -1101,7 +1102,7 @@ export default function MealPlannerClient() {
 
                 {/* Hero: gradient image + macros side by side */}
                 <div className="plan-hero-grid" style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 20, marginBottom: 24 }}>
-                  <div style={{
+                  <div className="plan-hero-img" style={{
                     borderRadius: 14, height: 200,
                     background: MEAL_GRADIENTS[activeMeal],
                     position: 'relative', flexShrink: 0,
@@ -1118,7 +1119,7 @@ export default function MealPlannerClient() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                    <div className="plan-macro-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                       {[
                         { label: 'Kcal', val: Math.round(activeSlot.calories).toString() },
                         { label: 'Protein', val: `${Math.round(activeSlot.protein_g)}g` },
