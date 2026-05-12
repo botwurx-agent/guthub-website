@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Camera, Zap, MessageCircle, Target, CalendarDays, FileText, LayoutDashboard, TrendingUp, Check } from 'lucide-react';
+import { Camera, Zap, MessageCircle, Target, CalendarDays, FileText, LayoutDashboard, TrendingUp, Check, RefreshCw, Sparkles, ShoppingBasket } from 'lucide-react';
 import { Reveal } from '../ui';
 import CoachChat, { CoachScriptItem } from '../CoachChat';
 
@@ -233,57 +233,156 @@ function MockGoal() {
   );
 }
 
-function MockPlanner() {
-  const [tab, setTab] = useState(0);
-  const tabs = ['Low-FODMAP', 'Mediterranean', 'High-protein'];
+const PLANNER_PLANS = [
+  { // Low-FODMAP
+    meals: [
+      ['Oat bowl', 'Rice cakes', 'Banana oats', 'Egg whites', 'GF toast', 'Quinoa', 'Smoothie'],
+      ['Chicken rice', 'Tuna salad', 'Turkey wrap', 'Salmon bowl', 'Egg salad', 'Rice noodle', 'Rice bowl'],
+      ['Salmon + veg', 'Chicken stir', 'Turkey burg', 'Cod fillet', 'Shrimp rice', 'Lamb chops', 'Pork loin'],
+    ],
+    swap: ['Chia pudding', 'Prawn rice', 'Beef + veg'],
+    macros: [{ l: 'Protein', pct: 68, color: 'var(--terracotta-400)' }, { l: 'Carbs', pct: 62, color: 'var(--forest-400)' }, { l: 'Fat', pct: 55, color: '#D4A53A' }],
+  },
+  { // Mediterranean
+    meals: [
+      ['Greek yogurt', 'Eggs + feta', 'Avo toast', 'Granola', 'Shakshuka', 'Labneh', 'Omelette'],
+      ['Tuna fattoush', 'Falafel wrap', 'Mezze plate', 'Sea bass', 'Chickpea', 'Niçoise', 'Lentil soup'],
+      ['Baked cod', 'Lamb kofta', 'Sea bream', 'Moussaka', 'Chicken pita', 'Grilled brz', 'Stuffed pep'],
+    ],
+    swap: ['Chia bowl', 'Chickpea bowl', 'Grilled bass'],
+    macros: [{ l: 'Protein', pct: 64, color: 'var(--terracotta-400)' }, { l: 'Carbs', pct: 72, color: 'var(--forest-400)' }, { l: 'Fat', pct: 68, color: '#D4A53A' }],
+  },
+  { // High-protein
+    meals: [
+      ['Egg scramble', 'Protein oats', 'Greek + nuts', 'Cottage ch', 'Turkey bacon', 'Egg muffins', 'Whey oats'],
+      ['Chicken breast', 'Turkey bowl', 'Tuna wrap', 'Steak salad', 'Shrimp bowl', 'Bison burg', 'Salmon rice'],
+      ['Chicken thigh', 'Lean beef', 'Salmon fillet', 'Turkey chili', 'Pork loin', 'Cod + broc', 'Egg white ch'],
+    ],
+    swap: ['Protein shake', 'Tuna quinoa', 'Beef tenderloin'],
+    macros: [{ l: 'Protein', pct: 82, color: 'var(--terracotta-400)' }, { l: 'Carbs', pct: 52, color: 'var(--forest-400)' }, { l: 'Fat', pct: 61, color: '#D4A53A' }],
+  },
+];
+const PLANNER_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const PLANNER_KCAL = [420, 480, 510, 460, 490, 530, 445];
+const SWAP_DAY = 3; // Thursday gets swapped
 
-  const plans = [
-    [
-      { day: 'Mon', meal: 'Oat porridge + blueberries' },
-      { day: 'Tue', meal: 'Grilled salmon + rice' },
-      { day: 'Wed', meal: 'Chicken quinoa bowl' },
-      { day: 'Thu', meal: 'Zucchini pasta + turkey' },
-    ],
-    [
-      { day: 'Mon', meal: 'Greek yoghurt + walnuts' },
-      { day: 'Tue', meal: 'Tuna niçoise salad' },
-      { day: 'Wed', meal: 'Grilled sea bass + veg' },
-      { day: 'Thu', meal: 'Lentil soup + pita' },
-    ],
-    [
-      { day: 'Mon', meal: 'Egg white omelette + spinach' },
-      { day: 'Tue', meal: 'Chicken breast + broccoli' },
-      { day: 'Wed', meal: 'Cottage cheese + berries' },
-      { day: 'Thu', meal: 'Turkey meatballs + greens' },
-    ],
-  ];
+function MockPlanner() {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const [diet, setDiet] = useState(0);
+  const [mealRow, setMealRow] = useState(1);
+  const [swappingDay, setSwappingDay] = useState<number | null>(null);
+  const [swappedDay, setSwappedDay] = useState<number | null>(null);
+  const [animKey, setAnimKey] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setTab(t => (t + 1) % 3), 2800);
-    return () => clearInterval(t);
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) setVisible(true);
+    }, { threshold: 0.3 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (!visible) return;
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const after = (ms: number, fn: () => void) => { const t = setTimeout(() => { if (!cancelled) fn(); }, ms); timers.push(t); };
+
+    const cycle = (offset = 0) => {
+      after(offset + 2200, () => { setDiet(d => (d + 1) % 3); setSwappedDay(null); setAnimKey(k => k + 1); });
+      after(offset + 4000, () => setSwappingDay(SWAP_DAY));
+      after(offset + 5300, () => { setSwappingDay(null); setSwappedDay(SWAP_DAY); });
+      after(offset + 7800, () => cycle(0));
+    };
+    cycle(0);
+    return () => { cancelled = true; timers.forEach(clearTimeout); };
+  }, [visible]);
+
+  const plan = PLANNER_PLANS[diet];
+  const meals = plan.meals[mealRow];
+
   return (
-    <div style={{ width: 300, background: '#fff', borderRadius: 20, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden', fontFamily: 'var(--font-body)' }}>
-      <div style={{ padding: '14px 14px 0', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-900)', marginBottom: 10 }}>Your meal plan</div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          {tabs.map((t, i) => (
-            <button key={t} onClick={() => setTab(i)} style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 700, background: tab === i ? 'var(--terracotta-400)' : 'var(--cream-100)', color: tab === i ? '#fff' : 'var(--ink-600)', transition: 'all 250ms var(--ease-out)', whiteSpace: 'nowrap' }}>{t}</button>
+    <div ref={ref} style={{ width: 430, background: '#fff', borderRadius: 20, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden', fontFamily: 'var(--font-body)' }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      {/* Header */}
+      <div style={{ padding: '16px 18px 14px', borderBottom: '1px solid var(--ink-100)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--terracotta-700)' }}>Your meal plan</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--ink-900)', marginTop: 2 }}>This week</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', background: 'var(--forest-50)', borderRadius: 999, fontSize: 11, fontWeight: 600, color: 'var(--forest-400)' }}>
+            <Sparkles size={11} /> AI-generated
+          </div>
+        </div>
+        {/* Diet style tabs */}
+        <div style={{ display: 'flex', gap: 5 }}>
+          {['Low-FODMAP', 'Mediterranean', 'High-protein'].map((d, i) => (
+            <button key={d} onClick={() => { setDiet(i); setSwappedDay(null); setAnimKey(k => k + 1); }} style={{ padding: '5px 10px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, background: diet === i ? 'var(--terracotta-400)' : 'var(--cream-100)', color: diet === i ? '#fff' : 'var(--ink-500)', transition: 'all 250ms', fontFamily: 'var(--font-body)' }}>{d}</button>
           ))}
         </div>
       </div>
-      <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {plans[tab].map((row, i) => (
-          <div key={row.day} style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: 1, animation: 'slideUp 300ms var(--ease-out) both', animationDelay: `${i * 50}ms` }}>
-            <div style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--cream-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--terracotta-500)', flexShrink: 0 }}>{row.day}</div>
-            <div style={{ fontSize: 12, color: 'var(--ink-700)', lineHeight: 1.4 }}>{row.meal}</div>
-          </div>
+
+      {/* Meal type selector */}
+      <div style={{ display: 'flex', padding: '8px 14px', background: 'var(--cream-50)', borderBottom: '1px solid var(--ink-100)', gap: 4 }}>
+        {['Breakfast', 'Lunch', 'Dinner'].map((m, i) => (
+          <button key={m} onClick={() => setMealRow(i)} style={{ flex: 1, padding: '6px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: mealRow === i ? 700 : 500, textAlign: 'center' as const, background: mealRow === i ? '#fff' : 'transparent', color: mealRow === i ? 'var(--ink-900)' : 'var(--ink-500)', boxShadow: mealRow === i ? '0 1px 4px rgba(0,0,0,.08)' : 'none', transition: 'all 200ms', fontFamily: 'var(--font-body)' }}>{m}</button>
         ))}
-        <div style={{ marginTop: 4, padding: '8px 10px', background: 'var(--cream-50)', borderRadius: 8, fontSize: 11, color: 'var(--ink-600)', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <CalendarDays size={12} color="var(--terracotta-400)" />
-          Grocery list ready · 18 items
+      </div>
+
+      {/* 7-day grid */}
+      <div style={{ padding: '12px 14px 8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 5 }}>
+          {PLANNER_DAYS.map((d, i) => (
+            <div key={d} style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', color: i === 0 ? 'var(--terracotta-500)' : 'var(--ink-400)', paddingBottom: 5 }}>
+              {d.toUpperCase()}
+            </div>
+          ))}
+          {meals.map((meal, i) => {
+            const isSwapping = swappingDay === i;
+            const isSwapped = swappedDay === i;
+            const displayMeal = isSwapped ? plan.swap[mealRow] : meal;
+            return (
+              <div key={`${animKey}-${i}`} style={{ padding: '7px 4px', borderRadius: 10, border: `1px solid ${isSwapping ? 'var(--terracotta-300)' : isSwapped ? 'var(--forest-300)' : i === 0 ? 'var(--terracotta-200)' : 'var(--ink-100)'}`, background: isSwapping ? 'var(--terracotta-50)' : isSwapped ? 'var(--forest-50)' : i === 0 ? '#fffaf6' : '#fff', textAlign: 'center' as const, minHeight: 62, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', transition: 'border-color 300ms, background 300ms', animation: `slideUp 350ms ${i * 45}ms var(--ease-out) both` }}>
+                {isSwapping ? (
+                  <RefreshCw size={14} color="var(--terracotta-400)" style={{ animation: 'spin 0.7s linear infinite' }} />
+                ) : (
+                  <>
+                    <div style={{ fontSize: 9.5, fontWeight: 600, color: isSwapped ? 'var(--forest-600)' : 'var(--ink-800)', lineHeight: 1.3, animation: isSwapped ? 'popIn 400ms var(--ease-out)' : 'none' }}>{displayMeal}</div>
+                    <div style={{ fontSize: 8.5, color: 'var(--ink-400)', marginTop: 3 }}>{isSwapped ? PLANNER_KCAL[i] - 35 : PLANNER_KCAL[i]} cal</div>
+                    {isSwapped && <div style={{ fontSize: 8, color: 'var(--forest-500)', fontWeight: 700, marginTop: 2, letterSpacing: '0.04em' }}>NEW</div>}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
+      </div>
+
+      {/* Macro bars */}
+      <div style={{ padding: '10px 18px 12px', borderTop: '1px solid var(--ink-100)' }}>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-500)', marginBottom: 8 }}>Daily avg macros</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {plan.macros.map((m, i) => (
+            <div key={m.l} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ fontSize: 10, color: 'var(--ink-600)', width: 44 }}>{m.l}</div>
+              <div style={{ flex: 1, height: 5, background: 'var(--cream-100)', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: visible ? `${m.pct}%` : '0%', background: m.color, borderRadius: 99, transition: `width 700ms ${i * 100}ms var(--ease-out)` }} />
+              </div>
+              <div style={{ fontSize: 9, color: 'var(--ink-500)', width: 24, textAlign: 'right' as const }}>{m.pct}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{ padding: '10px 18px 14px', borderTop: '1px solid var(--ink-100)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-600)' }}>
+          <ShoppingBasket size={13} color="var(--forest-400)" /> Grocery list · 23 items
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--terracotta-500)', fontWeight: 600 }}>Export →</div>
       </div>
     </div>
   );
