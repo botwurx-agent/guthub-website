@@ -104,6 +104,13 @@ You sound like a knowledgeable, caring friend who happens to be a registered die
 4. Offer specific, actionable guidance tailored to their profile — not generic advice
 5. Close with one gentle, curious follow-up question that shows you want to understand them better
 
+## PROACTIVE SYMPTOM-MEAL CORRELATION
+You have access to the user's meal logs (with timestamps) and symptom logs (with onset_minutes — minutes after eating when symptoms began). Use this data actively:
+- When you have both meals and symptoms logged, **always check whether symptoms could be related to meals eaten 15–120 minutes earlier**, even if the user didn't ask about correlations.
+- If you spot a pattern (e.g., bloating after wheat-containing meals, cramping after dairy, reflux after late dinners), **surface it proactively**: "I notice your bloating on Tuesday appeared about 45 minutes after your lunch — which included gluten. This happened again on Thursday. It's worth tracking whether wheat is a trigger for you."
+- When a user reports a new symptom, always scan their last 2–3 meals before asking them what they ate.
+- If you don't have enough data to identify patterns yet, say so clearly and suggest what to log to help you find them.
+
 ## RULES
 - Never diagnose medical conditions or prescribe medications
 - Only suggest a full meal plan if explicitly asked
@@ -139,25 +146,35 @@ export async function POST(request: Request) {
   // Create or reuse thread
   let thread = threadId
   let isFirstMessage = false
+  let threadContextSummary: string | null = null
   if (!thread) {
     const { data: newThread } = await supabase
       .from('coach_threads')
       .insert({ user_id: user.id, title: 'New conversation' })
-      .select('id')
+      .select('id, context_summary')
       .single()
     thread = newThread?.id
     isFirstMessage = true
+  } else {
+    const { data: threadRow } = await supabase
+      .from('coach_threads')
+      .select('context_summary')
+      .eq('id', thread)
+      .single()
+    threadContextSummary = threadRow?.context_summary ?? null
   }
 
-  // Check if this is the first user message in an existing thread
-  const { data: history } = await supabase
+  // Fetch the most recent 20 messages (rolling window — newest first, then reverse for chronological order)
+  const { data: historyRaw } = await supabase
     .from('coach_messages')
     .select('role, content')
     .eq('thread_id', thread)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
     .limit(20)
 
-  if (!isFirstMessage && (!history || history.length === 0)) isFirstMessage = true
+  const history = historyRaw ? [...historyRaw].reverse() : []
+
+  if (!isFirstMessage && history.length === 0) isFirstMessage = true
 
   // Save user message — store displayContent (short label) when provided so
   // the persisted history matches what was visually shown, while the AI still
@@ -171,10 +188,14 @@ export async function POST(request: Request) {
     image_type: imageType ?? null,
   })
 
-  // Build messages array
+  // Build messages array — include rolling-window summary when available
+  const systemContent = threadContextSummary
+    ? `${SYSTEM_PROMPT}\n\n${contextBlock}\n\n## EARLIER CONVERSATION SUMMARY\nThe following is a summary of the earlier part of this conversation (before the most recent messages shown below):\n${threadContextSummary}`
+    : `${SYSTEM_PROMPT}\n\n${contextBlock}`
+
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-    { role: 'system', content: `${SYSTEM_PROMPT}\n\n${contextBlock}` },
-    ...(history ?? []).map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    { role: 'system', content: systemContent },
+    ...history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
   ]
 
   if (imageBase64) {
@@ -267,6 +288,39 @@ export async function POST(request: Request) {
           content: cleanResponse,
         })
 
+        // Rolling window: if thread now has >25 messages, summarize older context
+        // (runs async after save — only regenerates every 10 new messages past the 25-message threshold)
+        const { count: msgCount } = await supabase
+          .from('coach_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('thread_id', thread)
+        if (msgCount && msgCount > 25 && !threadContextSummary) {
+          // Fetch all but the most recent 12 messages for summarization
+          const { data: olderMsgs } = await supabase
+            .from('coach_messages')
+            .select('role, content')
+            .eq('thread_id', thread)
+            .order('created_at', { ascending: true })
+            .limit(msgCount - 12)
+          if (olderMsgs && olderMsgs.length > 4) {
+            try {
+              const summaryRes = await openai.chat.completions.create({
+                model: AI_MODEL,
+                messages: [
+                  {
+                    role: 'user',
+                    content: `Summarize the key facts, user concerns, symptoms discussed, dietary decisions, and advice given in this conversation transcript. Be concise (4-8 sentences). Focus on information that would help a health coach continue the conversation coherently:\n\n${olderMsgs.map(m => `${m.role}: ${m.content}`).join('\n\n').slice(0, 6000)}`,
+                  },
+                ],
+              })
+              const summary = summaryRes.choices[0]?.message?.content?.trim()
+              if (summary) {
+                await supabase.from('coach_threads').update({ context_summary: summary }).eq('id', thread)
+              }
+            } catch { /* non-critical */ }
+          }
+        }
+
         // Auto-generate a meaningful thread title on first exchange
         let autoTitle: string | null = null
         if (isFirstMessage) {
@@ -306,6 +360,23 @@ export async function POST(request: Request) {
           ...(weightDraft ? { weightDraft } : {}),
         })}\n\n`))
         controller.close()
+
+        // Regenerate historical summary if stale (>23h since last update) — fire after stream closes
+        try {
+          const { data: lastSummary } = await supabase
+            .from('historical_summaries')
+            .select('summary_date')
+            .eq('user_id', user.id)
+            .order('summary_date', { ascending: false })
+            .limit(1)
+            .single()
+          const lastDate = lastSummary?.summary_date ? new Date(lastSummary.summary_date).getTime() : 0
+          const hoursSince = (Date.now() - lastDate) / 3600000
+          if (hoursSince > 23) {
+            // Run historical summarization without blocking
+            void generateHistoricalSummary(supabase, user.id, openai)
+          }
+        } catch { /* non-critical */ }
       } catch {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Stream interrupted.' })}\n\n`))
         controller.close()
@@ -320,4 +391,63 @@ export async function POST(request: Request) {
       'Connection': 'keep-alive',
     },
   })
+}
+
+// ── Historical summary generation ────────────────────────────────────────────
+// Called after stream closes when summary is >23h stale — non-blocking
+async function generateHistoricalSummary(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  userId: string,
+  openai: OpenAI
+) {
+  try {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
+    const today = new Date().toISOString().split('T')[0]
+
+    const [
+      { data: meals },
+      { data: symptoms },
+      { data: weights },
+      { data: water },
+      { data: supplements },
+    ] = await Promise.all([
+      supabase.from('meal_logs').select('meal_name, meal_type, calories, protein_g, log_date').eq('user_id', userId).gte('log_date', thirtyDaysAgo).order('log_date', { ascending: false }).limit(50),
+      supabase.from('symptom_logs').select('symptom_type, severity, log_date, notes').eq('user_id', userId).gte('log_date', thirtyDaysAgo).order('log_date', { ascending: false }).limit(30),
+      supabase.from('weight_logs').select('weight_kg, log_date').eq('user_id', userId).order('log_date', { ascending: false }).limit(30),
+      supabase.from('water_logs').select('amount_ml, log_date').eq('user_id', userId).gte('log_date', thirtyDaysAgo).order('log_date', { ascending: false }).limit(30),
+      supabase.from('supplement_logs').select('name, dose, log_date').eq('user_id', userId).gte('log_date', thirtyDaysAgo).limit(15),
+    ])
+
+    const mealLines = (meals ?? []).slice(0, 30).map((m: { log_date: string; meal_type: string; meal_name: string; calories?: number }) => `${m.log_date} ${m.meal_type}: ${m.meal_name}${m.calories ? ` (${Math.round(m.calories)} kcal)` : ''}`).join('\n')
+    const symptomLines = (symptoms ?? []).map((s: { log_date: string; symptom_type: string; severity: number; notes?: string }) => `${s.log_date}: ${s.symptom_type} severity ${s.severity}/10${s.notes ? ` - ${s.notes}` : ''}`).join('\n')
+    const weightLines = (weights ?? []).slice(0, 10).map((w: { log_date: string; weight_kg: number }) => `${w.log_date}: ${Math.round(w.weight_kg * 2.20462 * 10) / 10} lbs`).join('\n')
+
+    const dataBlock = [
+      mealLines ? `MEALS (last 30 days):\n${mealLines}` : '',
+      symptomLines ? `SYMPTOMS:\n${symptomLines}` : '',
+      weightLines ? `WEIGHT TREND:\n${weightLines}` : '',
+      (supplements ?? []).length ? `SUPPLEMENTS: ${(supplements ?? []).map((s: { name: string }) => s.name).join(', ')}` : '',
+    ].filter(Boolean).join('\n\n')
+
+    if (!dataBlock) return
+
+    const res = await openai.chat.completions.create({
+      model: AI_MODEL,
+      messages: [
+        {
+          role: 'user',
+          content: `You are summarizing a user's gut health journey over the last 30 days for a health coach AI to reference. Produce a 6-10 sentence narrative summary covering: most common foods, recurring symptoms and patterns, weight trend, supplement use, and any notable correlations or improvements. Be specific with data. This is internal context — write it as a clinical-style summary, not as a message to the user.\n\n${dataBlock}`,
+        },
+      ],
+    })
+
+    const summary = res.choices[0]?.message?.content?.trim()
+    if (!summary) return
+
+    await supabase.from('historical_summaries').upsert(
+      { user_id: userId, summary_date: today, summary_text: summary },
+      { onConflict: 'user_id,summary_date' }
+    )
+  } catch { /* non-critical */ }
 }

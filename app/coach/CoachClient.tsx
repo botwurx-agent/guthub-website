@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from 'react'
-import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown, Pencil, Trash2, Check, CalendarPlus, ChevronLeft, ChevronRight, Mic, Droplets, Scale } from 'lucide-react'
+import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown, Pencil, Trash2, Check, CalendarPlus, ChevronLeft, ChevronRight, Mic, Droplets, Scale, type LucideIcon } from 'lucide-react'
 import { startNewThread, getThreadMessages, renameThread, deleteThread, savePlanFromCoach, logMealFromCoach, logSymptomFromCoach, logWaterFromCoach, logWeightFromCoach } from '@/app/actions/coach'
 import type { LogDraft, SymptomDraft, WaterDraft, WeightDraft } from '@/app/actions/coach'
 
@@ -28,13 +28,17 @@ type PlanSlot = {
   fat_g?: number
 }
 
-const SUGGESTIONS = [
-  { title: 'Why am I bloated after lunch?', sub: 'Look at the last 7 days for patterns', icon: Frown },
-  { title: 'Plan my week (low-FODMAP)', sub: 'A 7-day plan based on my profile', icon: Utensils },
-  { title: 'Explain my latest lab result', sub: 'Uploaded report in plain English', icon: FlaskConical },
-  { title: 'What should I eat tonight?', sub: 'Quick dinner — under 30 minutes', icon: ChefHat },
-  { title: 'How do I reduce reflux at night?', sub: 'Practical, evidence-based tips', icon: Moon },
-  { title: 'Make me a grocery list', sub: 'For the next 7 days of meals', icon: ShoppingCart },
+const ICON_MAP: Record<string, LucideIcon> = {
+  Frown, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Droplets, Scale,
+}
+
+const FALLBACK_SUGGESTIONS = [
+  { title: 'Why am I bloated after meals?', sub: 'Identify your personal trigger foods', icon: 'Frown' },
+  { title: 'Plan my week', sub: 'A 7-day plan based on my profile', icon: 'Utensils' },
+  { title: 'Optimize my macros for gut health', sub: 'Protein, fiber, and fat balance', icon: 'FlaskConical' },
+  { title: 'What should I eat tonight?', sub: 'Quick gut-friendly dinner ideas', icon: 'ChefHat' },
+  { title: 'How do I reduce reflux at night?', sub: 'Practical, evidence-based tips', icon: 'Moon' },
+  { title: 'Make me a grocery list', sub: 'For the next 7 days of meals', icon: 'ShoppingCart' },
 ]
 
 function relativeTime(iso: string) {
@@ -47,7 +51,7 @@ function relativeTime(iso: string) {
 }
 
 export default function CoachClient({
-  initialThreadId, initialMessages, initialThreads, firstName, welcomeMessage, autostartMessage,
+  initialThreadId, initialMessages, initialThreads, firstName, welcomeMessage, autostartMessage, suggestions,
 }: {
   initialThreadId: string | null
   initialMessages: Message[]
@@ -55,6 +59,7 @@ export default function CoachClient({
   firstName: string
   welcomeMessage: string
   autostartMessage?: string
+  suggestions?: Array<{ title: string; sub: string; icon: string }>
 }) {
   const [threadId, setThreadId] = useState<string | null>(initialThreadId)
   const [messages, setMessages] = useState<Message[]>(initialMessages)
@@ -477,7 +482,7 @@ export default function CoachClient({
         {/* Messages scroll */}
         <div className="coach-chat-pad" style={{ flex: 1, overflowY: 'auto', padding: '24px 32px 8px' }}>
           {isEmpty ? (
-            <EmptyChat firstName={firstName} welcomeMessage={welcomeMessage} onSuggest={text => { setInput(text); send(text) }} />
+            <EmptyChat firstName={firstName} welcomeMessage={welcomeMessage} suggestions={suggestions ?? FALLBACK_SUGGESTIONS} onSuggest={text => { setInput(text); send(text) }} />
           ) : (
             <>
               {messages.map((msg, i) => <MessageBubble key={i} message={msg} firstName={firstName} />)}
@@ -1008,7 +1013,14 @@ function ThreadRow({
 }
 
 // ── Empty / welcome state ────────────────────────────────────────────────────
-function EmptyChat({ firstName, welcomeMessage, onSuggest }: { firstName: string; welcomeMessage: string; onSuggest: (text: string) => void }) {
+function EmptyChat({
+  firstName, welcomeMessage, suggestions, onSuggest,
+}: {
+  firstName: string
+  welcomeMessage: string
+  suggestions: Array<{ title: string; sub: string; icon: string }>
+  onSuggest: (text: string) => void
+}) {
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 0 24px' }}>
       {/* Personalized welcome bubble */}
@@ -1030,8 +1042,8 @@ function EmptyChat({ firstName, welcomeMessage, onSuggest }: { firstName: string
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        {SUGGESTIONS.map(s => {
-          const Icon = s.icon
+        {suggestions.map(s => {
+          const Icon = ICON_MAP[s.icon] ?? Frown
           return (
             <button key={s.title} onClick={() => onSuggest(s.title)} style={{
               textAlign: 'left', padding: '14px 16px', borderRadius: 14,
