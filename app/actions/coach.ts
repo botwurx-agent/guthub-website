@@ -12,6 +12,20 @@ export type LogDraft = {
   fat_g: number
 }
 
+export type SymptomDraft = {
+  symptom_type: string
+  severity: number
+  notes?: string
+}
+
+export type WaterDraft = {
+  amount_ml: number
+}
+
+export type WeightDraft = {
+  weight_lbs: number
+}
+
 export async function logMealFromCoach(draft: LogDraft, clientTz: string, clientDate: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -41,6 +55,81 @@ export async function logMealFromCoach(draft: LogDraft, clientTz: string, client
     source: 'coach',
   })
 
+  if (error) return { error: error.message }
+  revalidatePath('/log')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function logSymptomFromCoach(draft: SymptomDraft, clientTz: string, clientDate: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+  if (!draft.symptom_type?.trim()) return { error: 'Missing symptom type.' }
+  const severity = Math.min(10, Math.max(1, Math.round(draft.severity)))
+  if (!severity) return { error: 'Invalid severity.' }
+
+  let logDate = clientDate
+  if (clientTz) {
+    try { logDate = new Date().toLocaleDateString('en-CA', { timeZone: clientTz }) } catch { /* fall back */ }
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(logDate)) logDate = new Date().toISOString().split('T')[0]
+
+  const { error } = await supabase.from('symptom_logs').insert({
+    user_id: user.id,
+    log_date: logDate,
+    symptom_type: draft.symptom_type.trim().toLowerCase(),
+    severity,
+    notes: draft.notes?.trim() || null,
+  })
+  if (error) return { error: error.message }
+  revalidatePath('/log')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function logWaterFromCoach(draft: WaterDraft, clientTz: string, clientDate: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+  const amountMl = Math.round(draft.amount_ml)
+  if (!amountMl || amountMl < 1) return { error: 'Invalid amount.' }
+
+  let logDate = clientDate
+  if (clientTz) {
+    try { logDate = new Date().toLocaleDateString('en-CA', { timeZone: clientTz }) } catch { /* fall back */ }
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(logDate)) logDate = new Date().toISOString().split('T')[0]
+
+  const { error } = await supabase.from('water_logs').insert({
+    user_id: user.id,
+    log_date: logDate,
+    amount_ml: amountMl,
+  })
+  if (error) return { error: error.message }
+  revalidatePath('/log')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function logWeightFromCoach(draft: WeightDraft, clientTz: string, clientDate: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+  const weightKg = Math.round((draft.weight_lbs / 2.20462) * 100) / 100
+  if (!weightKg || weightKg < 20) return { error: 'Invalid weight.' }
+
+  let logDate = clientDate
+  if (clientTz) {
+    try { logDate = new Date().toLocaleDateString('en-CA', { timeZone: clientTz }) } catch { /* fall back */ }
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(logDate)) logDate = new Date().toISOString().split('T')[0]
+
+  const { error } = await supabase.from('weight_logs').insert({
+    user_id: user.id,
+    log_date: logDate,
+    weight_kg: weightKg,
+  })
   if (error) return { error: error.message }
   revalidatePath('/log')
   revalidatePath('/dashboard')

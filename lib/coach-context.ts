@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
+import { todayInTz, daysAgoInTz } from './timezone'
 
 // Builds the 4-layer AI context injected as a system message
 // Layer 1: Profile (full intake form data)
@@ -6,9 +7,9 @@ import { SupabaseClient } from '@supabase/supabase-js'
 // Layer 3: 14-day log patterns
 // Layer 4: Historical summary cache (nightly)
 
-export async function buildCoachContext(supabase: SupabaseClient, userId: string): Promise<string> {
-  const today = new Date().toISOString().split('T')[0]
-  const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0]
+export async function buildCoachContext(supabase: SupabaseClient, userId: string, tz = 'UTC'): Promise<string> {
+  const today = todayInTz(tz)
+  const fourteenDaysAgo = daysAgoInTz(tz, 14)
 
   const [
     { data: profile },
@@ -107,7 +108,7 @@ Additional notes: ${str(hp.additional_notes) || 'None'}`
 
   const waterToday = recentWater?.filter(w => w.log_date === today).reduce((s, w) => s + (w.amount_ml ?? 0), 0) ?? 0
 
-  const activeSection = `## TODAY (${today})
+  const activeSection = `## TODAY (${today}, user's local date)
 Gut score: ${gutScoreVal !== null ? Math.round(gutScoreVal as number) + '/100' : 'Not yet calculated'}
 Goal weight (this month): ${goalWeight}
 Consumed: ${consumed}

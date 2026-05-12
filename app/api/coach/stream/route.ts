@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { buildCoachContext } from '@/lib/coach-context'
+import { getUserTimezone } from '@/lib/timezone'
 import { AI_MODEL } from '@/lib/ai-config'
 import OpenAI from 'openai'
 
@@ -55,18 +56,36 @@ Rules for the JSON:
 - Only append this block when you have created a concrete plan with real meal names — not for general suggestions
 - Do NOT mention this block in your conversational text
 
-## LOG DRAFTS — SAVE TO LOG FEATURE
-When the user wants to log a single meal they ate (or are about to eat) and you have provided macros for it, append the following EXACTLY at the very end of your response on its own line — it will be hidden from the user and used to render a one-tap "Log this meal" button:
+## LOG DRAFTS — ONE-TAP LOGGING FROM CHAT
+When the user wants to log something they ate, a symptom they're experiencing, their water intake, or their weight, append the appropriate draft block EXACTLY at the very end of your response — it will be hidden from the user and rendered as a one-tap action button.
 
+### Meal log:
 LOG_DRAFT:{"meal_name":"Soft scrambled eggs with spinach + 1/2 avocado on whole-grain toast","meal_type":"breakfast","calories":390,"protein_g":19,"carbs_g":20,"fat_g":26}
-
-Rules for the JSON:
-- meal_type must be one of "breakfast", "lunch", "dinner", "snack", or "beverage"
+- meal_type: "breakfast", "lunch", "dinner", "snack", or "beverage"
 - Always include calories, protein_g, carbs_g, fat_g as integers
-- meal_name should be concise but descriptive (under 80 chars)
-- Only append this block when the user is logging an individual meal — not when planning a future week (use MEAL_PLAN_DRAFT for that)
-- Do NOT mention this block in your conversational text
-- Do NOT pretend you have already logged it — the button is what does the logging when the user taps it
+- Only use for logging an individual meal (not future meal planning — use MEAL_PLAN_DRAFT for that)
+
+### Symptom log:
+SYMPTOM_DRAFT:{"symptom_type":"bloating","severity":6,"notes":"after lunch, sharp cramping"}
+- symptom_type: use one of: bloating, gas, cramping, nausea, diarrhea, constipation, reflux, heartburn, fatigue, brain fog, headache, pain, other
+- severity: integer 1–10
+- notes: optional, brief description
+
+### Water log:
+WATER_DRAFT:{"amount_ml":480}
+- amount_ml: integer (240 = 1 cup/glass, 480 = 2 cups, etc.)
+- Use when the user mentions drinking water or you suggest they hydrate
+
+### Weight log:
+WEIGHT_DRAFT:{"weight_lbs":168}
+- weight_lbs: number (can be decimal)
+- Only use when the user explicitly tells you their weight
+
+Rules for ALL draft blocks:
+- Append only ONE draft block per response (the most relevant one)
+- Place it on its own line at the very end of the response
+- Do NOT mention the block in your conversational text
+- Do NOT pretend you have already logged anything — the button does the actual logging when tapped
 
 ## TONE & VOICE
 You sound like a knowledgeable, caring friend who happens to be a registered dietitian. Think warm, grounded, and real — not peppy, not clinical.
@@ -113,8 +132,9 @@ export async function POST(request: Request) {
   const { message, displayContent, threadId, imageBase64, imageType } = await request.json()
   if (!message?.trim() && !imageBase64) return new Response('Message required', { status: 400 })
 
-  // Build user context
-  const contextBlock = await buildCoachContext(supabase, user.id)
+  // Build user context using the user's local timezone
+  const tz = await getUserTimezone()
+  const contextBlock = await buildCoachContext(supabase, user.id, tz)
 
   // Create or reuse thread
   let thread = threadId
@@ -190,17 +210,19 @@ export async function POST(request: Request) {
           }
         }
 
-        // Extract hidden meal plan draft block before saving
+        // Extract hidden draft blocks before saving
         let mealPlanDraft: unknown[] | null = null
         let logDraft: unknown | null = null
+        let symptomDraft: unknown | null = null
+        let waterDraft: unknown | null = null
+        let weightDraft: unknown | null = null
         let cleanResponse = fullResponse
+
         const planMatch = fullResponse.match(/\nMEAL_PLAN_DRAFT:(\{[\s\S]*?\})\s*$/)
         if (planMatch) {
           try {
             const parsed = JSON.parse(planMatch[1])
-            if (Array.isArray(parsed.meals) && parsed.meals.length > 0) {
-              mealPlanDraft = parsed.meals
-            }
+            if (Array.isArray(parsed.meals) && parsed.meals.length > 0) mealPlanDraft = parsed.meals
           } catch { /* malformed — ignore */ }
           cleanResponse = fullResponse.slice(0, planMatch.index).trimEnd()
         }
@@ -211,6 +233,30 @@ export async function POST(request: Request) {
             if (parsed?.meal_name) logDraft = parsed
           } catch { /* malformed — ignore */ }
           cleanResponse = cleanResponse.slice(0, logMatch.index).trimEnd()
+        }
+        const symptomMatch = cleanResponse.match(/\nSYMPTOM_DRAFT:(\{[\s\S]*?\})\s*$/)
+        if (symptomMatch) {
+          try {
+            const parsed = JSON.parse(symptomMatch[1])
+            if (parsed?.symptom_type && parsed?.severity) symptomDraft = parsed
+          } catch { /* malformed — ignore */ }
+          cleanResponse = cleanResponse.slice(0, symptomMatch.index).trimEnd()
+        }
+        const waterMatch = cleanResponse.match(/\nWATER_DRAFT:(\{[\s\S]*?\})\s*$/)
+        if (waterMatch) {
+          try {
+            const parsed = JSON.parse(waterMatch[1])
+            if (parsed?.amount_ml) waterDraft = parsed
+          } catch { /* malformed — ignore */ }
+          cleanResponse = cleanResponse.slice(0, waterMatch.index).trimEnd()
+        }
+        const weightMatch = cleanResponse.match(/\nWEIGHT_DRAFT:(\{[\s\S]*?\})\s*$/)
+        if (weightMatch) {
+          try {
+            const parsed = JSON.parse(weightMatch[1])
+            if (parsed?.weight_lbs) weightDraft = parsed
+          } catch { /* malformed — ignore */ }
+          cleanResponse = cleanResponse.slice(0, weightMatch.index).trimEnd()
         }
 
         // Save assistant message (without the hidden draft block)
@@ -245,7 +291,8 @@ export async function POST(request: Request) {
         }
 
         // Replace streamed text with clean version (strips draft blocks)
-        if (mealPlanDraft || logDraft) {
+        const hasDraft = mealPlanDraft || logDraft || symptomDraft || waterDraft || weightDraft
+        if (hasDraft) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ replaceContent: cleanResponse })}\n\n`))
         }
 
@@ -254,6 +301,9 @@ export async function POST(request: Request) {
           ...(autoTitle ? { title: autoTitle } : {}),
           ...(mealPlanDraft ? { mealPlanDraft } : {}),
           ...(logDraft ? { logDraft } : {}),
+          ...(symptomDraft ? { symptomDraft } : {}),
+          ...(waterDraft ? { waterDraft } : {}),
+          ...(weightDraft ? { weightDraft } : {}),
         })}\n\n`))
         controller.close()
       } catch {

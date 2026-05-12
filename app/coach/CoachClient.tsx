@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from 'react'
-import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown, Pencil, Trash2, Check, CalendarPlus, ChevronLeft, ChevronRight, Mic } from 'lucide-react'
-import { startNewThread, getThreadMessages, renameThread, deleteThread, savePlanFromCoach, logMealFromCoach } from '@/app/actions/coach'
-import type { LogDraft } from '@/app/actions/coach'
+import { Send, Paperclip, X, Loader2, Plus, Sparkles, Utensils, FlaskConical, ChefHat, Moon, ShoppingCart, Frown, Pencil, Trash2, Check, CalendarPlus, ChevronLeft, ChevronRight, Mic, Droplets, Scale } from 'lucide-react'
+import { startNewThread, getThreadMessages, renameThread, deleteThread, savePlanFromCoach, logMealFromCoach, logSymptomFromCoach, logWaterFromCoach, logWeightFromCoach } from '@/app/actions/coach'
+import type { LogDraft, SymptomDraft, WaterDraft, WeightDraft } from '@/app/actions/coach'
 
 type Message = {
   id?: string
@@ -73,6 +73,18 @@ export default function CoachClient({
   const [loggingMeal, setLoggingMeal] = useState(false)
   const [mealLogged, setMealLogged] = useState(false)
   const [logError, setLogError] = useState<string | null>(null)
+  const [symptomDraft, setSymptomDraft] = useState<SymptomDraft | null>(null)
+  const [loggingSymptom, setLoggingSymptom] = useState(false)
+  const [symptomLogged, setSymptomLogged] = useState(false)
+  const [symptomError, setSymptomError] = useState<string | null>(null)
+  const [waterDraft, setWaterDraft] = useState<WaterDraft | null>(null)
+  const [loggingWater, setLoggingWater] = useState(false)
+  const [waterLogged, setWaterLogged] = useState(false)
+  const [waterError, setWaterError] = useState<string | null>(null)
+  const [weightDraft, setWeightDraft] = useState<WeightDraft | null>(null)
+  const [loggingWeight, setLoggingWeight] = useState(false)
+  const [weightLogged, setWeightLogged] = useState(false)
+  const [weightError, setWeightError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
@@ -215,6 +227,21 @@ export default function CoachClient({
                 setMealLogged(false)
                 setLogError(null)
               }
+              if (payload.symptomDraft) {
+                setSymptomDraft(payload.symptomDraft)
+                setSymptomLogged(false)
+                setSymptomError(null)
+              }
+              if (payload.waterDraft) {
+                setWaterDraft(payload.waterDraft)
+                setWaterLogged(false)
+                setWaterError(null)
+              }
+              if (payload.weightDraft) {
+                setWeightDraft(payload.weightDraft)
+                setWeightLogged(false)
+                setWeightError(null)
+              }
             }
             if (payload.error) setError(payload.error)
           } catch {}
@@ -272,6 +299,42 @@ export default function CoachClient({
     setLoggingMeal(false)
     if (result?.error) { setLogError(result.error); return }
     setMealLogged(true)
+  }
+
+  async function handleLogSymptom() {
+    if (!symptomDraft || loggingSymptom || symptomLogged) return
+    setLoggingSymptom(true)
+    setSymptomError(null)
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const date = new Date().toLocaleDateString('en-CA')
+    const result = await logSymptomFromCoach(symptomDraft, tz, date)
+    setLoggingSymptom(false)
+    if (result?.error) { setSymptomError(result.error); return }
+    setSymptomLogged(true)
+  }
+
+  async function handleLogWater() {
+    if (!waterDraft || loggingWater || waterLogged) return
+    setLoggingWater(true)
+    setWaterError(null)
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const date = new Date().toLocaleDateString('en-CA')
+    const result = await logWaterFromCoach(waterDraft, tz, date)
+    setLoggingWater(false)
+    if (result?.error) { setWaterError(result.error); return }
+    setWaterLogged(true)
+  }
+
+  async function handleLogWeight() {
+    if (!weightDraft || loggingWeight || weightLogged) return
+    setLoggingWeight(true)
+    setWeightError(null)
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const date = new Date().toLocaleDateString('en-CA')
+    const result = await logWeightFromCoach(weightDraft, tz, date)
+    setLoggingWeight(false)
+    if (result?.error) { setWeightError(result.error); return }
+    setWeightLogged(true)
   }
 
   function startEditing(t: Thread) {
@@ -449,6 +512,33 @@ export default function CoachClient({
                   onLog={handleLogMeal}
                 />
               )}
+              {symptomDraft && !streaming && (
+                <SymptomDraftCard
+                  draft={symptomDraft}
+                  saving={loggingSymptom}
+                  saved={symptomLogged}
+                  error={symptomError}
+                  onLog={handleLogSymptom}
+                />
+              )}
+              {waterDraft && !streaming && (
+                <WaterDraftCard
+                  draft={waterDraft}
+                  saving={loggingWater}
+                  saved={waterLogged}
+                  error={waterError}
+                  onLog={handleLogWater}
+                />
+              )}
+              {weightDraft && !streaming && (
+                <WeightDraftCard
+                  draft={weightDraft}
+                  saving={loggingWeight}
+                  saved={weightLogged}
+                  error={weightError}
+                  onLog={handleLogWeight}
+                />
+              )}
             </>
           )}
           <div ref={bottomRef} />
@@ -593,6 +683,98 @@ function LogDraftCard({ draft, saving, saved, error, onLog }: {
         {saving ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Logging…</>
           : saved ? <><Check size={13} /> Logged for today</>
           : <><Plus size={13} /> Log to today</>}
+      </button>
+    </div>
+  )
+}
+
+function SymptomDraftCard({ draft, saving, saved, error, onLog }: {
+  draft: SymptomDraft; saving: boolean; saved: boolean; error: string | null; onLog: () => void
+}) {
+  const label = draft.symptom_type.charAt(0).toUpperCase() + draft.symptom_type.slice(1)
+  const severityColor = draft.severity >= 7 ? '#b4422c' : draft.severity >= 4 ? '#C98A1E' : '#3F6A4A'
+  return (
+    <div style={{ margin: '16px 0', padding: '18px 20px', borderRadius: 14, background: 'rgba(201,138,30,0.07)', border: '1px solid rgba(201,138,30,0.2)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <Frown size={15} color="#C98A1E" />
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#C98A1E' }}>Log this symptom</span>
+      </div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-900)', marginBottom: 6 }}>{label}</div>
+      <div style={{ display: 'flex', gap: 14, fontSize: 12.5, color: 'var(--ink-600)', marginBottom: draft.notes ? 6 : 14, flexWrap: 'wrap' }}>
+        <span>Severity <b style={{ color: severityColor }}>{draft.severity}/10</b></span>
+      </div>
+      {draft.notes && <div style={{ fontSize: 13, color: 'var(--ink-500)', marginBottom: 14, fontStyle: 'italic' }}>"{draft.notes}"</div>}
+      {error && <div style={{ fontSize: 12.5, color: '#b4422c', marginBottom: 10 }}>{error}</div>}
+      <button onClick={onLog} disabled={saving || saved} style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: '8px 16px', borderRadius: 999, border: 'none',
+        background: saved ? 'var(--forest-400)' : '#C98A1E',
+        color: '#fff', fontSize: 13, fontWeight: 600,
+        cursor: saving || saved ? 'default' : 'pointer',
+        fontFamily: 'var(--font-body)', opacity: saving ? 0.8 : 1, transition: 'background 160ms',
+      }}>
+        {saving ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Logging…</>
+          : saved ? <><Check size={13} /> Logged</>
+          : <><Plus size={13} /> Log symptom</>}
+      </button>
+    </div>
+  )
+}
+
+function WaterDraftCard({ draft, saving, saved, error, onLog }: {
+  draft: WaterDraft; saving: boolean; saved: boolean; error: string | null; onLog: () => void
+}) {
+  const cups = Math.round((draft.amount_ml / 240) * 10) / 10
+  return (
+    <div style={{ margin: '16px 0', padding: '18px 20px', borderRadius: 14, background: 'rgba(111,184,168,0.08)', border: '1px solid rgba(111,184,168,0.25)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <Droplets size={15} color="#6FB8A8" />
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6FB8A8' }}>Log water</span>
+      </div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-900)', marginBottom: 6 }}>
+        {draft.amount_ml} ml <span style={{ fontWeight: 400, color: 'var(--ink-500)', fontSize: 13 }}>({cups} cup{cups !== 1 ? 's' : ''})</span>
+      </div>
+      {error && <div style={{ fontSize: 12.5, color: '#b4422c', marginBottom: 10 }}>{error}</div>}
+      <button onClick={onLog} disabled={saving || saved} style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: '8px 16px', borderRadius: 999, border: 'none',
+        background: saved ? 'var(--forest-400)' : '#6FB8A8',
+        color: '#fff', fontSize: 13, fontWeight: 600,
+        cursor: saving || saved ? 'default' : 'pointer',
+        fontFamily: 'var(--font-body)', opacity: saving ? 0.8 : 1, transition: 'background 160ms',
+      }}>
+        {saving ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Logging…</>
+          : saved ? <><Check size={13} /> Logged</>
+          : <><Plus size={13} /> Log water</>}
+      </button>
+    </div>
+  )
+}
+
+function WeightDraftCard({ draft, saving, saved, error, onLog }: {
+  draft: WeightDraft; saving: boolean; saved: boolean; error: string | null; onLog: () => void
+}) {
+  return (
+    <div style={{ margin: '16px 0', padding: '18px 20px', borderRadius: 14, background: 'rgba(157,151,138,0.08)', border: '1px solid rgba(157,151,138,0.25)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <Scale size={15} color="#9D978A" />
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9D978A' }}>Log weight</span>
+      </div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-900)', marginBottom: 14 }}>
+        {draft.weight_lbs} lbs
+      </div>
+      {error && <div style={{ fontSize: 12.5, color: '#b4422c', marginBottom: 10 }}>{error}</div>}
+      <button onClick={onLog} disabled={saving || saved} style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: '8px 16px', borderRadius: 999, border: 'none',
+        background: saved ? 'var(--forest-400)' : '#9D978A',
+        color: '#fff', fontSize: 13, fontWeight: 600,
+        cursor: saving || saved ? 'default' : 'pointer',
+        fontFamily: 'var(--font-body)', opacity: saving ? 0.8 : 1, transition: 'background 160ms',
+      }}>
+        {saving ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Logging…</>
+          : saved ? <><Check size={13} /> Logged</>
+          : <><Plus size={13} /> Log weight</>}
       </button>
     </div>
   )
