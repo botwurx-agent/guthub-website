@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Camera, Search, CheckCircle2, AlertTriangle, XCircle, Lightbulb, ChevronRight, RotateCcw, Utensils, Sparkles, AlertCircle, ImagePlus, X } from 'lucide-react'
+import { Camera, Search, CheckCircle2, AlertTriangle, XCircle, Lightbulb, ChevronRight, RotateCcw, Utensils, Sparkles, AlertCircle, ImagePlus, X, Check } from 'lucide-react'
 
 type Trigger = { food: string; symptom: string; score: number }
 
@@ -20,6 +20,74 @@ const VERDICT_CONFIG = {
   great:  { label: 'Great choice!',  color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0', icon: '🎉' },
   okay:   { label: 'Manageable',     color: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: '👍' },
   tricky: { label: 'Tricky spot',    color: '#dc2626', bg: '#fef2f2', border: '#fecaca', icon: '⚠️' },
+}
+
+const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const
+
+function LogButton({ itemName, calories }: { itemName: string; calories?: number | null }) {
+  const [open, setOpen] = useState(false)
+  const [mealType, setMealType] = useState<string>('dinner')
+  const [logging, setLogging] = useState(false)
+  const [done, setDone] = useState(false)
+
+  async function submit() {
+    setLogging(true)
+    const today = new Date().toLocaleDateString('en-CA')
+    const fd = new FormData()
+    fd.set('log_date', today)
+    fd.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
+    fd.set('meal_name', itemName)
+    fd.set('meal_type', mealType)
+    if (calories) fd.set('calories', String(calories))
+    const { logMeal } = await import('@/app/actions/log')
+    await logMeal(fd)
+    setLogging(false)
+    setDone(true)
+    setOpen(false)
+    setTimeout(() => setDone(false), 3000)
+  }
+
+  if (done) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: '#16a34a', padding: '5px 10px', background: '#f0fdf4', borderRadius: 7, border: '1px solid #bbf7d0' }}>
+        <Check size={11} /> Logged
+      </div>
+    )
+  }
+
+  if (open) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        <select
+          value={mealType}
+          onChange={e => setMealType(e.target.value)}
+          style={{ fontSize: 12, padding: '4px 8px', borderRadius: 7, border: '1px solid var(--cream-300)', background: '#fff', color: 'var(--ink-700)', fontFamily: 'var(--font-body)', cursor: 'pointer' }}
+        >
+          {MEAL_TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+        </select>
+        <button
+          onClick={submit}
+          disabled={logging}
+          style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: 'var(--forest-500)', border: 'none', padding: '5px 10px', borderRadius: 7, cursor: logging ? 'wait' : 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}
+        >
+          {logging ? '…' : 'Log it'}
+        </button>
+        <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: 'var(--ink-400)' }}>
+          <X size={12} />
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      onClick={() => setOpen(true)}
+      title="Log this meal"
+      style={{ fontSize: 11, fontWeight: 600, color: 'var(--forest-600)', background: 'var(--cream-100)', border: '1px solid var(--cream-200)', padding: '5px 10px', borderRadius: 7, cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap', flexShrink: 0 }}
+    >
+      + Log
+    </button>
+  )
 }
 
 export default function EatOutClient({ topTriggers, allergens }: { topTriggers: Trigger[]; allergens: string[] }) {
@@ -395,13 +463,18 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
               <div>
                 {result.safe.map((item, i) => (
                   <div key={i} style={{ padding: '12px 20px', borderBottom: i < result.safe.length - 1 ? '1px solid var(--cream-100)' : 'none' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-800)', lineHeight: 1.3 }}>{item.item}</div>
-                      {item.calories_estimate && (
-                        <span style={{ fontSize: 11, color: 'var(--ink-400)', flexShrink: 0, marginTop: 2 }}>~{item.calories_estimate} kcal</span>
-                      )}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-800)', lineHeight: 1.3 }}>{item.item}</span>
+                          {item.calories_estimate && (
+                            <span style={{ fontSize: 11, color: 'var(--ink-400)' }}>~{item.calories_estimate} kcal</span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 4, lineHeight: 1.5 }}>{item.reason}</div>
+                      </div>
+                      <LogButton itemName={item.item} calories={item.calories_estimate} />
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 4, lineHeight: 1.5 }}>{item.reason}</div>
                   </div>
                 ))}
               </div>
@@ -423,11 +496,16 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
                   <div>
                     {result.caution.map((item, i) => (
                       <div key={i} style={{ padding: '12px 20px', borderBottom: i < result.caution.length - 1 ? '1px solid var(--cream-100)' : 'none' }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-800)' }}>{item.item}</div>
-                        <div style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 3, lineHeight: 1.5 }}>{item.reason}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '5px 10px', background: '#fffbeb', borderRadius: 7, width: 'fit-content' }}>
-                          <ChevronRight size={11} color="#d97706" />
-                          <span style={{ fontSize: 11, fontWeight: 600, color: '#92400e' }}>{item.modification}</span>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-800)' }}>{item.item}</div>
+                            <div style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 3, lineHeight: 1.5 }}>{item.reason}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '5px 10px', background: '#fffbeb', borderRadius: 7, width: 'fit-content' }}>
+                              <ChevronRight size={11} color="#d97706" />
+                              <span style={{ fontSize: 11, fontWeight: 600, color: '#92400e' }}>{item.modification}</span>
+                            </div>
+                          </div>
+                          <LogButton itemName={item.item} />
                         </div>
                       </div>
                     ))}
@@ -477,16 +555,16 @@ export default function EatOutClient({ topTriggers, allergens }: { topTriggers: 
             </div>
           )}
 
-          {/* Log CTA */}
+          {/* Post-meal reminder */}
           <div className="eat-out-log-cta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: '16px 20px', flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Utensils size={17} color="var(--forest-500)" />
               <span style={{ fontSize: 14, color: 'var(--ink-700)', fontWeight: 500 }}>
-                After your meal, log what you ate to refine your trigger profile.
+                After eating, tap <strong>+ Log</strong> next to the item you ordered — or log any symptoms if they come up.
               </span>
             </div>
-            <a href="/log?tab=meal" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 10, background: 'var(--forest-500)', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
-              Log this meal
+            <a href="/log?type=symptom" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 10, border: '1px solid var(--cream-200)', background: 'var(--cream-50)', color: 'var(--ink-700)', fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
+              Log a symptom
             </a>
           </div>
         </div>
