@@ -4,7 +4,7 @@ import { Eyebrow, Reveal } from '../ui';
 
 export default function FeaturesHero() {
   return (
-    <section className="section-pad" style={{ padding: '96px 32px 40px', textAlign: 'center', background: `
+    <section className="section-pad" style={{ padding: '120px 32px 100px', textAlign: 'center', background: `
         radial-gradient(ellipse 80% 70% at 10% 120%, rgba(219,111,86,0.32) 0%, transparent 60%),
         radial-gradient(ellipse 55% 75% at 92% -5%, rgba(63,106,74,0.20) 0%, transparent 55%),
         var(--cream-50)
