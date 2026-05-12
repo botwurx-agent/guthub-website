@@ -672,42 +672,6 @@ export default function MealPlannerClient() {
               ))}
             </div>
 
-            {/* Diet style override chips */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end', maxWidth: 360 }}>
-              {/* "My default" chip */}
-              <button
-                onClick={() => setDietOverride(null)}
-                style={{
-                  padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
-                  fontSize: 12.5, fontWeight: 600, transition: 'all 140ms',
-                  background: dietOverride === null ? 'var(--forest-500)' : 'var(--cream-100)',
-                  color: dietOverride === null ? '#fff' : 'var(--ink-500)',
-                  boxShadow: dietOverride === null ? '0 1px 4px rgba(31,45,42,0.15)' : 'none',
-                  border: `1px solid ${dietOverride === null ? 'transparent' : 'var(--cream-200)'}`,
-                }}
-              >
-                My default ({dietLabel})
-              </button>
-              {DIET_OPTIONS
-                .filter(opt => opt.value !== (profile?.diet_mode ?? 'balanced').replace(/_/g, '-').toLowerCase())
-                .map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setDietOverride(prev => prev === opt.value ? null : opt.value)}
-                    style={{
-                      padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
-                      fontSize: 12.5, fontWeight: 600, transition: 'all 140ms',
-                      background: dietOverride === opt.value ? 'var(--terracotta-400)' : 'var(--cream-100)',
-                      color: dietOverride === opt.value ? '#fff' : 'var(--ink-500)',
-                      boxShadow: dietOverride === opt.value ? '0 1px 4px rgba(180,66,44,0.2)' : 'none',
-                      border: `1px solid ${dietOverride === opt.value ? 'transparent' : 'var(--cream-200)'}`,
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-            </div>
-
             <button
               onClick={generateWeek}
               disabled={generating}
@@ -727,6 +691,54 @@ export default function MealPlannerClient() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* ── Diet style bar ── full-width, between header and content ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20,
+        overflowX: 'auto', paddingBottom: 2,
+      }}>
+        <span style={{
+          fontSize: 11.5, fontWeight: 700, color: 'var(--ink-400)',
+          textTransform: 'uppercase', letterSpacing: '0.1em', flexShrink: 0,
+        }}>
+          Diet style:
+        </span>
+        {/* My default chip */}
+        <button
+          onClick={() => setDietOverride(null)}
+          style={{
+            padding: '6px 14px', borderRadius: 999, cursor: 'pointer', flexShrink: 0,
+            fontSize: 13, fontWeight: 600, transition: 'all 140ms',
+            background: dietOverride === null ? 'var(--forest-500)' : '#fff',
+            color: dietOverride === null ? '#fff' : 'var(--ink-500)',
+            border: `1.5px solid ${dietOverride === null ? 'var(--forest-500)' : 'var(--cream-200)'}`,
+            boxShadow: dietOverride === null ? '0 1px 4px rgba(31,45,42,0.18)' : 'none',
+          }}
+        >
+          My default ({dietLabel})
+        </button>
+        {/* Divider */}
+        <div style={{ width: 1, height: 20, background: 'var(--cream-200)', flexShrink: 0 }} />
+        {/* Override chips */}
+        {DIET_OPTIONS
+          .filter(opt => opt.value !== (profile?.diet_mode ?? 'balanced').replace(/_/g, '-').toLowerCase())
+          .map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setDietOverride(prev => prev === opt.value ? null : opt.value)}
+              style={{
+                padding: '6px 14px', borderRadius: 999, cursor: 'pointer', flexShrink: 0,
+                fontSize: 13, fontWeight: 600, transition: 'all 140ms',
+                background: dietOverride === opt.value ? 'var(--terracotta-400)' : '#fff',
+                color: dietOverride === opt.value ? '#fff' : 'var(--ink-500)',
+                border: `1.5px solid ${dietOverride === opt.value ? 'var(--terracotta-400)' : 'var(--cream-200)'}`,
+                boxShadow: dietOverride === opt.value ? '0 1px 4px rgba(180,66,44,0.2)' : 'none',
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
       </div>
 
       {/* Generating progress banner */}
