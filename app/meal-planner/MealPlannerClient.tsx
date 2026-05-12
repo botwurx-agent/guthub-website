@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronLeft, ChevronRight, RefreshCw, Check, Sparkles, UtensilsCrossed, ShoppingCart, Settings, Copy } from 'lucide-react'
+import { ChevronLeft, ChevronRight, RefreshCw, Check, Sparkles, UtensilsCrossed, ShoppingCart, Settings, Copy, Heart, HeartOff, RotateCcw } from 'lucide-react'
 import { MealIllustration } from '@/components/app/MealIllustration'
 
 type Slot = {
@@ -29,6 +29,17 @@ type MacroTarget = {
   protein_g: number | null
   carbs_g: number | null
   fat_g: number | null
+}
+
+type LikedMeal = {
+  id: string
+  meal_name: string
+  meal_type: string | null
+  calories: number | null
+  protein_g: number | null
+  fat_g: number | null
+  carbs_g: number | null
+  liked_at: string
 }
 
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'] as const
@@ -258,7 +269,20 @@ export default function MealPlannerClient() {
   const [macros, setMacros] = useState<MacroTarget | null>(null)
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState(false)
+  const [activeTab, setActiveTab] = useState<'plan' | 'favourites'>('plan')
+  const [likedMeals, setLikedMeals] = useState<LikedMeal[]>([])
+  const [unlikingId, setUnlikingId] = useState<string | null>(null)
   const supabase = createClient()
+
+  const fetchLikedMeals = useCallback(async () => {
+    const { data } = await supabase
+      .from('liked_meals')
+      .select('*')
+      .order('liked_at', { ascending: false })
+    setLikedMeals(data ?? [])
+  }, [])
+
+  useEffect(() => { fetchLikedMeals() }, [fetchLikedMeals])
 
   // Cycle loading messages while generating
   useEffect(() => {
@@ -455,12 +479,49 @@ export default function MealPlannerClient() {
 
   async function toggleAccept(slot: Slot) {
     setAcceptingSlot(slot.id)
-    await supabase
-      .from('meal_plan_slots')
-      .update({ accepted: !slot.accepted })
-      .eq('id', slot.id)
-    setSlots(prev => prev.map(s => s.id === slot.id ? { ...s, accepted: !s.accepted } : s))
+    const nowSaving = !slot.accepted
+    await supabase.from('meal_plan_slots').update({ accepted: nowSaving }).eq('id', slot.id)
+    if (nowSaving) {
+      await supabase.from('liked_meals').upsert({
+        meal_name: slot.meal_name,
+        meal_type: slot.meal_type,
+        calories: slot.calories,
+        protein_g: slot.protein_g,
+        fat_g: slot.fat_g,
+        carbs_g: slot.carbs_g,
+        source: 'meal_planner',
+        liked_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,meal_name' })
+      fetchLikedMeals()
+    }
+    setSlots(prev => prev.map(s => s.id === slot.id ? { ...s, accepted: nowSaving } : s))
     setAcceptingSlot(null)
+  }
+
+  async function unlikeMeal(liked: LikedMeal) {
+    setUnlikingId(liked.id)
+    await supabase.from('liked_meals').delete().eq('id', liked.id)
+    setLikedMeals(prev => prev.filter(m => m.id !== liked.id))
+    // also un-accept any matching slots
+    setSlots(prev => prev.map(s =>
+      s.meal_name === liked.meal_name ? { ...s, accepted: false } : s
+    ))
+    setUnlikingId(null)
+  }
+
+  async function logFavourite(liked: LikedMeal) {
+    const today = new Date().toLocaleDateString('en-CA')
+    const fd = new FormData()
+    fd.set('log_date', today)
+    fd.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
+    fd.set('meal_name', liked.meal_name)
+    fd.set('meal_type', liked.meal_type ?? 'snack')
+    fd.set('calories', String(liked.calories ?? ''))
+    fd.set('protein', String(liked.protein_g ?? ''))
+    fd.set('carbs', String(liked.carbs_g ?? ''))
+    fd.set('fat', String(liked.fat_g ?? ''))
+    const { logMeal } = await import('@/app/actions/log')
+    await logMeal(fd)
   }
 
   const dietLabel = (profile?.diet_mode && profile.diet_mode !== 'default')
@@ -477,6 +538,83 @@ export default function MealPlannerClient() {
 
   return (
     <div className="app-page-content" style={{ padding: '32px 28px', maxWidth: 1100, margin: '0 auto' }}>
+      {/* Tab switcher */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'var(--cream-100)', border: '1px solid var(--cream-200)', borderRadius: 12, padding: 4, width: 'fit-content' }}>
+        {(['plan', 'favourites'] as const).map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)} style={{
+            padding: '8px 20px', borderRadius: 9, border: 'none', cursor: 'pointer',
+            background: activeTab === tab ? '#fff' : 'transparent',
+            color: activeTab === tab ? 'var(--ink-900)' : 'var(--ink-500)',
+            fontSize: 14, fontWeight: activeTab === tab ? 600 : 400,
+            boxShadow: activeTab === tab ? '0 1px 4px rgba(31,45,42,0.09)' : 'none',
+            fontFamily: 'var(--font-body)', transition: 'all 140ms',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            {tab === 'favourites' && <Heart size={14} style={{ color: activeTab === tab ? 'var(--terracotta-400)' : 'var(--ink-400)' }} />}
+            {tab === 'plan' ? 'Week plan' : (likedMeals.length > 0 ? `Favourites (${likedMeals.length})` : 'Favourites')}
+          </button>
+        ))}
+      </div>
+
+      {/* ── FAVOURITES TAB ── */}
+      {activeTab === 'favourites' && (
+        <div>
+          {likedMeals.length === 0 ? (
+            <div style={{ background: 'var(--cream-100)', border: '2px dashed var(--cream-200)', borderRadius: 16, padding: '64px 32px', textAlign: 'center' }}>
+              <Heart size={40} color="var(--ink-300)" style={{ marginBottom: 16 }} />
+              <p style={{ fontWeight: 600, fontSize: 17, color: 'var(--ink-600)', margin: '0 0 8px' }}>No favourites yet</p>
+              <p style={{ fontSize: 14, color: 'var(--ink-400)', margin: 0 }}>
+                Tap <strong>Save</strong> on any meal in your week plan to add it here.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+              {likedMeals.map(meal => (
+                <div key={meal.id} style={{ background: '#fff', borderRadius: 16, border: '1px solid var(--cream-200)', padding: '18px 20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-900)', lineHeight: 1.3 }}>{meal.meal_name}</div>
+                      {meal.meal_type && (
+                        <div style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 3, textTransform: 'capitalize' }}>{meal.meal_type}</div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => unlikeMeal(meal)}
+                      disabled={unlikingId === meal.id}
+                      title="Remove from favourites"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--terracotta-400)', flexShrink: 0 }}
+                    >
+                      <HeartOff size={16} />
+                    </button>
+                  </div>
+                  {meal.calories && (
+                    <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--ink-500)', marginBottom: 14, flexWrap: 'wrap' }}>
+                      <span><strong style={{ color: 'var(--ink-800)' }}>{Math.round(meal.calories)}</strong> kcal</span>
+                      {meal.protein_g && <span><strong style={{ color: 'var(--ink-800)' }}>{Math.round(meal.protein_g)}g</strong> protein</span>}
+                      {meal.carbs_g && <span><strong style={{ color: 'var(--ink-800)' }}>{Math.round(meal.carbs_g)}g</strong> carbs</span>}
+                      {meal.fat_g && <span><strong style={{ color: 'var(--ink-800)' }}>{Math.round(meal.fat_g)}g</strong> fat</span>}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => logFavourite(meal)}
+                    style={{
+                      width: '100%', padding: '9px 14px', borderRadius: 10, border: 'none',
+                      background: 'var(--terracotta-50)', color: 'var(--terracotta-600)',
+                      fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}
+                  >
+                    <RotateCcw size={13} /> Log this meal today
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── PLAN TAB ── */}
+      <div style={{ display: activeTab === 'plan' ? undefined : 'none' }}>
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
         <div className="plan-page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
@@ -1049,6 +1187,8 @@ export default function MealPlannerClient() {
           </div>
         </div>
       )}
+
+      </div>
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }

@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useTransition, useRef } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Utensils, Frown, Circle, Droplets, Scale, StickyNote,
-  Camera, Sparkles, TrendingDown, TrendingUp, Trash2, RotateCcw, Check, Pill,
+  Camera, Sparkles, TrendingDown, TrendingUp, Trash2, RotateCcw, Check, Pill, Heart,
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import { deleteMeal, reLogMeal } from '@/app/actions/log'
 import LogMeal from '@/components/app/log/LogMeal'
 import LogMealPhoto from '@/components/app/log/LogMealPhoto'
@@ -18,7 +19,17 @@ import LogSupplement from '@/components/app/log/LogSupplement'
 import type { TimelineDay, WeekStats, TodayMacros, MacroTargets } from './page'
 
 type FilterId = 'all' | 'meal' | 'symptom' | 'weight' | 'note' | 'supplement'
-type FormId = 'meal' | 'photo-meal' | 'symptom' | 'bm' | 'water' | 'weight' | 'note' | 'supplement'
+type FormId = 'meal' | 'photo-meal' | 'symptom' | 'bm' | 'water' | 'weight' | 'note' | 'supplement' | 'favourites'
+
+type LikedMeal = {
+  id: string
+  meal_name: string
+  meal_type: string | null
+  calories: number | null
+  protein_g: number | null
+  fat_g: number | null
+  carbs_g: number | null
+}
 
 const FILTER_TABS: { id: FilterId; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -326,6 +337,14 @@ export default function LogPageClient({
 }) {
   const router = useRouter()
   const quickAddRef = useRef<HTMLDivElement>(null)
+  const [likedMeals, setLikedMeals] = useState<LikedMeal[]>([])
+  const supabase = createClient()
+
+  useEffect(() => {
+    supabase.from('liked_meals').select('*').order('liked_at', { ascending: false })
+      .then(({ data }) => setLikedMeals(data ?? []))
+  }, [])
+
   // Compute today/yesterday in the browser so the user's local timezone is used
   const clientToday = new Date().toLocaleDateString('en-CA')
   const _yd = new Date(); _yd.setDate(_yd.getDate() - 1)
@@ -371,7 +390,23 @@ export default function LogPageClient({
   const FORM_LABELS: Record<FormId, string> = {
     meal: 'Log a meal', 'photo-meal': 'Photo meal', symptom: 'Log a symptom',
     bm: 'Log bowel movement', water: 'Log water', weight: 'Log weight',
-    note: 'Add a note', supplement: 'Log supplement',
+    note: 'Add a note', supplement: 'Log supplement', favourites: 'Favourites',
+  }
+
+  async function logFavourite(meal: LikedMeal) {
+    const today = new Date().toLocaleDateString('en-CA')
+    const fd = new FormData()
+    fd.set('log_date', today)
+    fd.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
+    fd.set('meal_name', meal.meal_name)
+    fd.set('meal_type', meal.meal_type ?? 'snack')
+    fd.set('calories', String(meal.calories ?? ''))
+    fd.set('protein', String(meal.protein_g ?? ''))
+    fd.set('carbs', String(meal.carbs_g ?? ''))
+    fd.set('fat', String(meal.fat_g ?? ''))
+    const { logMeal } = await import('@/app/actions/log')
+    await logMeal(fd)
+    handleSuccess()
   }
 
   const activeFormContent = activeForm && (
@@ -384,6 +419,38 @@ export default function LogPageClient({
       {activeForm === 'weight'      && <LogWeight currentLbs={currentLbs} goalLbs={goalLbs} onSuccess={handleSuccess} />}
       {activeForm === 'note'        && <LogNote onSuccess={handleSuccess} />}
       {activeForm === 'supplement'  && <LogSupplement onSuccess={handleSuccess} />}
+      {activeForm === 'favourites'  && (
+        likedMeals.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--ink-400)' }}>
+            <Heart size={32} style={{ marginBottom: 12, opacity: 0.4 }} />
+            <p style={{ fontSize: 14, margin: 0 }}>No favourites yet.<br />Save meals from the Plan page to see them here.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {likedMeals.map(meal => (
+              <div key={meal.id} style={{ background: 'var(--cream-50)', borderRadius: 12, border: '1px solid var(--cream-200)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meal.meal_name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 2 }}>
+                    {[meal.calories && `${Math.round(meal.calories)} kcal`, meal.protein_g && `${Math.round(meal.protein_g)}g protein`].filter(Boolean).join(' · ')}
+                  </div>
+                </div>
+                <button
+                  onClick={() => logFavourite(meal)}
+                  style={{
+                    padding: '7px 14px', borderRadius: 8, border: 'none', flexShrink: 0,
+                    background: 'var(--terracotta-400)', color: '#fff',
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)',
+                    display: 'flex', alignItems: 'center', gap: 5,
+                  }}
+                >
+                  <RotateCcw size={11} /> Log
+                </button>
+              </div>
+            ))}
+          </div>
+        )
+      )}
     </div>
   )
 
@@ -552,6 +619,7 @@ export default function LogPageClient({
               <QuickAddTile icon={Droplets} label="Water" onClick={() => setActiveForm('water')} color="#6FB8A8" />
               <QuickAddTile icon={StickyNote} label="Note" onClick={() => setActiveForm('note')} color="#7A7468" />
               <QuickAddTile icon={Pill} label="Supplement" onClick={() => setActiveForm('supplement')} color="#8B5CF6" />
+              <QuickAddTile icon={Heart} label={`Favourites${likedMeals.length > 0 ? ` (${likedMeals.length})` : ''}`} onClick={() => setActiveForm('favourites')} color="var(--terracotta-400)" />
             </div>
           </div>
 
