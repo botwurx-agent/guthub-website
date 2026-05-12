@@ -309,6 +309,7 @@ export default function MealPlannerClient() {
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0)
   const [regeneratingSlot, setRegeneratingSlot] = useState<string | null>(null)
   const [acceptingSlot, setAcceptingSlot] = useState<string | null>(null)
+  const [loadingRecipe, setLoadingRecipe] = useState(false)
   const [activeDay, setActiveDay] = useState(0)
   const [activeMeal, setActiveMeal] = useState<'breakfast' | 'lunch' | 'dinner'>('dinner')
   const [planDays, setPlanDays] = useState<1 | 3 | 7>(7)
@@ -383,11 +384,21 @@ export default function MealPlannerClient() {
     fetchProfile()
   }, [])
 
+
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(weekStart, i)))
   const activeDateStr = weekDates[activeDay]
   const daySlots = slots.filter(s => s.plan_date === activeDateStr)
   const activeSlot = slots.find(s => s.plan_date === activeDateStr && s.meal_type === activeMeal)
   const hasAnyMeals = slots.length > 0
+
+  // Auto-fetch recipe when selection changes and slot has no ingredients yet
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (activeSlot && (!activeSlot.ingredients || activeSlot.ingredients.length === 0) && !loadingRecipe) {
+      fetchRecipe(activeSlot)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSlot?.id])
 
   const dayCalories = Math.round(daySlots.reduce((sum, s) => sum + (s.calories ?? 0), 0))
   const dayProtein = Math.round(daySlots.reduce((sum, s) => sum + (s.protein_g ?? 0), 0))
@@ -462,38 +473,41 @@ export default function MealPlannerClient() {
   }
 
   async function generateWeek() {
-    const total = planDays * 3
     setGenerating(true)
     setGeneratingCount(0)
-    setGeneratingTotal(total)
+    setGeneratingTotal(planDays * 3)
 
-    // For 1 or 3 day plans, start from the currently selected day.
-    // For 7 days, always start from Monday (weekStart).
     const genStart = planDays === 7 ? weekStart : addDays(weekStart, activeDay)
 
-    // Clear the slots for the dates being regenerated
     const datesToClear: string[] = []
     for (let i = 0; i < planDays; i++) datesToClear.push(toDateStr(addDays(genStart, i)))
     setSlots(prev => prev.filter(s => !datesToClear.includes(s.plan_date)))
 
-    try {
-      const res = await fetch('/api/meal-planner/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weekStart: toDateStr(genStart), regenerate: null, days: planDays, dietOverride }),
-      })
-      if (res.ok && res.body) {
-        await consumeStream(res.body, meal => {
-          setSlots(prev => {
-            const filtered = prev.filter(
-              s => !(s.plan_date === meal.plan_date && s.meal_type === meal.meal_type)
-            )
-            return [...filtered, { ...meal, id: `tmp-${meal.plan_date}-${meal.meal_type}` } as Slot]
-          })
-          setGeneratingCount(c => c + 1)
+    // Fire 3 parallel requests — one per meal type (Option B)
+    await Promise.all(['breakfast', 'lunch', 'dinner'].map(async mealType => {
+      try {
+        const res = await fetch('/api/meal-planner/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            weekStart: toDateStr(genStart),
+            days: planDays,
+            dietOverride,
+            mealTypes: [mealType],
+            phase: 'quick',
+          }),
         })
-      }
-    } catch { /* network error — slots will be empty */ }
+        if (res.ok && res.body) {
+          await consumeStream(res.body, meal => {
+            setSlots(prev => {
+              const filtered = prev.filter(s => !(s.plan_date === meal.plan_date && s.meal_type === meal.meal_type))
+              return [...filtered, { ...meal, id: `tmp-${meal.plan_date}-${meal.meal_type}` } as Slot]
+            })
+            setGeneratingCount(c => c + 1)
+          })
+        }
+      } catch { /* leave slot empty */ }
+    }))
 
     await fetchSlots()
     setGenerating(false)
@@ -508,14 +522,12 @@ export default function MealPlannerClient() {
       const res = await fetch('/api/meal-planner/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: { date, mealType }, dietOverride }),
+        body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: { date, mealType }, dietOverride, phase: 'quick' }),
       })
       if (res.ok && res.body) {
         await consumeStream(res.body, meal => {
           setSlots(prev => {
-            const filtered = prev.filter(
-              s => !(s.plan_date === meal.plan_date && s.meal_type === meal.meal_type)
-            )
+            const filtered = prev.filter(s => !(s.plan_date === meal.plan_date && s.meal_type === meal.meal_type))
             return [...filtered, { ...meal, id: `tmp-${meal.plan_date}-${meal.meal_type}` } as Slot]
           })
         })
@@ -523,6 +535,37 @@ export default function MealPlannerClient() {
     } catch { /* leave existing slot in place */ }
     await fetchSlots()
     setRegeneratingSlot(null)
+  }
+
+  // Phase 2: lazy-load recipe (ingredients + directions) for a slot (Option A)
+  const fetchingRecipeRef = useRef<string | null>(null)
+  async function fetchRecipe(slot: Slot) {
+    const key = `${slot.plan_date}-${slot.meal_type}`
+    if (fetchingRecipeRef.current === key) return
+    fetchingRecipeRef.current = key
+    setLoadingRecipe(true)
+    try {
+      const res = await fetch('/api/meal-planner/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phase: 'recipe',
+          dietOverride,
+          existingMeal: { name: slot.meal_name, date: slot.plan_date, meal_type: slot.meal_type },
+        }),
+      })
+      if (res.ok && res.body) {
+        await consumeStream(res.body, updated => {
+          setSlots(prev => prev.map(s =>
+            s.plan_date === updated.plan_date && s.meal_type === updated.meal_type
+              ? { ...s, ingredients: updated.ingredients ?? [], directions: updated.directions ?? '' }
+              : s
+          ))
+        })
+      }
+    } catch { /* leave empty */ }
+    fetchingRecipeRef.current = null
+    setLoadingRecipe(false)
   }
 
   async function toggleAccept(slot: Slot) {
@@ -1114,7 +1157,13 @@ export default function MealPlannerClient() {
                     <h4 style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--terracotta-600)', fontWeight: 700, margin: '0 0 12px' }}>
                       Ingredients
                     </h4>
-                    {(activeSlot.ingredients ?? []).length > 0 ? (
+                    {loadingRecipe ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {[80, 65, 90, 55, 75, 60].map((w, i) => (
+                          <div key={i} style={{ height: 14, borderRadius: 6, background: 'var(--cream-200)', width: `${w}%`, animation: 'pulse 1.4s ease-in-out infinite', animationDelay: `${i * 0.1}s` }} />
+                        ))}
+                      </div>
+                    ) : (activeSlot.ingredients ?? []).length > 0 ? (
                       <ul style={{ paddingLeft: 18, lineHeight: 1.8, color: 'var(--ink-800)', fontSize: 14, margin: 0 }}>
                         {(activeSlot.ingredients ?? []).map((ing, i) => (
                           <li key={i}>{ing}</li>
@@ -1128,7 +1177,13 @@ export default function MealPlannerClient() {
                     <h4 style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--terracotta-600)', fontWeight: 700, margin: '0 0 12px' }}>
                       Method
                     </h4>
-                    {activeSlot.directions ? (
+                    {loadingRecipe ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {[95, 85, 70, 90, 60].map((w, i) => (
+                          <div key={i} style={{ height: 14, borderRadius: 6, background: 'var(--cream-200)', width: `${w}%`, animation: 'pulse 1.4s ease-in-out infinite', animationDelay: `${i * 0.12}s` }} />
+                        ))}
+                      </div>
+                    ) : activeSlot.directions ? (
                       <ol style={{ paddingLeft: 18, lineHeight: 1.8, color: 'var(--ink-800)', fontSize: 14, margin: 0 }}>
                         {activeSlot.directions.split(/\n+/).filter(Boolean).map((step, i) => (
                           <li key={i}>{step.replace(/^\d+[\.\)]\s*/, '')}</li>
