@@ -79,78 +79,6 @@ export default function Header() {
         </div>
       </div>
 
-      {menuOpen && (
-        <div
-          className="mobile-nav-overlay"
-          role="dialog"
-          aria-modal="true"
-          style={{
-            position: 'fixed', inset: 0, zIndex: 60,
-            background: 'var(--cream-50)',
-            display: 'flex', flexDirection: 'column',
-            animation: 'authFadeIn 200ms var(--ease-out)',
-          }}
-        >
-          <div style={{
-            display: 'flex', alignItems: 'center',
-            padding: '14px 20px', borderBottom: '1px solid var(--border)',
-          }}>
-            <Link href="/" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-              <Image src="/logo-full.png" alt="GutHub" width={120} height={32} style={{ height: 32, width: 'auto' }} />
-            </Link>
-            <button
-              aria-label="Close menu"
-              onClick={() => setMenuOpen(false)}
-              style={{
-                marginLeft: 'auto', background: 'none', border: 'none', padding: 6,
-                cursor: 'pointer', color: 'var(--ink-800)',
-              }}
-            >
-              <X size={24} />
-            </button>
-          </div>
-          <nav style={{
-            display: 'flex', flexDirection: 'column',
-            padding: '16px 20px', gap: 4,
-          }}>
-            {navItems.map(item => (
-              <Link
-                key={item.label}
-                href={item.href}
-                onClick={() => setMenuOpen(false)}
-                style={{
-                  fontSize: 22, fontWeight: 500, color: 'var(--ink-900)',
-                  textDecoration: 'none', padding: '14px 4px',
-                  borderBottom: '1px solid var(--border)',
-                  fontFamily: 'var(--font-body)',
-                }}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div style={{
-            marginTop: 'auto', padding: '20px',
-            display: 'flex', flexDirection: 'column', gap: 12,
-            borderTop: '1px solid var(--border)',
-          }}>
-            <Button variant="primary" size="lg" as="a" href="/pricing" onClick={() => setMenuOpen(false)}>
-              Start your 7-day free trial
-            </Button>
-            <button
-              onClick={() => { setMenuOpen(false); openAuth('signin'); }}
-              style={{
-                fontSize: 16, fontWeight: 500, color: 'var(--ink-700)',
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontFamily: 'var(--font-body)', padding: '8px',
-              }}
-            >
-              Sign in
-            </button>
-          </div>
-        </div>
-      )}
-
       <style>{`
         @media (max-width: 767px) {
           .header-cta-full { display: none !important; }
@@ -160,6 +88,78 @@ export default function Header() {
       `}</style>
     </header>
     <div style={{ height: 60 }} aria-hidden="true" />
+
+    {menuOpen && (
+      <div
+        className="mobile-nav-overlay"
+        role="dialog"
+        aria-modal="true"
+        style={{
+          position: 'fixed', inset: 0, zIndex: 60,
+          background: 'var(--cream-50)',
+          display: 'flex', flexDirection: 'column',
+          animation: 'authFadeIn 200ms var(--ease-out)',
+        }}
+      >
+        <div style={{
+          display: 'flex', alignItems: 'center',
+          padding: '14px 20px', borderBottom: '1px solid var(--border)',
+        }}>
+          <Link href="/" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <Image src="/logo-full.png" alt="GutHub" width={120} height={32} style={{ height: 32, width: 'auto' }} />
+          </Link>
+          <button
+            aria-label="Close menu"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              marginLeft: 'auto', background: 'none', border: 'none', padding: 6,
+              cursor: 'pointer', color: 'var(--ink-800)',
+            }}
+          >
+            <X size={24} />
+          </button>
+        </div>
+        <nav style={{
+          display: 'flex', flexDirection: 'column',
+          padding: '16px 20px', gap: 4,
+        }}>
+          {navItems.map(item => (
+            <Link
+              key={item.label}
+              href={item.href}
+              onClick={() => setMenuOpen(false)}
+              style={{
+                fontSize: 22, fontWeight: 500, color: 'var(--ink-900)',
+                textDecoration: 'none', padding: '14px 4px',
+                borderBottom: '1px solid var(--border)',
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        <div style={{
+          marginTop: 'auto', padding: '20px',
+          display: 'flex', flexDirection: 'column', gap: 12,
+          borderTop: '1px solid var(--border)',
+        }}>
+          <Button variant="primary" size="lg" as="a" href="/pricing" onClick={() => setMenuOpen(false)}>
+            Start your 7-day free trial
+          </Button>
+          <button
+            onClick={() => { setMenuOpen(false); openAuth('signin'); }}
+            style={{
+              fontSize: 16, fontWeight: 500, color: 'var(--ink-700)',
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontFamily: 'var(--font-body)', padding: '8px',
+            }}
+          >
+            Sign in
+          </button>
+        </div>
+      </div>
+    )}
     </>
   );
 }
