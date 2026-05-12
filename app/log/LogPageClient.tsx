@@ -456,9 +456,9 @@ export default function LogPageClient({
 
   return (
     <>
-    {/* Form overlay — full-screen on mobile, dismissible on desktop */}
+    {/* Form overlay — mobile only */}
     {activeForm && (
-      <div style={{
+      <div className="log-overlay-mobile" style={{
         position: 'fixed', inset: 0, zIndex: 50,
         background: 'var(--cream-50)',
         display: 'flex', flexDirection: 'column',
@@ -607,10 +607,30 @@ export default function LogPageClient({
 
           {/* Quick add tiles */}
           <div ref={quickAddRef} style={{ background: '#fff', borderRadius: 16, border: '1px solid var(--cream-200)', padding: '20px 20px 24px' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700, color: 'var(--ink-900)' }}>Quick add</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              {activeForm && (
+                <button
+                  className="log-back-desktop"
+                  onClick={() => setActiveForm(null)}
+                  style={{
+                    background: 'none', border: 'none', padding: 0,
+                    cursor: 'pointer', color: 'var(--ink-500)', fontSize: 13,
+                    fontFamily: 'var(--font-body)', display: 'flex', alignItems: 'center', gap: 3,
+                  }}
+                >← Back</button>
+              )}
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink-900)' }}>
+                {activeForm ? FORM_LABELS[activeForm] : 'Quick add'}
+              </h3>
+            </div>
 
-            {/* Tiles always visible — form opens in the overlay above */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {/* Desktop inline form (hidden on mobile — overlay used instead) */}
+            <div className="log-form-desktop">
+              {activeForm && activeFormContent}
+            </div>
+
+            {/* Tiles — always visible on mobile; hidden on desktop when a form is open */}
+            <div className={activeForm ? 'log-tiles log-tiles-hidden-desktop' : 'log-tiles'} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <QuickAddTile icon={Camera} label="Photo meal" onClick={() => setActiveForm('photo-meal')} color="#DB6F56" />
               <QuickAddTile icon={Utensils} label="Type meal" onClick={() => setActiveForm('meal')} color="#DB6F56" />
               <QuickAddTile icon={Frown} label="Symptom" onClick={() => setActiveForm('symptom')} color="#C98A1E" />
@@ -678,6 +698,20 @@ export default function LogPageClient({
         </div>
       </div>
     </div>
+    <style>{`
+      /* Mobile: overlay is full-screen, tiles always visible, desktop inline form hidden */
+      @media (max-width: 767px) {
+        .log-form-desktop { display: none !important; }
+        .log-back-desktop { display: none !important; }
+        .log-tiles-hidden-desktop { display: grid !important; }
+      }
+      /* Desktop: overlay hidden, inline form shown, tiles hidden when form open */
+      @media (min-width: 768px) {
+        .log-overlay-mobile { display: none !important; }
+        .log-tiles-hidden-desktop { display: none !important; }
+        .log-form-desktop { display: block; }
+      }
+    `}</style>
     </>
   )
 }
