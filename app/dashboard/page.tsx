@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getUserTimezone, todayInTz } from '@/lib/timezone'
 import ClientTime from '@/components/app/ClientTime'
+import ClientGreeting from '@/components/app/ClientGreeting'
 import { computeGutScore, gutScoreLabel } from '@/lib/gut-score'
 import { MealIllustration } from '@/components/app/MealIllustration'
 import { Resend } from 'resend'
@@ -192,8 +193,7 @@ export default async function DashboardPage() {
             {formatDate(today)}
           </div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 400, color: 'var(--ink-900)', margin: '0 0 8px', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-            Good {getTimeOfDay()},{' '}
-            <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>{firstName}</em>.
+            <ClientGreeting firstName={firstName} />
           </h1>
           <p style={{ fontSize: 15, color: 'var(--ink-500)', margin: 0, lineHeight: 1.55, maxWidth: 560 }}>
             {subtitle}
