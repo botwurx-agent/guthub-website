@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { stripe, PLANS, type PlanKey } from '@/lib/stripe'
+import { stripe, PLANS, type PlanKey, type BillingInterval } from '@/lib/stripe'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { paymentMethodId, plan } = await request.json() as { paymentMethodId: string; plan: PlanKey }
+  const { paymentMethodId, plan, billing = 'monthly' } = await request.json() as {
+    paymentMethodId: string
+    plan: PlanKey
+    billing?: BillingInterval
+  }
   if (!PLANS[plan]) return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
 
   const { data: profile } = await supabase
@@ -16,7 +20,7 @@ export async function POST(request: Request) {
     .eq('id', user.id)
     .single()
 
-  // Check founding member cap
+  // Check founding member cap (applies to both monthly and yearly)
   if (plan === 'founding') {
     const { data: counter } = await supabase
       .from('founding_counter')
@@ -46,13 +50,15 @@ export async function POST(request: Request) {
     invoice_settings: { default_payment_method: paymentMethodId },
   })
 
+  const priceId = billing === 'yearly' ? PLANS[plan].yearlyPriceId : PLANS[plan].priceId
+
   // Create subscription with 7-day trial
   const subscription = await stripe.subscriptions.create({
     customer: customerId,
-    items: [{ price: PLANS[plan].priceId }],
+    items: [{ price: priceId }],
     trial_period_days: 7,
     default_payment_method: paymentMethodId,
-    metadata: { supabase_user_id: user.id, plan },
+    metadata: { supabase_user_id: user.id, plan, billing },
   })
 
   return NextResponse.json({

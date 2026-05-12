@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { stripe, PLANS } from '@/lib/stripe'
+import { stripe, PLANS, type BillingInterval } from '@/lib/stripe'
 import { redirect } from 'next/navigation'
 import SubscribeClient from './SubscribeClient'
 import type { Metadata } from 'next'
@@ -12,16 +12,17 @@ export const metadata: Metadata = {
 export default async function SubscribePage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string }>
+  searchParams: Promise<{ plan?: string; billing?: string }>
 }) {
-  const { plan } = await searchParams
+  const { plan, billing: billingParam } = await searchParams
   const planKey = (plan ?? 'launch') as keyof typeof PLANS
+  const billing: BillingInterval = billingParam === 'yearly' ? 'yearly' : 'monthly'
 
   if (!PLANS[planKey]) redirect('/pricing')
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect(`/?auth=signin&return=/subscribe?plan=${planKey}`)
+  if (!user) redirect(`/?auth=signin&return=/subscribe?plan=${planKey}&billing=${billing}`)
 
   // Check already subscribed
   const { data: profile } = await supabase
@@ -48,16 +49,19 @@ export default async function SubscribePage({
   const setupIntent = await stripe.setupIntents.create({
     customer: customerId,
     usage: 'off_session',
-    metadata: { supabase_user_id: user.id, plan: planKey },
+    metadata: { supabase_user_id: user.id, plan: planKey, billing },
   })
 
   const selectedPlan = PLANS[planKey]
-  const priceDisplay = `$${(selectedPlan.amount / 100).toFixed(0)}/mo`
+  const priceDisplay = billing === 'yearly'
+    ? `$${(selectedPlan.yearlyAmount / 100).toFixed(0)}/yr`
+    : `$${(selectedPlan.amount / 100).toFixed(0)}/mo`
 
   return (
     <SubscribeClient
       clientSecret={setupIntent.client_secret!}
       plan={planKey}
+      billing={billing}
       planName={selectedPlan.name}
       planPrice={priceDisplay}
       userName={profile?.name ?? ''}

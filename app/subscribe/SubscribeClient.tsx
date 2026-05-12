@@ -47,11 +47,13 @@ const appearance = {
 
 function CheckoutForm({
   plan,
+  billing,
   planName,
   planPrice,
   userEmail,
 }: {
   plan: string
+  billing: string
   planName: string
   planPrice: string
   userEmail: string
@@ -97,7 +99,7 @@ function CheckoutForm({
     const res = await fetch('/api/stripe/create-subscription', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ paymentMethodId: pmId, plan }),
+      body: JSON.stringify({ paymentMethodId: pmId, plan, billing }),
     })
 
     const data = await res.json()
@@ -184,6 +186,7 @@ function CheckoutForm({
 export default function SubscribeClient({
   clientSecret,
   plan,
+  billing,
   planName,
   planPrice,
   userName,
@@ -191,6 +194,7 @@ export default function SubscribeClient({
 }: {
   clientSecret: string
   plan: string
+  billing: string
   planName: string
   planPrice: string
   userName: string
@@ -242,7 +246,7 @@ export default function SubscribeClient({
               $0.00 today
             </p>
             <p style={{ margin: 0, fontSize: 13, color: '#D5E0D8', fontFamily: 'var(--font-body)', lineHeight: 1.6 }}>
-              Then {planPrice} per month after your trial ends. Cancel anytime before then and you won&apos;t be charged.
+              Then {planPrice} {billing === 'yearly' ? 'per year' : 'per month'} after your trial ends. Cancel anytime before then and you won&apos;t be charged.
             </p>
           </div>
 
@@ -281,6 +285,7 @@ export default function SubscribeClient({
           <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
             <CheckoutForm
               plan={plan}
+              billing={billing}
               planName={planName}
               planPrice={planPrice}
               userEmail={userEmail}

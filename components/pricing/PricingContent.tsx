@@ -50,10 +50,11 @@ function PricingHero() {
 function PricingCard() {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
 
   function startCheckout(plan: string) {
     setLoading(plan);
-    router.push(`/subscribe?plan=${plan}`);
+    router.push(`/subscribe?plan=${plan}&billing=${billing}`);
   }
 
   const plans = [
@@ -63,9 +64,11 @@ function PricingCard() {
       badgeColor: 'var(--terracotta-600)',
       badgeBg: 'var(--terracotta-50)',
       name: 'Founding Member',
-      price: '$13',
+      monthlyPrice: '$13',
+      yearlyPrice: '$125',
+      yearlyPerMonth: '$10.42',
       originalPrice: '$25',
-      period: '/mo',
+      yearlySavings: '$31',
       tagline: 'Locked in for life. Never increases.',
       highlight: true,
     },
@@ -75,9 +78,11 @@ function PricingCard() {
       badgeColor: 'var(--forest-500)',
       badgeBg: 'var(--forest-50)',
       name: 'Launch',
-      price: '$20',
+      monthlyPrice: '$20',
+      yearlyPrice: '$190',
+      yearlyPerMonth: '$15.83',
       originalPrice: null,
-      period: '/mo',
+      yearlySavings: '$50',
       tagline: 'Available while in early access.',
       highlight: false,
     },
@@ -87,9 +92,11 @@ function PricingCard() {
       badgeColor: 'var(--ink-600)',
       badgeBg: 'var(--ink-100)',
       name: 'Standard',
-      price: '$25',
+      monthlyPrice: '$25',
+      yearlyPrice: '$240',
+      yearlyPerMonth: '$20',
       originalPrice: null,
-      period: '/mo',
+      yearlySavings: '$60',
       tagline: 'Full access, no commitment.',
       highlight: false,
     },
@@ -103,6 +110,43 @@ function PricingCard() {
         background: 'radial-gradient(ellipse, rgba(224,124,89,0.12) 0%, rgba(224,124,89,0) 65%)',
         pointerEvents: 'none',
       }} />
+
+      {/* Billing toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 40 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: billing === 'monthly' ? 'var(--ink-900)' : 'var(--ink-400)', fontFamily: 'var(--font-body)' }}>
+          Monthly
+        </span>
+        <button
+          onClick={() => setBilling(billing === 'monthly' ? 'yearly' : 'monthly')}
+          style={{
+            width: 52, height: 28, borderRadius: 999, border: 'none',
+            background: billing === 'yearly' ? 'var(--forest-500)' : 'var(--ink-200)',
+            cursor: 'pointer', position: 'relative', transition: 'background 250ms',
+            flexShrink: 0,
+          }}
+          aria-label="Toggle billing interval"
+        >
+          <span style={{
+            position: 'absolute', top: 3, left: billing === 'yearly' ? 27 : 3,
+            width: 22, height: 22, borderRadius: '50%', background: '#fff',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+            transition: 'left 250ms var(--ease-out)',
+            display: 'block',
+          }} />
+        </button>
+        <span style={{ fontSize: 14, fontWeight: 600, color: billing === 'yearly' ? 'var(--ink-900)' : 'var(--ink-400)', fontFamily: 'var(--font-body)' }}>
+          Yearly
+        </span>
+        {billing === 'yearly' && (
+          <span style={{
+            padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700,
+            letterSpacing: '0.06em', textTransform: 'uppercase',
+            background: 'var(--terracotta-50)', color: 'var(--terracotta-600)',
+          }}>
+            Save up to $60/yr
+          </span>
+        )}
+      </div>
 
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
@@ -133,15 +177,26 @@ function PricingCard() {
                 </div>
               )}
               <div style={{ padding: '28px 28px 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '4px 10px', borderRadius: 999,
-                  background: plan.badgeBg, color: plan.badgeColor,
-                  fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
-                  textTransform: 'uppercase', marginBottom: 16, alignSelf: 'flex-start',
-                }}>
-                  {plan.key === 'founding' && <Star size={10} />}
-                  {plan.badge}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '4px 10px', borderRadius: 999,
+                    background: plan.badgeBg, color: plan.badgeColor,
+                    fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
+                    textTransform: 'uppercase', alignSelf: 'flex-start',
+                  }}>
+                    {plan.key === 'founding' && <Star size={10} />}
+                    {plan.badge}
+                  </div>
+                  {billing === 'yearly' && (
+                    <div style={{
+                      fontSize: 11, fontWeight: 700, color: 'var(--forest-500)',
+                      background: 'var(--forest-50)', padding: '3px 8px',
+                      borderRadius: 999, letterSpacing: '0.04em',
+                    }}>
+                      Save {plan.yearlySavings}
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 400, color: 'var(--ink-900)', marginBottom: 4 }}>
@@ -152,17 +207,25 @@ function PricingCard() {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
-                  {plan.originalPrice && (
+                  {billing === 'monthly' && plan.originalPrice && (
                     <span style={{
                       fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-400)',
                       textDecoration: 'line-through', textDecorationColor: 'var(--terracotta-400)',
                     }}>{plan.originalPrice}</span>
                   )}
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: 48, fontWeight: 400, color: 'var(--ink-900)', lineHeight: 1, letterSpacing: '-0.02em' }}>
-                    {plan.price}
+                    {billing === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice}
                   </span>
-                  <span style={{ fontSize: 15, color: 'var(--ink-500)' }}>{plan.period}</span>
+                  <span style={{ fontSize: 15, color: 'var(--ink-500)' }}>
+                    {billing === 'yearly' ? '/yr' : '/mo'}
+                  </span>
                 </div>
+
+                {billing === 'yearly' && (
+                  <div style={{ fontSize: 12.5, color: 'var(--ink-500)', marginBottom: 4 }}>
+                    {plan.yearlyPerMonth}/mo equivalent
+                  </div>
+                )}
 
                 <div style={{ fontSize: 12.5, color: 'var(--ink-500)', marginBottom: 24 }}>
                   7-day free trial · Cancel anytime
@@ -265,7 +328,7 @@ const faqItems = [
   { q: 'How does the 7-day free trial work?', a: 'Sign up and get full access to every feature for 7 days. No limits, no lite version. If you cancel before the trial ends, you won\'t be charged — ever.' },
   { q: 'Do I need a credit card to start?', a: 'Yes — we ask for a card up front so your access is uninterrupted if you decide to stay. You can remove it instantly from your account if you cancel.' },
   { q: 'What if I cancel?', a: 'Cancel anytime from your account in two taps. You keep access until the end of the period you\'ve paid for. We don\'t store your card after cancellation.' },
-  { q: 'Is there a long-term contract?', a: 'No. Guthub is month-to-month. There are no annual commitments and no early termination fees.' },
+  { q: 'Is there a long-term contract?', a: 'No. Monthly plans are billed month-to-month with no commitments. Yearly plans are billed once per year and save you up to $60 — you can still cancel anytime, and access continues until your paid year ends.' },
   { q: 'Will the price change?', a: 'Your price is locked in as long as your subscription is continuous. If we ever raise prices for new members, your rate stays the same.' },
   { q: 'Do you offer refunds?', a: 'Your 7-day free trial is the refund — we want you to try everything before you pay. Once billed, we don\'t offer mid-cycle refunds, but you can cancel to prevent the next charge.' },
 ];
