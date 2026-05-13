@@ -6,7 +6,7 @@ import { Star } from 'lucide-react';
 import { Eyebrow, Reveal } from '../ui';
 
 const items = [
-  { name: 'Sarah M.', role: 'Marketing Manager, 52', photo: '/testimonial-sarah.png', q: "I stopped googling at 11pm. Now I just ask Guthub, and I actually get a straight answer that makes sense for my body." },
+  { name: 'Sarah M.', role: 'Marketing Manager, 52', photo: '/testimonial-sarah.png', q: "Before using Guthub, I constantly felt bloated and uncomfortable after meals, but I could never figure out what was actually triggering it. I started logging my meals and symptoms daily, and within a few weeks Guthub helped me notice patterns I would have completely missed on my own. Certain foods I thought were healthy for me were actually causing a lot of my issues. Having everything tracked in one place made it so much easier to understand my body. I feel less bloated, more energized, and finally feel like I have some control over my gut health again." },
   { name: 'James T.', role: 'Retired Firefighter, 67', photo: '/testimonial-james.png', q: "I was skeptical of another app. But this one asks good questions back. It feels like it's thinking alongside me." },
   { name: 'Emily R.', role: 'Teacher, 44', photo: '/testimonial-emily.png', q: "The pattern it spotted between my coffee and my sleep saved me months of trial and error. That alone paid for the year." },
 ];
