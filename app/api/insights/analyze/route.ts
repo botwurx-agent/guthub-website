@@ -89,14 +89,19 @@ Return JSON:
   ],
   "insights": [
     {
-      "insight_type": "correlation" | "trend" | "weekly_summary",
+      "insight_type": "positive" | "achievement" | "correlation" | "trend" | "weekly_summary",
       "title": "short title (max 8 words)",
       "body": "2-3 sentence explanation with specific numbers or dates when possible"
     }
   ]
 }
 
-If data is insufficient for a meaningful correlation, omit it. Return 1-5 correlations and 2-4 insights. Be specific and actionable.`
+Use "positive" for any improving trend (gut score improving, symptoms reducing, good streak).
+Use "achievement" for milestones (7-day logging streak, hitting protein goal, weight progress).
+Use "correlation" or "trend" for neutral or concerning patterns.
+Use "weekly_summary" for an overall summary.
+
+Aim for at least 1-2 positive or achievement insights when the data supports it. Return 1-5 correlations and 3-5 insights total. Be specific and actionable.`
 
   const completion = await openai.chat.completions.create({
     model: AI_MODEL,
