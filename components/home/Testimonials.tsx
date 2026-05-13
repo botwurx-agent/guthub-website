@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Star } from 'lucide-react';
 import { Eyebrow, Reveal } from '../ui';
 
 const items = [
-  { name: 'Sarah M.', role: 'Marketing Manager, 52', initials: 'SM', q: "I stopped googling at 11pm. Now I just ask Guthub, and I actually get a straight answer that makes sense for my body." },
-  { name: 'James T.', role: 'Retired Firefighter, 67', initials: 'JT', q: "I was skeptical of another app. But this one asks good questions back. It feels like it's thinking alongside me." },
-  { name: 'Emily R.', role: 'Teacher, 44', initials: 'ER', q: "The pattern it spotted between my coffee and my sleep saved me months of trial and error. That alone paid for the year." },
+  { name: 'Sarah M.', role: 'Marketing Manager, 52', photo: '/testimonial-sarah.png', q: "I stopped googling at 11pm. Now I just ask Guthub, and I actually get a straight answer that makes sense for my body." },
+  { name: 'James T.', role: 'Retired Firefighter, 67', photo: '/testimonial-james.png', q: "I was skeptical of another app. But this one asks good questions back. It feels like it's thinking alongside me." },
+  { name: 'Emily R.', role: 'Teacher, 44', photo: '/testimonial-emily.png', q: "The pattern it spotted between my coffee and my sleep saved me months of trial and error. That alone paid for the year." },
 ];
 
 export default function Testimonials() {
@@ -48,7 +49,9 @@ function TestimonialCard({ t }: { t: typeof items[0] }) {
       </div>
       <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, lineHeight: 1.4, color: 'var(--ink-900)', fontWeight: 400, flex: 1, marginBottom: 24 }}>"{t.q}"</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--terracotta-100)', color: 'var(--terracotta-700)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14 }}>{t.initials}</div>
+        <div style={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
+          <Image src={t.photo} alt={t.name} fill style={{ objectFit: 'cover' }} sizes="44px" />
+        </div>
         <div>
           <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-900)' }}>{t.name}</div>
           <div style={{ fontSize: 13, color: 'var(--ink-500)' }}>{t.role}</div>
