@@ -1,8 +1,6 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AuthModal from '@/components/AuthModal';
-import FinalCTA from '@/components/FinalCTA';
-import ContentPage from '@/components/ContentPage';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -10,115 +8,297 @@ export const metadata: Metadata = {
   description: 'How GutHub collects, uses, stores, and protects your information.',
 };
 
-const h2: React.CSSProperties = {
-  fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 400,
-  lineHeight: 1.25, letterSpacing: '-0.01em',
-  color: 'var(--ink-900)', marginTop: 40, marginBottom: 14,
-};
+const termlyHtml = `<style>
+  [data-custom-class='body'], [data-custom-class='body'] * { background: transparent !important; }
+  [data-custom-class='title'], [data-custom-class='title'] * { font-family: Arial !important; font-size: 26px !important; color: #000000 !important; }
+  [data-custom-class='subtitle'], [data-custom-class='subtitle'] * { font-family: Arial !important; color: #595959 !important; font-size: 14px !important; }
+  [data-custom-class='heading_1'], [data-custom-class='heading_1'] * { font-family: Arial !important; font-size: 19px !important; color: #000000 !important; }
+  [data-custom-class='heading_2'], [data-custom-class='heading_2'] * { font-family: Arial !important; font-size: 17px !important; color: #000000 !important; }
+  [data-custom-class='body_text'], [data-custom-class='body_text'] * { color: #595959 !important; font-size: 14px !important; font-family: Arial !important; }
+  [data-custom-class='link'], [data-custom-class='link'] * { color: #3030F1 !important; font-size: 14px !important; font-family: Arial !important; word-break: break-word !important; }
+  ul { list-style-type: square; }
+  ul > li > ul { list-style-type: circle; }
+  ul > li > ul > li > ul { list-style-type: square; }
+  ol li { font-family: Arial; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { padding: 8px; }
+</style>
+<div data-custom-class="body">
+<div><strong><span style="font-size:26px;"><span data-custom-class="title"><h1>PRIVACY POLICY</h1></span></span></strong></div>
+<div><span style="color:rgb(127,127,127);"><strong><span style="font-size:15px;"><span data-custom-class="subtitle">Last updated May 12, 2026</span></span></strong></span></div>
+<br/><br/>
+<div style="line-height:1.5;"><span style="color:rgb(89,89,89);font-size:15px;"><span data-custom-class="body_text">This Privacy Notice for <strong>GuthubAi LLC</strong> ("we," "us," or "our") describes how and why we might access, collect, store, use, and/or share ("process") your personal information when you use our services ("Services"), including when you:</span></span></div>
+<ul>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);">Visit our website at <a href="http://www.guthub.ai" target="_blank" data-custom-class="link">http://www.guthub.ai</a> or any website of ours that links to this Privacy Notice</span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;">Use <strong>Guthubai</strong>. Custom Gut health nutrition app</span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);">Engage with us in other related ways, including any marketing or events</span></li>
+</ul>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><strong>Questions or concerns?</strong> Reading this Privacy Notice will help you understand your privacy rights and choices. We are responsible for making decisions about how your personal information is processed. If you do not agree with our policies and practices, please do not use our Services. If you still have any questions or concerns, please contact us at <a href="mailto:data@guthub.ai" target="_blank" data-custom-class="link">data@guthub.ai</a>.</span></span></div>
+<br/><br/>
+<div style="line-height:1.5;"><strong><span style="font-size:15px;"><span data-custom-class="heading_1"><h2>SUMMARY OF KEY POINTS</h2></span></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text"><strong><em>This summary provides key points from our Privacy Notice, but you can find out more details about any of these topics by using our <a href="#toc" data-custom-class="link" style="color:rgb(0,58,250);">table of contents</a> below.</em></strong></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text"><strong>What personal information do we process?</strong> When you visit, use, or navigate our Services, we may process personal information depending on how you interact with us and the Services, the choices you make, and the products and features you use.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text"><strong>Do we process any sensitive personal information?</strong> We may process sensitive personal information when necessary with your consent or as otherwise permitted by applicable law.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text"><strong>Do we collect any information from third parties?</strong> We do not collect any information from third parties.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text"><strong>How do we process your information?</strong> We process your information to provide, improve, and administer our Services, communicate with you, for security and fraud prevention, and to comply with law. We may also process your information for other purposes with your consent.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text"><strong>In what situations and with which parties do we share personal information?</strong> We may share information in specific situations and with specific third parties.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text"><strong>How do we keep your information safe?</strong> We have adequate organizational and technical processes and procedures in place to protect your personal information. However, no electronic transmission over the internet or information storage technology can be guaranteed to be 100% secure.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text"><strong>What are your rights?</strong> Depending on where you are located geographically, the applicable privacy law may mean you have certain rights regarding your personal information.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text"><strong>How do you exercise your rights?</strong> The easiest way to exercise your rights is by submitting a <a href="https://app.termly.io/dsar/25ce4eb4-8761-448c-97e4-2f819d9bbe40" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">data subject access request</a>, or by contacting us. We will consider and act upon any request in accordance with applicable data protection laws.</span></span></div>
+<br/><br/>
+<div id="toc" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>TABLE OF CONTENTS</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><a href="#infocollect" data-custom-class="link" style="color:rgb(0,58,250);">1. WHAT INFORMATION DO WE COLLECT?</a></span></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><a href="#infouse" data-custom-class="link" style="color:rgb(0,58,250);">2. HOW DO WE PROCESS YOUR INFORMATION?</a></span></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><a href="#whoshare" data-custom-class="link" style="color:rgb(0,58,250);">3. WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</a></span></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><a href="#cookies" data-custom-class="link" style="color:rgb(0,58,250);">4. DO WE USE COOKIES AND OTHER TRACKING TECHNOLOGIES?</a></span></div>
+<div style="line-height:1.5;"><a href="#ai" data-custom-class="link" style="color:rgb(0,58,250);">5. DO WE OFFER ARTIFICIAL INTELLIGENCE-BASED PRODUCTS?</a></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><a href="#sociallogins" data-custom-class="link" style="color:rgb(0,58,250);">6. HOW DO WE HANDLE YOUR SOCIAL LOGINS?</a></span></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><a href="#inforetain" data-custom-class="link" style="color:rgb(0,58,250);">7. HOW LONG DO WE KEEP YOUR INFORMATION?</a></span></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><a href="#infosafe" data-custom-class="link" style="color:rgb(0,58,250);">8. HOW DO WE KEEP YOUR INFORMATION SAFE?</a></span></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><a href="#infominors" data-custom-class="link" style="color:rgb(0,58,250);">9. DO WE COLLECT INFORMATION FROM MINORS?</a></span></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><a href="#privacyrights" data-custom-class="link" style="color:rgb(0,58,250);">10. WHAT ARE YOUR PRIVACY RIGHTS?</a></span></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><a href="#DNT" data-custom-class="link" style="color:rgb(0,58,250);">11. CONTROLS FOR DO-NOT-TRACK FEATURES</a></span></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><a href="#uslaws" data-custom-class="link" style="color:rgb(0,58,250);">12. DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY RIGHTS?</a></span></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><a href="#policyupdates" data-custom-class="link" style="color:rgb(0,58,250);">13. DO WE MAKE UPDATES TO THIS NOTICE?</a></span></div>
+<div style="line-height:1.5;"><a href="#contact" data-custom-class="link" style="color:rgb(0,58,250);font-size:15px;">14. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</a></div>
+<div style="line-height:1.5;"><a href="#request" data-custom-class="link" style="color:rgb(0,58,250);">15. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</a></div>
+<br/><br/>
 
-const h3: React.CSSProperties = {
-  fontFamily: 'var(--font-body)', fontSize: 17, fontWeight: 700,
-  color: 'var(--ink-900)', marginTop: 24, marginBottom: 10,
-};
+<div id="infocollect" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>1. WHAT INFORMATION DO WE COLLECT?</h2></span></strong></div>
+<div style="line-height:1.5;"><strong><span style="font-size:15px;" data-custom-class="heading_2"><h3>Personal information you disclose to us</h3></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><em><strong>In Short:</strong> We collect personal information that you provide to us.</em></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">We collect personal information that you voluntarily provide to us when you register on the Services, express an interest in obtaining information about us or our products and Services, when you participate in activities on the Services, or otherwise when you contact us.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><strong>Personal Information Provided by You.</strong> The personal information we collect may include: names, phone numbers, email addresses, mailing addresses, usernames, passwords, billing addresses, and debit/credit card numbers.</span></span></div>
+<br/>
+<div id="sensitiveinfo" style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text"><strong>Sensitive Information.</strong> When necessary, with your consent or as otherwise permitted by applicable law, we process the following categories of sensitive information: <strong>health data</strong>.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><strong>Payment Data.</strong> We may collect data necessary to process your payment if you choose to make purchases. All payment data is handled and stored by <strong>Stripe</strong>. You may find their privacy notice here: <a href="https://stripe.com/privacy" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">https://stripe.com/privacy</a>.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><strong>Social Media Login Data.</strong> We may provide you with the option to register with us using your existing social media account details. If you choose to register in this way, we will collect certain profile information about you from the social media provider, as described in the section <a href="#sociallogins" data-custom-class="link" style="color:rgb(0,58,250);">HOW DO WE HANDLE YOUR SOCIAL LOGINS?</a> below.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">All personal information that you provide to us must be true, complete, and accurate, and you must notify us of any changes to such personal information.</span></span></div>
 
-const p: React.CSSProperties = { margin: '0 0 16px' };
+<div style="line-height:1.5;"><strong><span style="font-size:15px;" data-custom-class="heading_2"><h3>Information automatically collected</h3></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><em><strong>In Short:</strong> Some information — such as your Internet Protocol (IP) address and/or browser and device characteristics — is collected automatically when you visit our Services.</em></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">We automatically collect certain information when you visit, use, or navigate the Services. This information does not reveal your specific identity but may include device and usage information, such as your IP address, browser and device characteristics, operating system, language preferences, referring URLs, device name, country, location, information about how and when you use our Services, and other technical information.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">Like many businesses, we also collect information through cookies and similar technologies. You can find out more about this in our Cookie Notice: <a href="https://www.guthub.ai/cookies" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">https://www.guthub.ai/cookies</a>.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">The information we collect includes:</span></span></div>
+<ul>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><em>Log and Usage Data.</em> Service-related, diagnostic, usage, and performance information our servers automatically collect when you access or use our Services.</span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><em>Device Data.</em> Information about your computer, phone, tablet, or other device you use to access the Services.</span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><em>Location Data.</em> We collect location data such as information about your device's location, which can be either precise or imprecise.</span></li>
+</ul>
 
-const ul: React.CSSProperties = {
-  margin: '0 0 18px', paddingLeft: 22,
-  display: 'flex', flexDirection: 'column', gap: 6,
-};
+<div style="line-height:1.5;"><strong><span style="font-size:15px;" data-custom-class="heading_2"><h3>Google API</h3></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">Our use of information received from Google APIs will adhere to <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">Google API Services User Data Policy</a>, including the <a href="https://developers.google.com/terms/api-services-user-data-policy#limited-use" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">Limited Use requirements</a>.</span></span></div>
+<br/><br/>
+
+<div id="infouse" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>2. HOW DO WE PROCESS YOUR INFORMATION?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><em><strong>In Short:</strong> We process your information to provide, improve, and administer our Services, communicate with you, for security and fraud prevention, and to comply with law.</em></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><strong>We process your personal information for a variety of reasons, depending on how you interact with our Services, including:</strong></span></span></div>
+<ul>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><strong>To facilitate account creation and authentication and otherwise manage user accounts.</strong></span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><strong>To deliver and facilitate delivery of services to the user.</strong></span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><strong>To respond to user inquiries/offer support to users.</strong></span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><strong>To enable user-to-user communications.</strong></span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><strong>To deliver targeted advertising to you.</strong> We may process your information to develop and display personalized content and advertising tailored to your interests, location, and more. For more information see our Cookie Notice: <a href="https://www.guthub.ai/cookies" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">https://www.guthub.ai/cookies</a>.</span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><strong>To protect our Services.</strong> We may process your information as part of our efforts to keep our Services safe and secure, including fraud monitoring and prevention.</span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><strong>To evaluate and improve our Services, products, marketing, and your experience.</strong></span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><strong>To comply with our legal obligations.</strong></span></li>
+</ul>
+<br/>
+
+<div id="whoshare" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>3. WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><em><strong>In Short:</strong> We may share information in specific situations described in this section and/or with the following third parties.</em></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">We may need to share your personal information in the following situations:</span></span></div>
+<ul>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;"><strong>Business Transfers.</strong> We may share or transfer your information in connection with, or during negotiations of, any merger, sale of company assets, financing, or acquisition of all or a portion of our business to another company.</span></li>
+</ul>
+<br/>
+
+<div id="cookies" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>4. DO WE USE COOKIES AND OTHER TRACKING TECHNOLOGIES?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><em><strong>In Short:</strong> We may use cookies and other tracking technologies to collect and store your information.</em></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">We may use cookies and similar tracking technologies (like web beacons and pixels) to gather information when you interact with our Services. Some online tracking technologies help us maintain the security of our Services and your account, prevent crashes, fix bugs, save your preferences, and assist with basic site functions.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">We also permit third parties and service providers to use online tracking technologies on our Services for analytics and advertising, including to help manage and display advertisements, to tailor advertisements to your interests.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">To the extent these online tracking technologies are deemed to be a "sale"/"sharing" (which includes targeted advertising, as defined under the applicable laws) under applicable US state laws, you can opt out of these online tracking technologies by submitting a request as described below under section <a href="#uslaws" data-custom-class="link" style="color:rgb(0,58,250);">DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY RIGHTS?</a></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">Specific information about how we use such technologies and how you can refuse certain cookies is set out in our Cookie Notice: <a href="https://www.guthub.ai/cookies" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">https://www.guthub.ai/cookies</a>.</span></span></div>
+
+<div style="line-height:1.5;"><strong><span style="font-size:15px;" data-custom-class="heading_2"><h3>Google Analytics</h3></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">We may share your information with Google Analytics to track and analyze the use of the Services. The Google Analytics Advertising Features that we may use include: Remarketing with Google Analytics, Google Analytics Demographics and Interests Reporting, and Google Display Network Impressions Reporting. To opt out of being tracked by Google Analytics across the Services, visit <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">https://tools.google.com/dlpage/gaoptout</a>. You can opt out of Google Analytics Advertising Features through <a href="https://adssettings.google.com/" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">Ads Settings</a>. For more information on the privacy practices of Google, please visit the <a href="https://policies.google.com/privacy" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">Google Privacy &amp; Terms page</a>.</span></span></div>
+<br/><br/>
+
+<div id="ai" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>5. DO WE OFFER ARTIFICIAL INTELLIGENCE-BASED PRODUCTS?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text"><em><strong>In Short:</strong> We offer products, features, or tools powered by artificial intelligence, machine learning, or similar technologies.</em></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">As part of our Services, we offer products, features, or tools powered by artificial intelligence, machine learning, or similar technologies (collectively, "AI Products"). These tools are designed to enhance your experience and provide you with innovative solutions. The terms in this Privacy Notice govern your use of the AI Products within our Services.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><strong><span data-custom-class="body_text">Our AI Products</span></strong></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">Our AI Products are designed for the following functions:</span></span></div>
+<ul><li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">AI insights</span></span></li></ul>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><strong><span data-custom-class="body_text">How We Process Your Data Using AI</span></strong></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">All personal information processed using our AI Products is handled in line with our Privacy Notice and our agreement with third parties. This ensures high security and safeguards your personal information throughout the process.</span></span></div>
+<br/><br/>
+
+<div id="sociallogins" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>6. HOW DO WE HANDLE YOUR SOCIAL LOGINS?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><em><strong>In Short:</strong> If you choose to register or log in to our Services using a social media account, we may have access to certain information about you.</em></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">Our Services offer you the ability to register and log in using your third-party social media account details (like your Google login). Where you choose to do this, we will receive certain profile information about you from your social media provider. The profile information we receive may vary depending on the social media provider concerned, but will often include your name, email address, and profile picture.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">We will use the information we receive only for the purposes that are described in this Privacy Notice or that are otherwise made clear to you on the relevant Services. Please note that we do not control, and are not responsible for, other uses of your personal information by your third-party social media provider. We recommend that you review their privacy notice to understand how they collect, use, and share your personal information.</span></span></div>
+<br/><br/>
+
+<div id="inforetain" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>7. HOW LONG DO WE KEEP YOUR INFORMATION?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><em><strong>In Short:</strong> We keep your information for as long as necessary to fulfill the purposes outlined in this Privacy Notice unless otherwise required by law.</em></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">We will only keep your personal information for as long as it is necessary for the purposes set out in this Privacy Notice, unless a longer retention period is required or permitted by law. No purpose in this notice will require us keeping your personal information for longer than the period of time in which users have an account with us.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">When we have no ongoing legitimate business need to process your personal information, we will either delete or anonymize such information, or, if this is not possible, then we will securely store your personal information and isolate it from any further processing until deletion is possible.</span></span></div>
+<br/><br/>
+
+<div id="infosafe" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>8. HOW DO WE KEEP YOUR INFORMATION SAFE?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><em><strong>In Short:</strong> We aim to protect your personal information through a system of organizational and technical security measures.</em></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">We have implemented appropriate and reasonable technical and organizational security measures designed to protect the security of any personal information we process. However, despite our safeguards and efforts to secure your information, no electronic transmission over the Internet or information storage technology can be guaranteed to be 100% secure, so we cannot promise or guarantee that hackers, cybercriminals, or other unauthorized third parties will not be able to defeat our security and improperly collect, access, steal, or modify your information. You should only access the Services within a secure environment.</span></span></div>
+<br/><br/>
+
+<div id="infominors" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>9. DO WE COLLECT INFORMATION FROM MINORS?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><em><strong>In Short:</strong> We do not knowingly collect data from or market to children under 18 years of age.</em></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">We do not knowingly collect, solicit data from, or market to children under 18 years of age, nor do we knowingly sell such personal information. By using the Services, you represent that you are at least 18 or that you are the parent or guardian of such a minor and consent to such minor dependent's use of the Services. If we learn that personal information from users less than 18 years of age has been collected, we will deactivate the account and take reasonable measures to promptly delete such data from our records. If you become aware of any data we may have collected from children under age 18, please contact us at <a href="mailto:support@guthub.ai" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">support@guthub.ai</a>.</span></span></div>
+<br/><br/>
+
+<div id="privacyrights" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>10. WHAT ARE YOUR PRIVACY RIGHTS?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><em><strong>In Short:</strong> You may review, change, or terminate your account at any time, depending on your country, province, or state of residence.</em></span></span></div>
+<br/>
+<div id="withdrawconsent" style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><strong><u>Withdrawing your consent:</u></strong> If we are relying on your consent to process your personal information, you have the right to withdraw your consent at any time by contacting us using the contact details provided in the section <a href="#contact" data-custom-class="link" style="color:rgb(0,58,250);">HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</a> below.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">However, please note that this will not affect the lawfulness of the processing before its withdrawal.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><strong><span style="font-size:15px;" data-custom-class="heading_2"><h3>Account Information</h3></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">If you would at any time like to review or change the information in your account or terminate your account, you can log in to your account settings and update your user account.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">Upon your request to terminate your account, we will deactivate or delete your account and information from our active databases. However, we may retain some information in our files to prevent fraud, troubleshoot problems, assist with any investigations, enforce our legal terms and/or comply with applicable legal requirements.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><strong><u>Cookies and similar technologies:</u></strong> Most Web browsers are set to accept cookies by default. If you prefer, you can usually choose to set your browser to remove cookies and to reject cookies. For further information, please see our Cookie Notice: <a href="https://www.guthub.ai/cookies" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">https://www.guthub.ai/cookies</a>.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span data-custom-class="body_text"><span style="font-size:15px;">If you have questions or comments about your privacy rights, you may email us at <a href="mailto:data@guthub.ai" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">data@guthub.ai</a>.</span></span></div>
+<br/><br/>
+
+<div id="DNT" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>11. CONTROLS FOR DO-NOT-TRACK FEATURES</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">Most web browsers and some mobile operating systems and mobile applications include a Do-Not-Track ("DNT") feature or setting you can activate to signal your privacy preference not to have data about your online browsing activities monitored and collected. At this stage, no uniform technology standard for recognizing and implementing DNT signals has been finalized. As such, we do not currently respond to DNT browser signals or any other mechanism that automatically communicates your choice not to be tracked online. If a standard for online tracking is adopted that we must follow in the future, we will inform you about that practice in a revised version of this Privacy Notice.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">California law requires us to let you know how we respond to web browser DNT signals. Because there currently is not an industry or legal standard for recognizing or honoring DNT signals, we do not respond to them at this time.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><strong><u><span data-custom-class="body_text">Global Privacy Control:</span></u> </strong></span><span data-custom-class="body_text"><span style="font-size:15px;">We recognize and honor Global Privacy Control (GPC) signals. If you use a browser or extension that supports GPC, we will treat this as a valid request to opt out of the sale or sharing of your personal information for targeted advertising purposes under applicable state privacy laws, including the California Consumer Privacy Act (CCPA). When we detect a GPC signal from your browser, we will automatically apply your opt-out preference without requiring you to take any additional action. For more information about GPC and how to enable it, visit <a href="http://globalprivacycontrol.org" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">globalprivacycontrol.org</a>.</span></span></div>
+<br/><br/>
+
+<div id="uslaws" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>12. DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY RIGHTS?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><em><strong>In Short:</strong> If you are a resident of California, Colorado, Connecticut, Delaware, Florida, Indiana, Iowa, Kentucky, Maryland, Minnesota, Montana, Nebraska, New Hampshire, New Jersey, Oregon, Rhode Island, Tennessee, Texas, Utah, or Virginia, you may have the right to request access to and receive details about the personal information we maintain about you and how we have processed it, correct inaccuracies, get a copy of, or delete your personal information.</em></span></span></div>
+<br/>
+<div style="line-height:1.5;"><strong><span style="font-size:15px;" data-custom-class="heading_2"><h3>Categories of Personal Information We Collect</h3></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">The table below shows the categories of personal information we have collected in the past twelve (12) months.</span></span></div>
+<br/>
+<table style="width:100%;border-collapse:collapse;">
+<thead><tr>
+<th style="width:34%;border:1px solid black;padding:8px;text-align:left;"><span style="font-size:15px;color:rgb(89,89,89);"><strong>Category</strong></span></th>
+<th style="width:51%;border:1px solid black;padding:8px;text-align:left;"><span style="font-size:15px;color:rgb(89,89,89);"><strong>Examples</strong></span></th>
+<th style="width:15%;border:1px solid black;padding:8px;text-align:left;"><span style="font-size:15px;color:rgb(89,89,89);"><strong>Collected</strong></span></th>
+</tr></thead>
+<tbody>
+<tr><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">A. Identifiers</span></td><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">Contact details, such as real name, alias, postal address, telephone or mobile contact number, unique personal identifier, online identifier, Internet Protocol address, email address, and account name</span></td><td style="border:1px solid black;padding:8px;text-align:center;"><span style="font-size:15px;color:rgb(89,89,89);">YES</span></td></tr>
+<tr><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">B. Personal information as defined in the California Customer Records statute</span></td><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">Name, contact information, education, employment, employment history, and financial information</span></td><td style="border:1px solid black;padding:8px;text-align:center;"><span style="font-size:15px;color:rgb(89,89,89);">YES</span></td></tr>
+<tr><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">C. Protected classification characteristics under state or federal law</span></td><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">Gender, age, date of birth, race and ethnicity, national origin, marital status, and other demographic data</span></td><td style="border:1px solid black;padding:8px;text-align:center;"><span style="font-size:15px;color:rgb(89,89,89);">YES</span></td></tr>
+<tr><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">D. Commercial information</span></td><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">Transaction information, purchase history, financial details, and payment information</span></td><td style="border:1px solid black;padding:8px;text-align:center;"><span style="font-size:15px;color:rgb(89,89,89);">NO</span></td></tr>
+<tr><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">E. Biometric information</span></td><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">Fingerprints and voiceprints</span></td><td style="border:1px solid black;padding:8px;text-align:center;"><span style="font-size:15px;color:rgb(89,89,89);">NO</span></td></tr>
+<tr><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">F. Internet or other similar network activity</span></td><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">Browsing history, search history, online behavior, interest data, and interactions with our and other websites, applications, systems, and advertisements</span></td><td style="border:1px solid black;padding:8px;text-align:center;"><span style="font-size:15px;color:rgb(89,89,89);">NO</span></td></tr>
+<tr><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">G. Geolocation data</span></td><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">Device location</span></td><td style="border:1px solid black;padding:8px;text-align:center;"><span style="font-size:15px;color:rgb(89,89,89);">NO</span></td></tr>
+<tr><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">H. Audio, electronic, sensory, or similar information</span></td><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">Images and audio, video or call recordings created in connection with our business activities</span></td><td style="border:1px solid black;padding:8px;text-align:center;"><span style="font-size:15px;color:rgb(89,89,89);">NO</span></td></tr>
+<tr><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">I. Professional or employment-related information</span></td><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">Business contact details in order to provide you our Services at a business level or job title, work history, and professional qualifications if you apply for a job with us</span></td><td style="border:1px solid black;padding:8px;text-align:center;"><span style="font-size:15px;color:rgb(89,89,89);">NO</span></td></tr>
+<tr><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">J. Education Information</span></td><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">Student records and directory information</span></td><td style="border:1px solid black;padding:8px;text-align:center;"><span style="font-size:15px;color:rgb(89,89,89);">NO</span></td></tr>
+<tr><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">K. Inferences drawn from collected personal information</span></td><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">Inferences drawn from any of the collected personal information listed above to create a profile or summary about an individual's preferences and characteristics</span></td><td style="border:1px solid black;padding:8px;text-align:center;"><span style="font-size:15px;color:rgb(89,89,89);">NO</span></td></tr>
+<tr><td style="border:1px solid black;padding:8px;"><span style="font-size:15px;color:rgb(89,89,89);">L. Sensitive personal Information</span></td><td style="border:1px solid black;padding:8px;"></td><td style="border:1px solid black;padding:8px;text-align:center;"><span style="font-size:15px;color:rgb(89,89,89);">NO</span></td></tr>
+</tbody>
+</table>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">We will use and retain the collected personal information as needed to provide the Services or for as long as the user has an account with us.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><strong><span style="font-size:15px;" data-custom-class="heading_2"><h3>Your Rights</h3></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">You have rights under certain US state data protection laws. However, these rights are not absolute, and in certain cases, we may decline your request as permitted by law. These rights include:</span></span></div>
+<ul>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;"><strong>Right to know</strong> whether or not we are processing your personal data</span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;"><strong>Right to access</strong> your personal data</span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;"><strong>Right to correct</strong> inaccuracies in your personal data</span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;"><strong>Right to request</strong> the deletion of your personal data</span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;"><strong>Right to obtain a copy</strong> of the personal data you previously shared with us</span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;"><strong>Right to non-discrimination</strong> for exercising your rights</span></li>
+<li data-custom-class="body_text" style="line-height:1.5;"><span style="font-size:15px;"><strong>Right to opt out</strong> of the processing of your personal data if it is used for targeted advertising, the sale of personal data, or profiling</span></li>
+</ul>
+<br/>
+<div style="line-height:1.5;"><strong><span style="font-size:15px;" data-custom-class="heading_2"><h3>How to Exercise Your Rights</h3></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">To exercise these rights, you can contact us by submitting a <a href="https://app.termly.io/dsar/25ce4eb4-8761-448c-97e4-2f819d9bbe40" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">data subject access request</a>, by emailing us at <a href="mailto:data@guthub.ai" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">data@guthub.ai</a>, or by referring to the contact details at the bottom of this document.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">We will honor your opt-out preferences if you enact the <a href="https://globalprivacycontrol.org/" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">Global Privacy Control</a> (GPC) opt-out signal on your browser.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><strong><span style="font-size:15px;" data-custom-class="heading_2"><h3>Request Verification</h3></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">Upon receiving your request, we will need to verify your identity to determine you are the same person about whom we have the information in our system. We will only use personal information provided in your request to verify your identity or authority to make the request.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><strong><span style="font-size:15px;" data-custom-class="heading_2"><h3>Appeals</h3></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">Under certain US state data protection laws, if we decline to take action regarding your request, you may appeal our decision by emailing us at <a href="mailto:data@guthub.ai" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">data@guthub.ai</a>. We will inform you in writing of any action taken or not taken in response to the appeal. If your appeal is denied, you may submit a complaint to your state attorney general.</span></span></div>
+<br/>
+<div style="line-height:1.5;"><strong><span style="font-size:15px;" data-custom-class="heading_2"><h3>California "Shine The Light" Law</h3></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="body_text">California Civil Code Section 1798.83, also known as the "Shine The Light" law, permits our users who are California residents to request and obtain from us, once a year and free of charge, information about categories of personal information (if any) we disclosed to third parties for direct marketing purposes and the names and addresses of all third parties with which we shared personal information in the immediately preceding calendar year. If you are a California resident and would like to make such a request, please submit your request in writing to us by using the contact details provided in the section <a href="#contact" data-custom-class="link" style="color:rgb(0,58,250);">HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</a></span></span></div>
+<br/><br/>
+
+<div id="policyupdates" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>13. DO WE MAKE UPDATES TO THIS NOTICE?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><em><strong>In Short:</strong> Yes, we will update this notice as necessary to stay compliant with relevant laws.</em></span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">We may update this Privacy Notice from time to time. The updated version will be indicated by an updated "Revised" date at the top of this Privacy Notice. If we make material changes to this Privacy Notice, we may notify you either by prominently posting a notice of such changes or by directly sending you a notification. We encourage you to review this Privacy Notice frequently to be informed of how we are protecting your information.</span></span></div>
+<br/><br/>
+
+<div id="contact" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>14. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">If you have questions or comments about this notice, you may email us at <a href="mailto:support@guthub.ai" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">support@guthub.ai</a> or contact us by post at:</span></span></div>
+<br/>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text"><strong>GuthubAi LLC</strong></span></span></div>
+<br/><br/>
+
+<div id="request" style="line-height:1.5;"><strong><span data-custom-class="heading_1"><h2>15. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</h2></span></strong></div>
+<div style="line-height:1.5;"><span style="font-size:15px;color:rgb(89,89,89);"><span data-custom-class="body_text">Based on the applicable laws of your country or state of residence in the US, you may have the right to request access to the personal information we collect from you, details about how we have processed it, correct inaccuracies, or delete your personal information. You may also have the right to withdraw your consent to our processing of your personal information. These rights may be limited in some circumstances by applicable law. To request to review, update, or delete your personal information, please fill out and submit a <a href="https://app.termly.io/dsar/25ce4eb4-8761-448c-97e4-2f819d9bbe40" target="_blank" data-custom-class="link" style="color:rgb(0,58,250);">data subject access request</a>.</span></span></div>
+<br/>
+<div><span data-custom-class="body_text">This Privacy Policy was created using Termly's <a href="https://termly.io/products/privacy-policy-generator/" target="_blank" rel="noopener external" data-custom-class="link" style="color:rgb(0,58,250);">Privacy Policy Generator</a>.</span></div>
+</div>`;
 
 export default function PrivacyPage() {
   return (
     <>
       <Header />
       <main>
-        <ContentPage
-          eyebrow="Legal"
-          title="Privacy Policy"
-          lastUpdated="April 28, 2026"
-          disclaimer={<>This document is provided for informational purposes. For specific legal questions, please contact us at <a href="mailto:support@guthub.ai" style={{ color: 'var(--terracotta-600)', textDecoration: 'none', fontWeight: 600 }}>support@guthub.ai</a>.</>}
-        >
-          <h2 style={h2}>Introduction</h2>
-          <p style={p}>Guthub (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;) provides AI-powered gut-health nutrition guidance through our website and app. This Privacy Policy explains how we collect, use, store, and protect your information when you use our service. Because Guthub involves personal and health-related information, we take your privacy seriously and have designed our practices to keep your data secure and under your control.</p>
-          <p style={p}>By using Guthub, you agree to the practices described in this policy. If you do not agree, please do not use the service.</p>
-
-          <h2 style={h2}>Information we collect</h2>
-          <p style={p}>When you use Guthub, we collect the following types of information:</p>
-
-          <h3 style={h3}>Information you provide directly:</h3>
-          <ul style={ul}>
-            <li>Account information: name, email address, password</li>
-            <li>Intake information: dietary preferences, food sensitivities, medical conditions you choose to share, current weight, height, goals, lifestyle factors</li>
-            <li>Meal logs and photos</li>
-            <li>Symptom reports and feedback</li>
-            <li>Conversations with the AI coach</li>
-            <li>Lab results or test reports you upload (optional)</li>
-            <li>Payment information (processed by our payment provider, not stored by us)</li>
-          </ul>
-
-          <h3 style={h3}>Information collected automatically:</h3>
-          <ul style={ul}>
-            <li>Device and browser information</li>
-            <li>IP address and approximate location</li>
-            <li>Usage data, such as which features you use and how often</li>
-            <li>Cookies and similar tracking technologies (see our Cookie Policy)</li>
-          </ul>
-
-          <h2 style={h2}>How we use your information</h2>
-          <p style={p}>We use your information to:</p>
-          <ul style={ul}>
-            <li>Provide and personalize the Guthub service</li>
-            <li>Generate AI-powered nutrition guidance, meal plans, and feedback tailored to your profile</li>
-            <li>Improve our service and develop new features</li>
-            <li>Communicate with you about your account, our service, and updates</li>
-            <li>Process payments and manage subscriptions</li>
-            <li>Comply with legal obligations</li>
-            <li>Protect the security and integrity of our service</li>
-          </ul>
-          <p style={p}>We do not use your information for third-party advertising. We do not sell your data.</p>
-
-          <h2 style={h2}>How we share your information</h2>
-          <p style={p}>We share your information only in limited circumstances:</p>
-          <p style={p}><strong>Service providers:</strong> We work with third-party companies to operate Guthub, including hosting providers, payment processors, email services, and AI infrastructure providers. These providers only access information necessary to perform their services and are bound by confidentiality obligations.</p>
-          <p style={p}><strong>Legal requirements:</strong> We may disclose information if required by law, court order, or to protect our rights, users, or the public.</p>
-          <p style={p}><strong>Business transfers:</strong> If Guthub is involved in a merger, acquisition, or sale, your information may be transferred. You will be notified before this happens.</p>
-          <p style={p}>We do not sell your personal information to third parties. We do not share your data with advertisers.</p>
-
-          <h2 style={h2}>AI processing</h2>
-          <p style={p}>Guthub uses third-party AI services, including OpenAI, to generate personalized nutrition guidance. When you interact with the AI coach, your conversations and relevant context from your profile are processed by these services to generate responses. Our AI providers are contractually prohibited from using your data to train their general models.</p>
-
-          <h2 style={h2}>Data retention</h2>
-          <p style={p}>We keep your information for as long as your account is active or as needed to provide the service. If you delete your account, we will delete your personal data within 30 days, except where retention is required for legal, tax, or fraud-prevention purposes.</p>
-          <p style={p}>You can request a full export or deletion of your data at any time by contacting us at <a href="mailto:support@guthub.ai" style={{ color: 'var(--terracotta-600)', textDecoration: 'none', fontWeight: 600 }}>support@guthub.ai</a>.</p>
-
-          <h2 style={h2}>Your rights and choices</h2>
-          <p style={p}>Depending on where you live, you may have the following rights:</p>
-          <ul style={ul}>
-            <li>Access the personal information we hold about you</li>
-            <li>Correct inaccurate information</li>
-            <li>Delete your account and associated data</li>
-            <li>Export your data in a portable format</li>
-            <li>Opt out of certain types of data processing</li>
-            <li>Object to or restrict how we use your information</li>
-          </ul>
-          <p style={p}>To exercise any of these rights, contact us at <a href="mailto:support@guthub.ai" style={{ color: 'var(--terracotta-600)', textDecoration: 'none', fontWeight: 600 }}>support@guthub.ai</a>. We will respond within 30 days.</p>
-          <p style={p}>If you are a California resident, you have additional rights under the CCPA/CPRA. If you are in the EU or UK, you have rights under GDPR. We honor these rights regardless of where you live.</p>
-
-          <h2 style={h2}>Security</h2>
-          <p style={p}>We use industry-standard security measures to protect your information, including encryption in transit and at rest, secure authentication, and limited internal access controls. No system is perfectly secure, but we work hard to protect your data and will notify you in the event of any breach affecting your information.</p>
-
-          <h2 style={h2}>Children&rsquo;s privacy</h2>
-          <p style={p}>Guthub is not intended for children under 18. We do not knowingly collect personal information from children. If you believe a child has provided us information, contact us and we will delete it.</p>
-
-          <h2 style={h2}>Changes to this policy</h2>
-          <p style={p}>We may update this Privacy Policy as our service evolves or as required by law. We will notify you of material changes via email or through the service. The &ldquo;Last updated&rdquo; date at the top of this policy indicates when it was last revised.</p>
-
-          <h2 style={h2}>Contact us</h2>
-          <p style={p}>For privacy questions, requests, or concerns, contact us at:</p>
-          <p style={p}><a href="mailto:support@guthub.ai" style={{ color: 'var(--terracotta-600)', textDecoration: 'none', fontWeight: 600 }}>support@guthub.ai</a></p>
-        </ContentPage>
-        <FinalCTA />
+        <section style={{ padding: '72px 32px 96px', background: 'var(--cream-50)' }}>
+          <div style={{ maxWidth: 860, margin: '0 auto' }}>
+            <div dangerouslySetInnerHTML={{ __html: termlyHtml }} />
+          </div>
+        </section>
       </main>
       <Footer />
       <AuthModal />
