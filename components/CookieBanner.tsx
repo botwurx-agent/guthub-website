@@ -7,6 +7,15 @@ const GA_ID = 'G-N2Z43CL18W';
 const META_PIXEL_ID = '1575707930432478';
 const COOKIE_NAME = 'guthub_cookie_consent';
 
+declare global {
+  interface Window {
+    dataLayer: unknown[];
+    gtag: (...args: unknown[]) => void;
+    fbq: (...args: unknown[]) => void;
+    _fbq: unknown;
+  }
+}
+
 function getConsent(): 'accepted' | 'declined' | null {
   if (typeof document === 'undefined') return null;
   const match = document.cookie.split('; ').find(c => c.startsWith(COOKIE_NAME + '='));
@@ -20,16 +29,37 @@ function writeConsent(value: 'accepted' | 'declined') {
   document.cookie = `${COOKIE_NAME}=${value}; path=/; max-age=${oneYear}; samesite=lax`;
 }
 
-function loadGA() {
+// Always initializes GA4 with consent mode defaults (denied).
+// GA4 runs in anonymous/cookieless mode — no personal data, no cookies.
+// Google models the gaps so you still get aggregated insights from non-consenting visitors.
+function initGA() {
   if (document.getElementById('ga-gtag')) return;
-  const s1 = document.createElement('script');
-  s1.id = 'ga-gtag';
-  s1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
-  s1.async = true;
-  document.head.appendChild(s1);
-  const s2 = document.createElement('script');
-  s2.innerHTML = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');`;
-  document.head.appendChild(s2);
+
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function (...args: unknown[]) { window.dataLayer.push(args); };
+
+  // Must be set BEFORE the gtag.js script loads
+  window.gtag('consent', 'default', {
+    analytics_storage: 'denied',
+    ad_storage: 'denied',
+    wait_for_update: 500,
+  });
+
+  window.gtag('js', new Date());
+  window.gtag('config', GA_ID);
+
+  const s = document.createElement('script');
+  s.id = 'ga-gtag';
+  s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+  s.async = true;
+  document.head.appendChild(s);
+}
+
+function grantAnalyticsConsent() {
+  window.gtag?.('consent', 'update', {
+    analytics_storage: 'granted',
+    ad_storage: 'granted',
+  });
 }
 
 function loadMetaPixel() {
@@ -44,9 +74,10 @@ export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    initGA(); // always runs — anonymized mode by default
     const consent = getConsent();
     if (consent === 'accepted') {
-      loadGA();
+      grantAnalyticsConsent();
       loadMetaPixel();
     } else if (consent === null) {
       setVisible(true);
@@ -55,7 +86,7 @@ export default function CookieBanner() {
 
   function accept() {
     writeConsent('accepted');
-    loadGA();
+    grantAnalyticsConsent();
     loadMetaPixel();
     setVisible(false);
   }
