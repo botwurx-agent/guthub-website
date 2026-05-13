@@ -9,7 +9,7 @@ import CrossPlatformShowcase from '@/components/features/CrossPlatformShowcase';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Features — GutHub',
+  title: 'Features | GutHub',
   description: 'Everything you need, all connected. Snap & know, AI chat, goal tracker, meal planner, test reports, and health dashboard.',
 };
 

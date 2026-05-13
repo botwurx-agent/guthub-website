@@ -6,7 +6,7 @@ import { Eyebrow, Reveal } from '../ui';
 
 const items = [
   { name: 'Sarah M.', role: 'Marketing Manager, 52', initials: 'SM', q: "I stopped googling at 11pm. Now I just ask Guthub, and I actually get a straight answer that makes sense for my body." },
-  { name: 'James T.', role: 'Retired Firefighter, 67', initials: 'JT', q: "I was skeptical of another app. But this one asks good questions back — it feels like it's thinking alongside me." },
+  { name: 'James T.', role: 'Retired Firefighter, 67', initials: 'JT', q: "I was skeptical of another app. But this one asks good questions back. It feels like it's thinking alongside me." },
   { name: 'Emily R.', role: 'Teacher, 44', initials: 'ER', q: "The pattern it spotted between my coffee and my sleep saved me months of trial and error. That alone paid for the year." },
 ];
 

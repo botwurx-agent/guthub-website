@@ -21,23 +21,23 @@ export default function FeaturesSection() {
         </Reveal>
 
         <FeatureRow reverse eyebrow="Your AI coach" title="A nutritionist that remembers everything you've told it."
-          body="Most AI chatbots forget you the moment the conversation ends. Guthub doesn't. It builds on your intake, your meal logs, your symptoms, and every conversation you've had — so the advice gets sharper the more you use it."
+          body="Most AI chatbots forget you the moment the conversation ends. Guthub doesn't. It builds on your intake, your meal logs, your symptoms, and every conversation you've had, so the advice gets sharper the more you use it."
           bullets={['Pulls context from your intake form, meal logs, and past conversations', "Spots patterns across days and weeks you'd never catch on your own", 'Suggests small changes to test, not dramatic eliminations']}
           visual={<CoachChatVisual />} />
 
         <FeatureRow eyebrow="Snap & know" title="Take a photo of your meal. Get macros in seconds."
-          body="No more guessing portions or hunting through food databases. Guthub identifies ingredients, estimates calories, protein, carbs, and fat — and flags anything that could trigger your symptoms."
-          bullets={['Recognizes most meals instantly — including home-cooked dishes', 'Shows macros and gut-health flags side by side', 'Saves to your daily log automatically']}
+          body="No more guessing portions or hunting through food databases. Guthub identifies ingredients, estimates calories, protein, carbs, and fat, and flags anything that could trigger your symptoms."
+          bullets={['Recognizes most meals instantly, including home-cooked dishes', 'Shows macros and gut-health flags side by side', 'Saves to your daily log automatically']}
           visual={<PhotoMacroVisual />} />
 
         <FeatureRow reverse eyebrow="AI meal planner" title="Meals built around the way you actually eat."
-          body="Tell Guthub your diet — low-FODMAP, gluten-free, vegetarian, whatever works for your body — and it generates a week of meals you'll actually want to make, with macros and grocery list included."
-          bullets={['Adapts to your dietary preferences and restrictions', 'Swap any meal with one tap — the plan rebalances itself', 'Exports a grocery list, grouped by aisle']}
+          body="Tell Guthub your diet (low-FODMAP, gluten-free, vegetarian, whatever works for your body) and it generates a week of meals you'll actually want to make, with macros and grocery list included."
+          bullets={['Adapts to your dietary preferences and restrictions', 'Swap any meal with one tap. The plan rebalances itself', 'Exports a grocery list, grouped by aisle']}
           visual={<MealPlannerVisual />} />
 
         <FeatureRow last eyebrow="Goal tracker" title="Watch your progress, day by day."
           body="Set a goal weight and daily macro targets. Log meals manually or via photo, and Guthub gives you visual progress, gentle nudges, and feedback when you're drifting off track."
-          bullets={["Set a goal weight — Guthub calculates daily targets", 'Visual rings show protein, carbs, and fat progress', "Weekly check-ins with feedback on what's working"]}
+          bullets={["Set a goal weight. Guthub calculates daily targets", 'Visual rings show protein, carbs, and fat progress', "Weekly check-ins with feedback on what's working"]}
           visual={<GoalTrackerVisual />} />
       </div>
     </section>
@@ -215,10 +215,10 @@ function MacroPill({ n, label, tone }: { n: string; label: string; tone: 'terrac
 
 const coachScript: CoachScriptItem[] = [
   { from: 'user', text: "Coffee's been hitting me weird lately. Is it just me?", delay: 100 },
-  { from: 'ai', text: "Not just you. Looking at the last 14 days — you've logged bloating or discomfort 6 times after coffee, mostly on days you had it before breakfast.", delay: 1400 },
+  { from: 'ai', text: "Not just you. Looking at the last 14 days: you've logged bloating or discomfort 6 times after coffee, mostly on days you had it before breakfast.", delay: 1400 },
   { from: 'ai', text: "On the 4 days you had coffee with food, no symptoms reported. That's a pretty clear pattern.", delay: 1600 },
   { from: 'user', text: "Huh. So it's not the coffee itself?", delay: 1200 },
-  { from: 'ai', text: "Looks more like timing than the coffee. Want to test it for a few days — coffee only after breakfast — and we'll see if it holds?", delay: 1400 },
+  { from: 'ai', text: "Looks more like timing than the coffee. Want to test it for a few days, coffee only after breakfast, and we'll see if it holds?", delay: 1400 },
 ];
 
 function CoachChatVisual() {
@@ -316,7 +316,7 @@ function GoalTrackerVisual() {
       </div>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', background: 'var(--forest-50)', borderRadius: 10, fontSize: 12, color: 'var(--forest-400)', lineHeight: 1.45 }}>
         <TrendingUp size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-        <div>You're on pace to hit your goal in <strong style={{ fontWeight: 700 }}>6 weeks</strong>. Protein is 44g short — add a snack.</div>
+        <div>You're on pace to hit your goal in <strong style={{ fontWeight: 700 }}>6 weeks</strong>. Protein is 44g short. Add a snack.</div>
       </div>
     </div>
   );

@@ -21,7 +21,7 @@ export default function FeaturesHero() {
           <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>all connected.</em>
         </h1>
         <p style={{ fontSize: 20, lineHeight: 1.55, color: 'var(--ink-700)', maxWidth: 640, margin: '0 auto' }}>
-          Your intake is the seed. From there, every Guthub tool learns who you are and works together — no settings to tweak, no profiles to maintain.
+          Your intake is the seed. From there, every Guthub tool learns who you are and works together. No settings to tweak, no profiles to maintain.
         </p>
         <div style={{ marginTop: 48, display: 'flex', justifyContent: 'center' }}>
           <svg width="120" height="100" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

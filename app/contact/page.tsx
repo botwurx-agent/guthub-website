@@ -7,7 +7,7 @@ import { Eyebrow, Reveal } from '@/components/ui';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Contact — GutHub',
+  title: 'Contact | GutHub',
   description: 'Get in touch with the GutHub team.',
 };
 

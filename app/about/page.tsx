@@ -12,7 +12,7 @@ import WhatsNext from '@/components/about/WhatsNext';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About — GutHub',
+  title: 'About | GutHub',
   description: 'Built by someone who needed it himself. Learn the story behind GutHub and meet the team.',
 };
 

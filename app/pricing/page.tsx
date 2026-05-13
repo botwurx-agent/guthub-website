@@ -8,7 +8,7 @@ import { Resend } from 'resend';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Pricing — GutHub',
+  title: 'Pricing | GutHub',
   description: 'Try it free for 7 days. $13/month for founding members. Cancel anytime.',
 };
 
@@ -57,7 +57,7 @@ export default async function PricingPage({
             <p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#C85A44;">Your trial has ended</p>
             <h1 style="margin:0 0 24px;font-family:Georgia,serif;font-size:32px;font-weight:400;color:#1B1A17;line-height:1.25;">Don't lose your progress, ${firstName}.</h1>
             <p style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#5A564D;">
-              Your 7-day free trial has ended. Your logs, coach history, meal plans, and gut score data are all still there — but you'll need an active subscription to access them.
+              Your 7-day free trial has ended. Your logs, coach history, meal plans, and gut score data are all still there. You'll need an active subscription to access them.
             </p>
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#FAF5EE;border-radius:10px;padding:20px 24px;margin-bottom:28px;">
               <tr><td>
@@ -96,7 +96,7 @@ export default async function PricingPage({
         resend.emails.send({
           from: 'GutHub <hello@guthub.ai>',
           to: user.email,
-          subject: `Your GutHub trial has ended — your data is waiting`,
+          subject: `Your GutHub trial has ended. Your data is waiting`,
           html,
         }).catch(() => {})
 

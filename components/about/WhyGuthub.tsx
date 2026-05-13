@@ -13,7 +13,7 @@ export default function WhyGuthub() {
             Our approach
           </div>
           <p className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem, 3.2vw, 2.75rem)', lineHeight: 1.35, letterSpacing: '-0.02em', fontWeight: 400, color: 'var(--cream-100)', margin: 0 }}>
-            Most gut health apps treat you like a calorie counter. We treat you like a person with a unique history, specific triggers, and real goals &mdash; and we built every tool to reflect that.
+            Most gut health apps treat you like a calorie counter. We treat you like a person with a unique history, specific triggers, and real goals. Every tool we built reflects that.
           </p>
         </Reveal>
       </div>

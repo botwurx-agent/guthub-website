@@ -27,7 +27,7 @@ export default function ProblemSection() {
             <em style={{ fontStyle: 'italic', color: 'var(--terracotta-300)' }}>don't wait.</em>
           </h2>
           <p style={{ fontSize: 18, lineHeight: 1.55, color: 'rgba(250,245,238,.72)' }}>
-            Gut health isn't linear. Symptoms shift. Context matters. Questions come up daily — usually at 11pm, when no doctor is available.
+            Gut health isn't linear. Symptoms shift. Context matters. Questions come up daily, usually at 11pm, when no doctor is available.
           </p>
         </Reveal>
         <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', alignItems: 'stretch' }}>

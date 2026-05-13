@@ -8,7 +8,7 @@ const beliefs = [
   {
     icon: Heart,
     title: 'You know your body best.',
-    body: "Guthub amplifies your self-knowledge. It doesn't prescribe a diet — it helps you discover which foods work for your specific biology.",
+    body: "Guthub amplifies your self-knowledge. It doesn't prescribe a diet. It helps you discover which foods work for your specific biology.",
   },
   {
     icon: ShieldCheck,
@@ -17,8 +17,8 @@ const beliefs = [
   },
   {
     icon: Sparkles,
-    title: "Personalization isn't a feature — it's the product.",
-    body: "Generic advice fails most people. Guthub is only useful because it's calibrated to you — your intake, your history, your patterns.",
+    title: "Personalization is the product.",
+    body: "Generic advice fails most people. Guthub is only useful because it's calibrated to you: your intake, your history, your patterns.",
   },
   {
     icon: Users,

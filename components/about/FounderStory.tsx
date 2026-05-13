@@ -43,13 +43,13 @@ export default function FounderStory() {
             I could relate. There have been plenty of times I felt lost, following a specific diet, trying to fix a particular issue, not knowing what to eat. And the help you need doesn't come on your schedule. It comes at 11pm when you're standing in front of the fridge.
           </p>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
-            Guthub is my answer to that gap. Someone — anyone — with a helping hand, any time of the day.
+            Guthub is my answer to that gap: a helping hand for anyone, any time of the day.
           </p>
           <blockquote style={{ margin: 0, padding: '16px 20px', borderLeft: '3px solid var(--terracotta-400)', background: 'var(--terracotta-50)', borderRadius: '0 10px 10px 0' }}>
             <p style={{ fontSize: 16, lineHeight: 1.65, color: 'var(--ink-800)', fontStyle: 'italic', margin: 0 }}>
-              "I wanted one place that could hold all my gut health data and actually help me understand it — not just store it."
+              "I wanted one place that could hold all my gut health data and actually help me understand it. Not just store it."
             </p>
-            <cite style={{ display: 'block', marginTop: 10, fontSize: 13, color: 'var(--terracotta-600)', fontStyle: 'normal', fontWeight: 600 }}>— Steve Nazari, founder</cite>
+            <cite style={{ display: 'block', marginTop: 10, fontSize: 13, color: 'var(--terracotta-600)', fontStyle: 'normal', fontWeight: 600 }}>Steve Nazari, founder</cite>
           </blockquote>
         </Reveal>
       </div>

@@ -40,7 +40,7 @@ function PricingHero() {
           Try it free for 7 days. <em style={{ fontStyle: 'italic' }}>Keep it if it works.</em>
         </h1>
         <p style={{ fontSize: 20, lineHeight: 1.55, color: 'var(--ink-700)', maxWidth: 620, margin: '0 auto' }}>
-          One plan. Month-to-month. Cancel anytime. Everything you need to understand your gut — chat, photo macros, meal planning, and goal tracking.
+          One plan. Month-to-month. Cancel anytime. Everything you need to understand your gut: chat, photo macros, meal planning, and goal tracking.
         </p>
       </Reveal>
     </section>
@@ -325,12 +325,12 @@ function IncludedCard({ f, featured }: { f: typeof includedFeatures[0]; featured
 }
 
 const faqItems = [
-  { q: 'How does the 7-day free trial work?', a: 'Sign up and get full access to every feature for 7 days. No limits, no lite version. If you cancel before the trial ends, you won\'t be charged — ever.' },
-  { q: 'Do I need a credit card to start?', a: 'Yes — we ask for a card up front so your access is uninterrupted if you decide to stay. You can remove it instantly from your account if you cancel.' },
+  { q: 'How does the 7-day free trial work?', a: 'Sign up and get full access to every feature for 7 days. No limits, no lite version. If you cancel before the trial ends, you won\'t be charged. Not a cent.' },
+  { q: 'Do I need a credit card to start?', a: 'Yes. We ask for a card up front so your access is uninterrupted if you decide to stay. You can remove it instantly from your account if you cancel.' },
   { q: 'What if I cancel?', a: 'Cancel anytime from your account in two taps. You keep access until the end of the period you\'ve paid for. We don\'t store your card after cancellation.' },
-  { q: 'Is there a long-term contract?', a: 'No. Monthly plans are billed month-to-month with no commitments. Yearly plans are billed once per year and save you up to $60 — you can still cancel anytime, and access continues until your paid year ends.' },
+  { q: 'Is there a long-term contract?', a: 'No. Monthly plans are billed month-to-month with no commitments. Yearly plans are billed once per year and save you up to $60. You can still cancel anytime, and access continues until your paid year ends.' },
   { q: 'Will the price change?', a: 'Your price is locked in as long as your subscription is continuous. If we ever raise prices for new members, your rate stays the same.' },
-  { q: 'Do you offer refunds?', a: 'Your 7-day free trial is the refund — we want you to try everything before you pay. Once billed, we don\'t offer mid-cycle refunds, but you can cancel to prevent the next charge.' },
+  { q: 'Do you offer refunds?', a: 'Your 7-day free trial is the refund. We want you to try everything before you pay. Once billed, we don\'t offer mid-cycle refunds, but you can cancel to prevent the next charge.' },
 ];
 
 function PricingFAQ() {

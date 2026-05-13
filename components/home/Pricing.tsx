@@ -8,7 +8,7 @@ import { openAuth } from '../AuthModal';
 
 const features = [
   'Unlimited chat with your AI gut-health guide',
-  'Snap & know — photo-to-macros in seconds',
+  'Snap & know: photo-to-macros in seconds',
   'AI meal planner + grocery lists',
   'Goal tracker with daily macro targets',
   'Cancel anytime, in two taps',
@@ -25,7 +25,7 @@ export default function Pricing() {
             Start with <em style={{ fontStyle: 'italic' }}>7 days free.</em> Keep what works.
           </h2>
           <p style={{ fontSize: 18, lineHeight: 1.6, color: 'rgba(250,245,238,.72)', marginBottom: 48 }}>
-            Full access for 7 days. Cancel anytime — no long-term commitments, no questions.
+            Full access for 7 days. Cancel anytime. No long-term commitments, no questions.
           </p>
         </Reveal>
 

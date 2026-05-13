@@ -17,7 +17,7 @@ export default function AboutHero() {
           <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>needed it himself.</em>
         </h1>
         <p style={{ fontSize: 20, lineHeight: 1.55, color: 'var(--ink-700)', maxWidth: 620, margin: '0 auto' }}>
-          Guthub started as a personal project — a way to finally understand what was happening in Steve's gut — and turned into something worth sharing with everyone.
+          Guthub started as a personal project to finally understand what was happening in Steve's gut, and turned into something worth sharing with everyone.
         </p>
       </Reveal>
     </section>

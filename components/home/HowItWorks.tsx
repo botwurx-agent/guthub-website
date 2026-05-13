@@ -5,7 +5,7 @@ import { Eyebrow, Reveal } from '../ui';
 import IntakeFlowGraphic from '../IntakeFlowGraphic';
 
 const steps = [
-  { n: '01', t: 'Tell Guthub about you', b: 'A 6-minute intake captures your symptoms, sensitivities, diet, and goals. Nothing fancy — just the kind of context a real practitioner would gather on day one.' },
+  { n: '01', t: 'Tell Guthub about you', b: 'A 6-minute intake captures your symptoms, sensitivities, diet, and goals. Nothing fancy. Just the kind of context a real practitioner would gather on day one.' },
   { n: '02', t: 'Use any tool. It already knows you.', b: 'Snap a meal, chat with your coach, or open a meal plan. Every feature pulls from your intake automatically. No re-explaining yourself.' },
   { n: '03', t: 'It learns as you go.', b: 'Every meal logged, every symptom flagged, every conversation makes the picture sharper. The longer you use Guthub, the more personalized it becomes.' },
 ];
@@ -20,7 +20,7 @@ export default function HowItWorks() {
             One intake. <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>Every tool tuned to you.</em>
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--ink-700)' }}>
-            No generic advice. No starting from scratch every conversation. Every feature in Guthub reads from the same profile — so the moment you finish your intake, the whole system already knows you.
+            No generic advice. No starting from scratch every conversation. Every feature in Guthub reads from the same profile, so the moment you finish your intake, the whole system already knows you.
           </p>
         </Reveal>
 

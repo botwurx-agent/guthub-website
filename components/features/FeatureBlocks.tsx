@@ -138,7 +138,7 @@ function MockGoal() {
         </div>
         <svg
           role="img"
-          aria-label={`Daily bloating severity (lower is better) — ${days.map((d, i) => `${d} ${bloating[i]}`).join(', ')}`}
+          aria-label={`Daily bloating severity, lower is better: ${days.map((d, i) => `${d} ${bloating[i]}`).join(', ')}`}
           viewBox="0 0 280 100" preserveAspectRatio="none"
           style={{ width: '100%', height: 100, display: 'block' }}
         >
@@ -618,7 +618,7 @@ const blocks = [
     id: 'snap',
     eyebrow: 'Snap & know',
     headline: 'Point. Snap. Done.',
-    body: 'Photograph any meal and Guthub returns full macros in seconds — calories, protein, carbs, and fat. It also flags ingredients that conflict with your sensitivities before you take a single bite.',
+    body: 'Photograph any meal and Guthub returns full macros in seconds: calories, protein, carbs, and fat. It also flags ingredients that conflict with your sensitivities before you take a single bite.',
     bullets: ['Instant macro breakdown from a photo', 'Auto-flags your personal triggers', 'Logs to your daily tracker automatically'],
     icon: Camera,
     visual: <MockSnap />,
