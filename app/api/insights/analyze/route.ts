@@ -22,7 +22,7 @@ export async function POST() {
     supabase.from('gut_scores').select('score_date, score').eq('user_id', user.id).gte('score_date', since).order('score_date'),
     supabase.from('symptom_logs').select('log_date, symptom_type, severity, notes').eq('user_id', user.id).gte('log_date', since).order('log_date'),
     supabase.from('bm_logs').select('log_date, bristol_type, urgency, pain').eq('user_id', user.id).gte('log_date', since).order('log_date'),
-    supabase.from('meal_logs').select('log_date, meal_name, food_items').eq('user_id', user.id).gte('log_date', since).order('log_date'),
+    supabase.from('meal_logs').select('log_date, meal_name, meal_type, ingredients, calories, protein_g, carbs_g, fat_g').eq('user_id', user.id).gte('log_date', since).order('log_date'),
     supabase.from('weight_logs').select('log_date, weight_kg').eq('user_id', user.id).gte('log_date', since).order('log_date'),
   ])
 
@@ -44,10 +44,11 @@ export async function POST() {
   ).join('\n')
 
   const mealSummary = (meals ?? []).map(m => {
-    const foods = Array.isArray(m.food_items)
-      ? m.food_items.map((f: any) => (typeof f === 'string' ? f : f.name ?? f.food_name ?? '')).filter(Boolean).join(', ')
+    const foods = Array.isArray(m.ingredients)
+      ? m.ingredients.map((f: any) => (typeof f === 'string' ? f : f.name ?? f.food_name ?? '')).filter(Boolean).join(', ')
       : ''
-    return `${m.log_date} — ${m.meal_name}${foods ? `: ${foods}` : ''}`
+    const macros = m.calories ? ` [${m.calories} kcal, ${m.protein_g}g protein, ${m.carbs_g}g carbs, ${m.fat_g}g fat]` : ''
+    return `${m.log_date} (${m.meal_type ?? 'meal'}) — ${m.meal_name}${foods ? `: ${foods}` : ''}${macros}`
   }).join('\n')
 
   const weightSummary = (weights ?? []).map(w => `${w.log_date}: ${w.weight_kg}kg`).join(', ')
