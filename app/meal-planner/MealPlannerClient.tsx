@@ -317,6 +317,14 @@ export default function MealPlannerClient() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [macros, setMacros] = useState<MacroTarget | null>(null)
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())
+  // Reset checked items when the selected day changes
+  const prevActiveDayRef = useRef(activeDay)
+  useEffect(() => {
+    if (prevActiveDayRef.current !== activeDay) {
+      setCheckedItems(new Set())
+      prevActiveDayRef.current = activeDay
+    }
+  }, [activeDay])
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<'plan' | 'favourites'>('plan')
   const [dietOverride, setDietOverride] = useState<string | null>(null)
@@ -404,7 +412,7 @@ export default function MealPlannerClient() {
   const dayCalories = Math.round(daySlots.reduce((sum, s) => sum + (s.calories ?? 0), 0))
   const dayProtein = Math.round(daySlots.reduce((sum, s) => sum + (s.protein_g ?? 0), 0))
 
-  const allIngredients = slots.flatMap(s => s.ingredients ?? [])
+  const allIngredients = daySlots.flatMap(s => s.ingredients ?? [])
   const uniqueIngredients = consolidateIngredients(allIngredients)
 
   // Group ingredients by category for shopping list
@@ -520,6 +528,10 @@ export default function MealPlannerClient() {
   async function regenerateMeal(date: string, mealType: string) {
     const key = `${date}-${mealType}`
     setRegeneratingSlot(key)
+    // Clear ingredients immediately so the shopping list doesn't show stale items
+    setSlots(prev => prev.map(s =>
+      s.plan_date === date && s.meal_type === mealType ? { ...s, ingredients: [], directions: '' } : s
+    ))
     try {
       const res = await fetch('/api/meal-planner/generate', {
         method: 'POST',
@@ -1236,8 +1248,8 @@ export default function MealPlannerClient() {
                   <h3 style={{ margin: '0 0 2px', fontSize: 15, fontWeight: 700, color: 'var(--ink-800)' }}>Shopping list</h3>
                   <p style={{ margin: 0, fontSize: 12, color: 'var(--ink-400)' }}>
                     {uniqueIngredients.length > 0
-                      ? `${uniqueIngredients.length - checkedItems.size} of ${uniqueIngredients.length} left`
-                      : 'For the week'}
+                      ? `${uniqueIngredients.length - checkedItems.size} of ${uniqueIngredients.length} items · today`
+                      : 'For today\'s meals'}
                   </p>
                 </div>
                 {uniqueIngredients.length > 0 ? (
