@@ -82,7 +82,7 @@ Specific concerns: ${str(hp.specific_concerns) || 'None reported'}
 Activity level: ${str(hp.activity_level) || 'Unknown'}
 Has worked with RD before: ${str(hp.has_worked_with_rd) || 'Unknown'}
 
-Medical conditions: ${arr(hp.medical_conditions) || 'None reported'}
+Medical conditions: ${arr(hp.medical_conditions) || 'None reported'}${hp.undiagnosed_symptoms ? `\nSelf-reported symptoms (undiagnosed): ${hp.undiagnosed_symptoms} — user is still figuring out what's going on; take a discovery-oriented, exploratory approach rather than assuming a specific condition` : ''}
 Food allergens: ${arr(hp.allergens) || arr(hp.allergies) || 'None reported'}
 Medications / supplements: ${str(hp.medications) || 'None reported'}
 Is pregnant: ${hp.is_pregnant ? 'Yes' : 'No'}

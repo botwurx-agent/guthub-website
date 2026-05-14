@@ -84,7 +84,22 @@ const CONDITION_OPTIONS = [
   'Thyroid Condition',
   'Autoimmune Condition',
   'Diabetes / Blood Sugar Issues',
+  'Still figuring it out',
   'None of These',
+]
+
+// Plain-language symptom chips shown when "Still figuring it out" is selected
+const UNDIAGNOSED_SYMPTOM_OPTIONS = [
+  'Bloating after meals',
+  'Irregular bowel habits',
+  'Stomach discomfort or cramping',
+  'Fatigue after eating',
+  'Frequent gas',
+  'Reflux or heartburn',
+  'Brain fog after meals',
+  'Food sensitivities (not sure which)',
+  'Unexplained weight changes',
+  'Persistent nausea',
 ]
 
 // IBD flare status sub-field (required when IBD is selected)
@@ -168,6 +183,7 @@ export default function OnboardingPage() {
   const [heightFt, setHeightFt] = useState('')
   const [heightIn, setHeightIn] = useState('')
   const [conditions, setConditions] = useState<string[]>([])
+  const [undiagnosedSymptoms, setUndiagnosedSymptoms] = useState<string[]>([])
   const [allergens, setAllergens] = useState<string[]>([])
   const [medications, setMedications] = useState('')
 
@@ -252,6 +268,7 @@ export default function OnboardingPage() {
             nickname: nickname || null,
             medical_conditions: conditions.join(', ') || null,
             ibd_status: ibdStatus || null,
+            undiagnosed_symptoms: undiagnosedSymptoms.join(', ') || null,
             allergens: allergens.join(', ') || null,
             medications: medications || null,
           },
@@ -440,7 +457,7 @@ export default function OnboardingPage() {
 
         <div style={{ flex: 1 }}>
           {step === 0 && <StepAboutYou {...{ fullName, setFullName, nickname, setNickname, dob, setDob, gender, setGender }} />}
-          {step === 1 && <StepHealth {...{ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, conditions, setConditions, ibdStatus, setIbdStatus, allergens, setAllergens, medications, setMedications }} />}
+          {step === 1 && <StepHealth {...{ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, conditions, setConditions, undiagnosedSymptoms, setUndiagnosedSymptoms, ibdStatus, setIbdStatus, allergens, setAllergens, medications, setMedications }} />}
           {step === 2 && <StepEating {...{ eatingStyle, setEatingStyle, eatingStyleFollowing, setEatingStyleFollowing, fodmapPhase, setFodmapPhase, cookingFreq, setCookingFreq, eatOutFreq, setEatOutFreq, typicalDay, setTypicalDay }} />}
           {step === 3 && <StepGoals {...{ goals, setGoals, specificConcerns, setSpecificConcerns, priorRd, setPriorRd, activityLevel, setActivityLevel, targetWeightLbs, setTargetWeightLbs }} />}
           {step === 4 && <StepLifestyle {...{ sleepQuality, setSleepQuality, sleepHours, setSleepHours, energyLevel, setEnergyLevel, stressLevel, setStressLevel, exerciseRoutine, setExerciseRoutine, additionalNotes, setAdditionalNotes }} />}
@@ -554,16 +571,18 @@ function StepAboutYou({ fullName, setFullName, nickname, setNickname, dob, setDo
 }
 
 // ─── Step 2: Health & history ─────────────────────────────────────────────
-function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, conditions, setConditions, ibdStatus, setIbdStatus, allergens, setAllergens, medications, setMedications }: {
+function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, setHeightIn, conditions, setConditions, undiagnosedSymptoms, setUndiagnosedSymptoms, ibdStatus, setIbdStatus, allergens, setAllergens, medications, setMedications }: {
   weightLbs: string; setWeightLbs: (v: string) => void
   heightFt: string; setHeightFt: (v: string) => void
   heightIn: string; setHeightIn: (v: string) => void
   conditions: string[]; setConditions: (v: string[]) => void
+  undiagnosedSymptoms: string[]; setUndiagnosedSymptoms: (v: string[]) => void
   ibdStatus: string; setIbdStatus: (v: string) => void
   allergens: string[]; setAllergens: (v: string[]) => void
   medications: string; setMedications: (v: string) => void
 }) {
   const hasIbd = conditions.includes("IBD / Crohn's / Ulcerative Colitis")
+  const isFiguringItOut = conditions.includes('Still figuring it out')
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 580 }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -584,7 +603,7 @@ function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, 
         </OField>
       </div>
 
-      <OField label="Medical conditions" hint="Pick any that apply. Tap &ldquo;Other&rdquo; to search additional options.">
+      <OField label="What's going on with your gut?" hint="Pick any that apply. Tap &ldquo;Other&rdquo; to search additional options.">
         <TieredAutocomplete
           tier1={CONDITION_OPTIONS}
           tier2={CONDITION_TIER2}
@@ -593,6 +612,25 @@ function StepHealth({ weightLbs, setWeightLbs, heightFt, setHeightFt, heightIn, 
           onChange={setConditions}
         />
       </OField>
+
+      {isFiguringItOut && (
+        <OField
+          label="Which of these sounds like you?"
+          hint="Pick everything that resonates. You don't need a diagnosis."
+        >
+          <div style={{
+            background: 'var(--terracotta-50)', border: '1px solid var(--terracotta-200)',
+            borderRadius: 12, padding: '14px 16px',
+          }}>
+            <ChipGroup
+              options={UNDIAGNOSED_SYMPTOM_OPTIONS}
+              value={undiagnosedSymptoms}
+              onChange={setUndiagnosedSymptoms}
+              multi={true}
+            />
+          </div>
+        </OField>
+      )}
 
       {hasIbd && (
         <OField label="Current IBD status">
