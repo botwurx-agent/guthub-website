@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { Sparkles, X } from 'lucide-react'
 import { logMeal } from '@/app/actions/log'
 import { SuccessBanner, ErrorBanner, Field, Input, Textarea, SubmitBtn } from './shared'
@@ -36,6 +36,14 @@ const FOOD_REFS = [
 
 function PortionGuide({ onClose }: { onClose: () => void }) {
   const [tab, setTab] = useState<'visual' | 'foods'>('visual')
+  const [isDesktop, setIsDesktop] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    setIsDesktop(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
   return (
     <>
       {/* Backdrop */}
@@ -43,18 +51,24 @@ function PortionGuide({ onClose }: { onClose: () => void }) {
         onClick={onClose}
         style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)' }}
       />
-      {/* Panel */}
-      <div style={{
+      {/* Panel — right drawer on desktop, bottom sheet on mobile */}
+      <div style={isDesktop ? {
+        position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 201,
+        width: 380, background: '#fff',
+        boxShadow: '-8px 0 40px rgba(0,0,0,0.14)',
+        display: 'flex', flexDirection: 'column',
+        animation: 'slideInRight 240ms var(--ease-out)',
+      } : {
         position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
         width: '100%', maxWidth: 520, zIndex: 201,
         background: '#fff', borderRadius: '20px 20px 0 0',
         boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
         maxHeight: '72vh', display: 'flex', flexDirection: 'column',
-        animation: 'slideUp 220ms var(--ease-out)',
+        animation: 'slideInBottom 240ms var(--ease-out)',
       }}>
         {/* Handle + header */}
-        <div style={{ padding: '12px 20px 0', flexShrink: 0 }}>
-          <div style={{ width: 36, height: 4, borderRadius: 99, background: 'var(--cream-200)', margin: '0 auto 16px' }} />
+        <div style={{ padding: isDesktop ? '24px 20px 0' : '12px 20px 0', flexShrink: 0 }}>
+          {!isDesktop && <div style={{ width: 36, height: 4, borderRadius: 99, background: 'var(--cream-200)', margin: '0 auto 16px' }} />}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--ink-900)' }}>Portion guide</h3>

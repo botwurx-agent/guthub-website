@@ -163,6 +163,14 @@ button { font-family: var(--font-body); }
   from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
 }
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slideInBottom {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
 @keyframes heroGlow {
   0%, 100% { transform: scale(1); opacity: 0.75; }
   50% { transform: scale(1.08); opacity: 1; }
