@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     mealTypes: mealTypesFilter,     // e.g. ['breakfast'] for parallel requests
     phase = 'quick',                 // 'quick' = name+macros only | 'recipe' = ingredients+directions
     existingMeal,                    // { name, date, meal_type } for recipe-only fetch
+    complexity = 'simple',           // 'simple' = weeknight friendly | 'weekend' = ambitious dishes
   } = await request.json()
 
   const [{ data: profile }, { data: macroTarget }] = await Promise.all([
@@ -159,57 +160,85 @@ Return a single JSON object only — no markdown:
         existingWeekMeals = (weekMeals ?? []).map(m => `${m.plan_date} ${m.meal_type}: ${m.meal_name}`)
       }
 
-      // For single-slot swaps, pick a random cuisine + cooking method to guarantee variety
-      const CUISINES = [
+      // Cuisine + method rotation for dinner single-slot swaps
+      const DINNER_CUISINES = [
         'Italian', 'Mexican', 'Japanese', 'Thai', 'Indian', 'Middle Eastern',
         'Greek', 'Vietnamese', 'Korean', 'Moroccan', 'Spanish', 'Caribbean',
         'French bistro', 'American comfort (elevated)', 'Ethiopian', 'Turkish',
         'Peruvian', 'Lebanese', 'Malaysian', 'Portuguese',
       ]
-      const COOKING_METHODS = [
-        'roasted', 'braised', 'grilled', 'baked', 'stir-fried',
-        'slow-cooked', 'poached', 'steamed', 'broiled', 'sautéed',
-      ]
-      const randomCuisine = regenerate
-        ? CUISINES[Math.floor(Math.random() * CUISINES.length)]
+      const SIMPLE_METHODS   = ['baked', 'grilled', 'sautéed', 'stir-fried', 'roasted', 'broiled']
+      const WEEKEND_METHODS  = ['slow-braised', 'slow-roasted', 'poached', 'roasted', 'grilled', 'baked', 'broiled']
+
+      const isDinnerOnly = slots.every(s => s.meal_type === 'dinner')
+      const randomCuisine = (regenerate && isDinnerOnly)
+        ? DINNER_CUISINES[Math.floor(Math.random() * DINNER_CUISINES.length)]
         : null
-      const randomMethod = regenerate
-        ? COOKING_METHODS[Math.floor(Math.random() * COOKING_METHODS.length)]
+      const methodPool = complexity === 'weekend' ? WEEKEND_METHODS : SIMPLE_METHODS
+      const randomMethod = (regenerate && isDinnerOnly)
+        ? methodPool[Math.floor(Math.random() * methodPool.length)]
         : null
 
-      const prompt = `You are a creative, knowledgeable gut-health nutrition planner. Generate a meal plan that feels genuinely exciting and varied — meals a real person would look forward to eating, not generic "healthy eating" clichés.
+      // Split slots by meal type for tailored instructions
+      const breakfastLunchSlots = slots.filter(s => s.meal_type !== 'dinner')
+      const dinnerSlots = slots.filter(s => s.meal_type === 'dinner')
 
-USER PROFILE:
+      const commonProfile = `USER PROFILE:
 - Diet style: ${dietLabel}
 - Daily targets: ${calories} kcal | Protein ${protein}g | Carbs ${carbs}g | Fat ${fat}g
 - Macro split: breakfast 25% · lunch 35% · dinner 40% of daily targets
 ${allergies ? `- Allergies / avoid: ${allergies}` : ''}
-${conditions ? `- Health conditions: ${conditions}` : ''}
-${randomCuisine ? `
-THIS MEAL MUST BE: ${randomCuisine} cuisine, primary cooking method: ${randomMethod}. Do not deviate from this — the user needs genuine variety, not the same Asian-inspired pan-seared dishes every time.` : ''}
+${conditions ? `- Health conditions: ${conditions}` : ''}`
 
-VARIETY RULES — strictly enforce these:
-1. Each protein may appear AT MOST ONCE across the full week. Rotate between: chicken thighs, chicken breast, ground turkey, beef, pork tenderloin, lamb, cod, tilapia, shrimp, tuna, eggs, tofu, tempeh, lentils, chickpeas, black beans, white beans.
-2. Each grain or carb base may appear AT MOST ONCE. Rotate between: rice, pasta, bread/toast, potatoes, oats, farro, polenta, corn tortillas, soba noodles, rice noodles, couscous, barley.
-3. NO generic "bowls" (grain bowl, buddha bowl, power bowl) — be specific about the actual dish.
-4. Quinoa, salmon, avocado, and sweet potato are fine but use each AT MOST ONCE per week.
+      const commonProteins = `chicken breast, chicken thighs, steak, fish (cod, tilapia, or similar), ground beef, ground turkey, ground chicken, pork`
+      const commonGrains = `rice, pasta, bread/toast, potatoes, oats, corn tortillas, noodles`
 
-MEAL NAMING — be specific and appetizing:
-- Include cooking method + key flavors: "Slow-Braised Lamb Shoulder with Harissa, Chickpeas and Preserved Lemon"
-- NOT vague: "Fish with Vegetables" or "Chicken Rice Bowl"
-- Names should make someone genuinely want to eat that meal
+      const breakfastLunchBlock = breakfastLunchSlots.length > 0 ? `
+=== BREAKFAST & LUNCH MEALS ===
+Keep these quick, familiar, and easy — something a busy person can make in under 20 minutes on a weekday morning or midday.
+- Domestic, approachable meals only. No exotic cuisines or restaurant-style plating.
+- Common breakfast ideas: eggs (scrambled, fried, omelette), oatmeal, yogurt parfait, toast with toppings, smoothie, pancakes, breakfast burrito, avocado toast.
+- Common lunch ideas: sandwich, wrap, soup, simple salad with protein, leftovers-style bowl, quesadilla, grilled cheese, tuna melt.
+- Each protein used AT MOST ONCE. Rotate from: ${commonProteins}, eggs.
+- Each carb base AT MOST ONCE. Rotate from: ${commonGrains}.
+- NO repeated primary vegetables across the week.
+- Be specific but simple: "Scrambled Eggs with Cheddar, Turkey Bacon and Whole-Wheat Toast" not just "Eggs and Toast".
 
-GUT-HEALTH REQUIREMENTS:
+Slots:
+${breakfastLunchSlots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}` : ''
+
+      const complexityNote = complexity === 'simple'
+        ? `COMPLEXITY: Weeknight-friendly. Under 30 minutes, common grocery store ingredients, no specialist techniques. Someone tired after work should be able to cook this without stress.`
+        : `COMPLEXITY: Weekend cook level. More ambitious dishes are welcome — longer cook times, marinating, multiple components. Still gut-friendly and made from real ingredients.`
+
+      const dinnerBlock = dinnerSlots.length > 0 ? `
+=== DINNER MEALS ===
+${complexityNote}
+${randomCuisine ? `THIS DINNER MUST BE: ${randomCuisine} cuisine, primary cooking method: ${randomMethod}. Do not deviate.` : 'Draw from varied world cuisine traditions — Italian, Mexican, Indian, Middle Eastern, Greek, Korean, etc.'}
+- Each protein AT MOST ONCE. Rotate from: ${commonProteins}, lamb, shrimp, lentils, chickpeas.
+- Each grain/carb AT MOST ONCE. Rotate from: ${commonGrains}, couscous, farro, barley.
+- NO generic "bowls". Be specific: "Baked Lemon Herb Chicken Thighs with Roasted Potatoes and Green Beans" not "Chicken Bowl".
+- Quinoa, salmon, avocado, sweet potato: fine but use each AT MOST ONCE per week.
+- Appetizing, specific names that include the cooking method and key flavors.
+
+Slots:
+${dinnerSlots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}` : ''
+
+      const prompt = `You are a gut-health nutrition planner. Generate varied, delicious meals tailored to the user's profile.
+
+${commonProfile}
+
+GUT-HEALTH REQUIREMENTS (all meals):
 - Anti-inflammatory ingredients throughout the week
-- Diverse fiber sources across different plant foods (not the same vegetables daily)
-- Avoid known gut irritants unless the user's diet style allows them
-- Favor whole, minimally processed ingredients
+- Diverse fiber from different plant foods — not the same vegetables daily
+- Avoid known gut irritants unless diet allows
+- Whole, minimally processed ingredients
 
 ${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do NOT repeat these proteins, grains, or cuisines:
 ${existingWeekMeals.join('\n')}
-
-` : ''}Generate meals for these slots:
-${slots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}
+` : ''}
+${breakfastLunchBlock}
+${dinnerBlock}
 
 Return a JSON array only — no markdown, no explanation. Each object:
 {"date":"YYYY-MM-DD","meal_type":"breakfast|lunch|dinner","meal_name":"string","calories":number,"protein_g":number,"fat_g":number,"carbs_g":number}`

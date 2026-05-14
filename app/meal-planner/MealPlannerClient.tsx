@@ -313,6 +313,7 @@ export default function MealPlannerClient() {
   const [activeDay, setActiveDay] = useState(0)
   const [activeMeal, setActiveMeal] = useState<'breakfast' | 'lunch' | 'dinner'>('dinner')
   const [planDays, setPlanDays] = useState<1 | 3 | 7>(7)
+  const [complexity, setComplexity] = useState<'simple' | 'weekend'>('simple')
   const [profile, setProfile] = useState<Profile | null>(null)
   const [macros, setMacros] = useState<MacroTarget | null>(null)
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())
@@ -495,6 +496,7 @@ export default function MealPlannerClient() {
             dietOverride,
             mealTypes: [mealType],
             phase: 'quick',
+            complexity,
           }),
         })
         if (res.ok && res.body) {
@@ -522,7 +524,7 @@ export default function MealPlannerClient() {
       const res = await fetch('/api/meal-planner/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: { date, mealType }, dietOverride, phase: 'quick' }),
+        body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: { date, mealType }, dietOverride, phase: 'quick', complexity }),
       })
       if (res.ok && res.body) {
         await consumeStream(res.body, meal => {
@@ -749,6 +751,29 @@ export default function MealPlannerClient() {
                   }}
                 >
                   {d} {d === 1 ? 'day' : 'days'}
+                </button>
+              ))}
+            </div>
+
+            {/* Complexity toggle */}
+            <div style={{
+              display: 'flex', alignItems: 'center',
+              background: 'var(--cream-100)', borderRadius: 10, padding: 3, gap: 2,
+            }}>
+              {(['simple', 'weekend'] as const).map(c => (
+                <button
+                  key={c}
+                  onClick={() => setComplexity(c)}
+                  style={{
+                    padding: '6px 13px', borderRadius: 8, border: 'none',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    background: complexity === c ? '#fff' : 'transparent',
+                    color: complexity === c ? 'var(--ink-800)' : 'var(--ink-400)',
+                    boxShadow: complexity === c ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                    transition: 'all 140ms',
+                  }}
+                >
+                  {c === 'simple' ? 'Quick & Easy' : 'Weekend Cook'}
                 </button>
               ))}
             </div>
