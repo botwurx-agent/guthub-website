@@ -33,7 +33,8 @@ export async function POST(request: Request) {
   const allergies    = hp.allergies ?? hp.allergens ?? hp.food_allergies ?? ''
   const conditions   = hp.conditions ?? hp.health_conditions ?? hp.medical_conditions ?? ''
   const eatingStyle  = hp.eating_style ?? ''
-  const dietLabel    = dietMode !== 'default' ? dietMode.replace(/_/g, ' ') : (eatingStyle || 'balanced')
+  const resolvedDiet = dietOverride ?? profile?.diet_mode ?? 'default'
+  const dietLabel    = resolvedDiet !== 'default' ? resolvedDiet.replace(/_/g, ' ') : (eatingStyle || 'balanced')
 
   const encoder = new TextEncoder()
 
@@ -143,6 +144,21 @@ Return a single JSON object only — no markdown:
         }
       }
 
+      // For single-slot swaps, fetch the rest of the week so the AI can avoid repeating proteins/cuisines
+      let existingWeekMeals: string[] = []
+      if (regenerate && weekStart) {
+        const weekEnd = new Date(weekStart)
+        weekEnd.setUTCDate(weekEnd.getUTCDate() + 6)
+        const { data: weekMeals } = await supabase
+          .from('meal_plan_slots')
+          .select('meal_name, meal_type, plan_date')
+          .eq('user_id', user.id)
+          .gte('plan_date', weekStart)
+          .lte('plan_date', weekEnd.toISOString().split('T')[0])
+          .neq('plan_date', regenerate.date)
+        existingWeekMeals = (weekMeals ?? []).map(m => `${m.plan_date} ${m.meal_type}: ${m.meal_name}`)
+      }
+
       const prompt = `You are a creative, knowledgeable gut-health nutrition planner. Generate a meal plan that feels genuinely exciting and varied — meals a real person would look forward to eating, not generic "healthy eating" clichés.
 
 USER PROFILE:
@@ -170,7 +186,10 @@ GUT-HEALTH REQUIREMENTS:
 - Avoid known gut irritants unless the user's diet style allows them
 - Favor whole, minimally processed ingredients
 
-Generate meals for these slots:
+${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do NOT repeat these proteins, grains, or cuisines:
+${existingWeekMeals.join('\n')}
+
+` : ''}Generate meals for these slots:
 ${slots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}
 
 Return a JSON array only — no markdown, no explanation. Each object:
