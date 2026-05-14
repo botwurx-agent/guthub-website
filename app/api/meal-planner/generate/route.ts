@@ -29,11 +29,11 @@ export async function POST(request: Request) {
   const carbs    = macroTarget?.carbohydrates_g ?? 200
   const fat      = macroTarget?.fat_g ?? 65
 
-  const dietMode   = dietOverride ?? profile?.diet_mode ?? 'default'
-  const healthInfo = profile?.health_profile ?? {}
-  const allergies  = healthInfo.allergies ?? healthInfo.food_allergies ?? ''
-  const conditions = healthInfo.conditions ?? healthInfo.health_conditions ?? ''
-  const dietLabel  = dietMode !== 'default' ? dietMode.replace(/_/g, ' ') : 'balanced'
+  const hp           = profile?.health_profile ?? {}
+  const allergies    = hp.allergies ?? hp.allergens ?? hp.food_allergies ?? ''
+  const conditions   = hp.conditions ?? hp.health_conditions ?? hp.medical_conditions ?? ''
+  const eatingStyle  = hp.eating_style ?? ''
+  const dietLabel    = dietMode !== 'default' ? dietMode.replace(/_/g, ' ') : (eatingStyle || 'balanced')
 
   const encoder = new TextEncoder()
 
@@ -50,19 +50,25 @@ export async function POST(request: Request) {
           ? Math.round(meal_type === 'breakfast' ? calories * 0.25 : meal_type === 'lunch' ? calories * 0.35 : calories * 0.40)
           : null
 
-        const recipePrompt = `Generate a recipe for this meal: "${name}" (${meal_type}, ${dietLabel} diet${mealCalories ? `, ~${mealCalories} kcal` : ''}).
-${allergies ? `Avoid: ${allergies}.` : ''}
+        const recipePrompt = `Generate a practical, delicious recipe for: "${name}"
 
-Return a single JSON object:
+Context: ${meal_type} | ${dietLabel} diet${mealCalories ? ` | ~${mealCalories} kcal` : ''}
+${allergies ? `Avoid: ${allergies}` : ''}
+
+Requirements:
+- Ingredients with specific quantities (e.g. "2 tbsp olive oil", "150g chicken thigh")
+- Directions in 4-6 clear steps — practical, not overly technical
+- Total should hit the calorie target roughly
+- Gut-friendly preparation (avoid deep frying, heavy cream sauces unless the diet allows)
+
+Return a single JSON object only — no markdown:
 {
   "date": "${date}",
   "meal_type": "${meal_type}",
   "meal_name": "${name}",
-  "ingredients": ["string", ...],
+  "ingredients": ["quantity + ingredient", ...],
   "directions": "Step 1. ... Step 2. ..."
-}
-
-Be specific with portions. Keep directions concise (4-6 steps).`
+}`
 
         try {
           const stream = await openai.chat.completions.create({
@@ -137,21 +143,38 @@ Be specific with portions. Keep directions concise (4-6 steps).`
         }
       }
 
-      const prompt = `You are a gut-friendly nutrition planner. Requirements:
-- Diet style: ${dietLabel}
-- Daily targets: ${calories} kcal · Protein ${protein}g · Carbs ${carbs}g · Fat ${fat}g
-${allergies ? `- Avoid: ${allergies}` : ''}
-${conditions ? `- Health conditions: ${conditions}` : ''}
-- Distribute macros: breakfast 25%, lunch 35%, dinner 40% of daily targets
-- Gut-friendly foods only. Vary meals — no repeats.
+      const prompt = `You are a creative, knowledgeable gut-health nutrition planner. Generate a meal plan that feels genuinely exciting and varied — meals a real person would look forward to eating, not generic "healthy eating" clichés.
 
-Generate meal names and macros for:
+USER PROFILE:
+- Diet style: ${dietLabel}
+- Daily targets: ${calories} kcal | Protein ${protein}g | Carbs ${carbs}g | Fat ${fat}g
+- Macro split: breakfast 25% · lunch 35% · dinner 40% of daily targets
+${allergies ? `- Allergies / avoid: ${allergies}` : ''}
+${conditions ? `- Health conditions: ${conditions}` : ''}
+
+VARIETY RULES — strictly enforce these:
+1. Each protein may appear AT MOST ONCE across the full week. Rotate between: chicken thighs, chicken breast, ground turkey, beef, pork tenderloin, lamb, cod, tilapia, shrimp, tuna, eggs, tofu, tempeh, lentils, chickpeas, black beans, white beans.
+2. Each grain or carb base may appear AT MOST ONCE. Rotate between: rice, pasta, bread/toast, potatoes, oats, farro, polenta, corn tortillas, soba noodles, rice noodles, couscous, barley.
+3. Draw from a DIFFERENT cuisine tradition each day. Options: Italian, Mexican, Japanese, Thai, Indian, Middle Eastern, Greek, Vietnamese, Korean, Moroccan, American, French, Spanish, Caribbean.
+4. NO generic "bowls" (grain bowl, buddha bowl, power bowl) — be specific about the actual dish.
+5. Quinoa, salmon, avocado, and sweet potato are fine but use each AT MOST ONCE per week.
+
+MEAL NAMING — be specific and appetizing:
+- Include cooking method + key flavors: "Pan-Seared Cod with Romesco and Roasted Red Peppers"
+- NOT vague: "Fish with Vegetables" or "Chicken Rice Bowl"
+- Names should make someone genuinely want to eat that meal
+
+GUT-HEALTH REQUIREMENTS:
+- Anti-inflammatory ingredients throughout the week
+- Diverse fiber sources across different plant foods (not the same vegetables daily)
+- Avoid known gut irritants unless the user's diet style allows them
+- Favor whole, minimally processed ingredients
+
+Generate meals for these slots:
 ${slots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}
 
-Return a JSON array. Each object:
-{"date":"YYYY-MM-DD","meal_type":"breakfast|lunch|dinner","meal_name":"string","calories":number,"protein_g":number,"fat_g":number,"carbs_g":number}
-
-Names only — no ingredients or directions.`
+Return a JSON array only — no markdown, no explanation. Each object:
+{"date":"YYYY-MM-DD","meal_type":"breakfast|lunch|dinner","meal_name":"string","calories":number,"protein_g":number,"fat_g":number,"carbs_g":number}`
 
       const saveMeal = async (meal: Record<string, unknown>) => {
         const row = {
