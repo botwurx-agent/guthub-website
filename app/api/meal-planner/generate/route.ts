@@ -190,15 +190,24 @@ Return a single JSON object only — no markdown:
 ${allergies ? `- Allergies / avoid: ${allergies}` : ''}
 ${conditions ? `- Health conditions: ${conditions}` : ''}`
 
-      const commonProteins = `chicken breast, chicken thighs, steak, fish (cod, tilapia, or similar), ground beef, ground turkey, ground chicken, pork`
-      const commonGrains = `rice, pasta, bread/toast, potatoes, oats, corn tortillas, noodles`
+      const ketoMode = resolvedDiet === 'keto' || dietLabel.toLowerCase().includes('keto')
+      const ketoRule = ketoMode
+        ? `KETO STRICT: All meals must be low-carb/high-fat. NO rice, pasta, bread, oats, corn, beans, lentils, potatoes, tortillas, or any grain. Use cauliflower rice, zucchini noodles, lettuce wraps, or just serve without a carb base. Prioritize: meat, fish, eggs, cheese, non-starchy vegetables (broccoli, spinach, zucchini, green beans, asparagus, mushrooms, peppers), healthy fats (olive oil, butter, avocado).`
+        : ''
+
+      const commonProteins = `chicken breast, chicken thighs, steak, fish (cod, tilapia, or similar), ground beef, ground turkey, ground chicken, pork chops`
+      const commonGrains = ketoMode
+        ? `cauliflower rice, zucchini noodles, roasted vegetables (as the base)`
+        : `rice, pasta, bread/toast, potatoes, oats, corn tortillas, noodles`
+
+      const plainLanguageRule = `PLAIN ENGLISH ONLY: Write ingredient names that any home cook would recognize. Never use French culinary terms or restaurant jargon. Examples: say "green beans" not "haricots verts", "pan sauce" not "jus", "mashed cauliflower" not "cauliflower purée", "pepper-crusted" not "au poivre". If a technique sounds fancy, simplify it.`
 
       const breakfastLunchBlock = breakfastLunchSlots.length > 0 ? `
 === BREAKFAST & LUNCH MEALS ===
 Keep these quick, familiar, and easy — something a busy person can make in under 20 minutes on a weekday morning or midday.
 - Domestic, approachable meals only. No exotic cuisines or restaurant-style plating.
-- Common breakfast ideas: eggs (scrambled, fried, omelette), oatmeal, yogurt parfait, toast with toppings, smoothie, pancakes, breakfast burrito, avocado toast.
-- Common lunch ideas: sandwich, wrap, soup, simple salad with protein, leftovers-style bowl, quesadilla, grilled cheese, tuna melt.
+- Common breakfast ideas: eggs (scrambled, fried, omelette), oatmeal, yogurt parfait, toast with toppings, smoothie, pancakes, breakfast burrito, avocado toast.${ketoMode ? ' Keto breakfasts: egg omelette, bacon and eggs, Greek yogurt (full-fat), avocado with eggs.' : ''}
+- Common lunch ideas: sandwich, wrap, soup, simple salad with protein, quesadilla, grilled cheese, tuna melt.${ketoMode ? ' Keto lunches: lettuce wrap, protein salad, egg salad, tuna salad, soup without noodles.' : ''}
 - Each protein used AT MOST ONCE. Rotate from: ${commonProteins}, eggs.
 - Each carb base AT MOST ONCE. Rotate from: ${commonGrains}.
 - NO repeated primary vegetables across the week.
@@ -208,18 +217,18 @@ Slots:
 ${breakfastLunchSlots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}` : ''
 
       const complexityNote = complexity === 'simple'
-        ? `COMPLEXITY: Weeknight-friendly. Under 30 minutes, common grocery store ingredients, no specialist techniques. Someone tired after work should be able to cook this without stress.`
-        : `COMPLEXITY: Weekend cook level. More ambitious dishes are welcome — longer cook times, marinating, multiple components. Still gut-friendly and made from real ingredients.`
+        ? `COMPLEXITY — Quick & Easy: Must be genuinely simple. Under 30 minutes, one or two pans, common grocery store ingredients, no blenders or specialist equipment, no multi-step sauces. A person who just got home from work should be able to cook this without stress. If a technique requires more than basic cooking skills, replace it with something simpler.`
+        : `COMPLEXITY — Weekend Cook: More ambitious dishes are welcome. Longer cook times, marinating, multiple components, interesting techniques. Still gut-friendly and made from real whole ingredients.`
 
       const dinnerBlock = dinnerSlots.length > 0 ? `
 === DINNER MEALS ===
 ${complexityNote}
 ${randomCuisine ? `THIS DINNER MUST BE: ${randomCuisine} cuisine, primary cooking method: ${randomMethod}. Do not deviate.` : 'Draw from varied world cuisine traditions — Italian, Mexican, Indian, Middle Eastern, Greek, Korean, etc.'}
-- Each protein AT MOST ONCE. Rotate from: ${commonProteins}, lamb, shrimp, lentils, chickpeas.
-- Each grain/carb AT MOST ONCE. Rotate from: ${commonGrains}, couscous, farro, barley.
+- Each protein AT MOST ONCE. Rotate from: ${commonProteins}, lamb, shrimp.${ketoMode ? '' : ' lentils, chickpeas.'}
+- Each carb base AT MOST ONCE. Rotate from: ${commonGrains}.${ketoMode ? '' : ', couscous, farro, barley.'}
 - NO generic "bowls". Be specific: "Baked Lemon Herb Chicken Thighs with Roasted Potatoes and Green Beans" not "Chicken Bowl".
 - Quinoa, salmon, avocado, sweet potato: fine but use each AT MOST ONCE per week.
-- Appetizing, specific names that include the cooking method and key flavors.
+- Appetizing, specific names that include the cooking method and key flavors — in plain English.
 
 Slots:
 ${dinnerSlots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}` : ''
@@ -227,6 +236,10 @@ ${dinnerSlots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}` : ''
       const prompt = `You are a gut-health nutrition planner. Generate varied, delicious meals tailored to the user's profile.
 
 ${commonProfile}
+
+${ketoRule}
+
+${plainLanguageRule}
 
 GUT-HEALTH REQUIREMENTS (all meals):
 - Anti-inflammatory ingredients throughout the week
