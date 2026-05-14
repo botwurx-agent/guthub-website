@@ -108,7 +108,7 @@ export async function middleware(request: NextRequest) {
     if (!profile?.onboarding_completed && !pathname.startsWith('/settings')) {
       const target = hostname === APP_DOMAIN
         ? `https://${APP_DOMAIN}/onboarding`
-        : `/onboarding`
+        : new URL('/onboarding', request.url).toString()
       return NextResponse.redirect(target)
     }
 
@@ -123,7 +123,7 @@ export async function middleware(request: NextRequest) {
       if (!hasAccess) {
         const target = hostname === APP_DOMAIN
           ? `https://${WWW_DOMAIN}/pricing?reason=subscription_required`
-          : `/pricing?reason=subscription_required`
+          : new URL('/pricing?reason=subscription_required', request.url).toString()
         return NextResponse.redirect(target)
       }
     }
