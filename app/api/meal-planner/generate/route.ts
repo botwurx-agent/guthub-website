@@ -190,15 +190,101 @@ Return a single JSON object only — no markdown:
 ${allergies ? `- Allergies / avoid: ${allergies}` : ''}
 ${conditions ? `- Health conditions: ${conditions}` : ''}`
 
-      const ketoMode = resolvedDiet === 'keto' || dietLabel.toLowerCase().includes('keto')
+      const ketoMode        = resolvedDiet === 'keto'      || dietLabel.toLowerCase().includes('keto')
+      const veganMode       = resolvedDiet === 'vegan'      || dietLabel.toLowerCase().includes('vegan')
+      const vegetarianMode  = veganMode                     || dietLabel.toLowerCase().includes('vegetarian')
+      const pescatarianMode = dietLabel.toLowerCase().includes('pescatarian')
+      const paleoMode       = resolvedDiet === 'paleo'      || dietLabel.toLowerCase().includes('paleo')
+      const lowFodmapMode   = resolvedDiet === 'low_fodmap' || dietLabel.toLowerCase().includes('fodmap')
+
+      // ── Per-diet protein + carb lists ─────────────────────────────────────
+      let commonProteins: string
+      let dinnerExtraProteins: string
+      if (veganMode) {
+        commonProteins      = `tofu, tempeh, lentils, chickpeas, black beans, edamame`
+        dinnerExtraProteins = `, seitan, white beans`
+      } else if (vegetarianMode) {
+        commonProteins      = `eggs, Greek yogurt, cottage cheese, tofu, tempeh, lentils, chickpeas`
+        dinnerExtraProteins = `, black beans, halloumi, paneer`
+      } else if (pescatarianMode) {
+        commonProteins      = `fish (cod, tilapia, or salmon), shrimp, eggs, tofu`
+        dinnerExtraProteins = `, tuna, crab, scallops`
+      } else if (paleoMode) {
+        commonProteins      = `chicken breast, chicken thighs, steak, ground beef, ground turkey, pork chops, fish (cod, tilapia, or similar)`
+        dinnerExtraProteins = `, lamb, shrimp, venison`
+      } else {
+        commonProteins      = `chicken breast, chicken thighs, steak, fish (cod, tilapia, or similar), ground beef, ground turkey, ground chicken, pork chops`
+        dinnerExtraProteins = `, lamb, shrimp, lentils, chickpeas`
+      }
+
+      let commonGrains: string
+      let dinnerExtraGrains: string
+      if (ketoMode) {
+        commonGrains      = `cauliflower rice, zucchini noodles, roasted vegetables (as the base)`
+        dinnerExtraGrains = ``
+      } else if (paleoMode) {
+        commonGrains      = `sweet potato, butternut squash, cauliflower rice, roasted root vegetables`
+        dinnerExtraGrains = `, plantain`
+      } else if (lowFodmapMode) {
+        commonGrains      = `white rice, quinoa, gluten-free oats, potatoes, gluten-free pasta`
+        dinnerExtraGrains = `, polenta, rice noodles`
+      } else {
+        commonGrains      = `rice, pasta, bread/toast, potatoes, oats, corn tortillas, noodles`
+        dinnerExtraGrains = `, couscous, farro, barley, quinoa`
+      }
+
+      // ── Per-diet rule blocks (injected prominently into prompt) ───────────
       const ketoRule = ketoMode
-        ? `KETO STRICT: All meals must be low-carb/high-fat. NO rice, pasta, bread, oats, corn, beans, lentils, potatoes, tortillas, or any grain. Use cauliflower rice, zucchini noodles, lettuce wraps, or just serve without a carb base. Prioritize: meat, fish, eggs, cheese, non-starchy vegetables (broccoli, spinach, zucchini, green beans, asparagus, mushrooms, peppers), healthy fats (olive oil, butter, avocado).`
+        ? `KETO STRICT: All meals must be low-carb/high-fat. NO rice, pasta, bread, oats, corn, beans, lentils, potatoes, tortillas, or any grain. Use cauliflower rice, zucchini noodles, lettuce wraps, or serve without a carb base. Prioritize: meat, fish, eggs, cheese, non-starchy vegetables (broccoli, spinach, zucchini, green beans, asparagus, mushrooms, peppers), healthy fats (olive oil, butter, avocado).`
         : ''
 
-      const commonProteins = `chicken breast, chicken thighs, steak, fish (cod, tilapia, or similar), ground beef, ground turkey, ground chicken, pork chops`
-      const commonGrains = ketoMode
-        ? `cauliflower rice, zucchini noodles, roasted vegetables (as the base)`
-        : `rice, pasta, bread/toast, potatoes, oats, corn tortillas, noodles`
+      const veganRule = veganMode
+        ? `VEGAN STRICT: Absolutely NO meat, poultry, fish, seafood, dairy, eggs, honey, or any animal product. Every meal must be 100% plant-based. Proteins: tofu, tempeh, seitan, legumes (lentils, chickpeas, black beans, edamame). No butter, cheese, or yogurt — use olive oil, coconut milk, oat milk, or plant-based alternatives only.`
+        : ''
+
+      const vegetarianRule = (!veganMode && vegetarianMode)
+        ? `VEGETARIAN STRICT: NO meat, poultry, fish, or seafood of any kind. Eggs and dairy are allowed. Proteins: eggs, Greek yogurt, cottage cheese, tofu, tempeh, lentils, chickpeas, black beans, halloumi, paneer.`
+        : ''
+
+      const pescatarianRule = pescatarianMode
+        ? `PESCATARIAN STRICT: NO beef, pork, chicken, turkey, lamb, duck, game, or any land animal meat. Fish and seafood are fully allowed. Proteins: fish (cod, tilapia, salmon, tuna), shrimp, crab, scallops, eggs, tofu. Do NOT generate any meal with chicken, steak, ground beef, ground turkey, pork chops, or similar.`
+        : ''
+
+      const paleoRule = paleoMode
+        ? `PALEO STRICT: NO grains (no rice, pasta, bread, oats, corn, quinoa, tortillas), NO legumes (no beans, lentils, chickpeas, peanuts), NO dairy (no cheese, milk, yogurt, butter — use ghee or coconut oil). No processed foods. Use sweet potato, butternut squash, or roasted vegetables as the carb base. Any unprocessed meat, poultry, fish, eggs, nuts, and seeds are fine.`
+        : ''
+
+      const lowFodmapRule = lowFodmapMode
+        ? `LOW-FODMAP STRICT: Avoid all high-FODMAP ingredients. NO garlic or onion (garlic-infused oil is safe), NO wheat, rye, or barley, NO apples, pears, mangoes, peaches, or stone fruits, NO regular lentils or chickpeas (small portions of canned well-rinsed chickpeas only), NO lactose (use hard cheeses like cheddar/parmesan, or lactose-free dairy). Safe starches: white rice, potatoes, gluten-free oats, quinoa. Safe proteins: chicken, beef, pork, fish, eggs, firm tofu. Safe vegetables: carrots, zucchini, bell peppers, spinach, kale, green beans, bok choy, tomatoes, cucumber.`
+        : ''
+
+      const dietRules = [ketoRule, veganRule, vegetarianRule, pescatarianRule, paleoRule, lowFodmapRule].filter(Boolean).join('\n\n')
+
+      // ── Diet-aware breakfast/lunch hints ─────────────────────────────────
+      let breakfastHint: string
+      let lunchHint: string
+      if (ketoMode) {
+        breakfastHint = 'Keto breakfasts: egg omelette, bacon and eggs, avocado with eggs, smoked salmon with cream cheese.'
+        lunchHint     = 'Keto lunches: lettuce wrap with tuna or chicken, egg salad, zucchini soup, steak salad.'
+      } else if (veganMode) {
+        breakfastHint = 'Vegan breakfasts: oatmeal with fruit, avocado toast, tofu scramble, smoothie bowl, chia pudding.'
+        lunchHint     = 'Vegan lunches: lentil soup, grain bowl with roasted vegetables and chickpeas, vegetable wrap, black bean salad.'
+      } else if (vegetarianMode) {
+        breakfastHint = 'Vegetarian breakfasts: eggs any style, yogurt parfait, oatmeal, avocado toast, smoothie, pancakes.'
+        lunchHint     = 'Vegetarian lunches: caprese salad, egg salad sandwich, lentil soup, grilled cheese, veggie wrap, shakshuka.'
+      } else if (pescatarianMode) {
+        breakfastHint = 'Breakfasts: eggs any style, smoked salmon on toast, yogurt parfait, oatmeal, avocado toast.'
+        lunchHint     = 'Pescatarian lunches: tuna salad, salmon wrap, shrimp salad, fish tacos, clam chowder, avocado toast with egg.'
+      } else if (paleoMode) {
+        breakfastHint = 'Paleo breakfasts: eggs (scrambled, fried, or omelette), bacon, sweet potato hash, fruit bowl with nuts.'
+        lunchHint     = 'Paleo lunches: large salad with grilled chicken or steak, lettuce-wrap burger, chicken and vegetable soup.'
+      } else if (lowFodmapMode) {
+        breakfastHint = 'Low-FODMAP breakfasts: scrambled eggs, rice cakes with peanut butter, gluten-free oats, banana with almond butter.'
+        lunchHint     = 'Low-FODMAP lunches: grilled chicken salad (no croutons), rice bowl, gluten-free sandwich, potato soup (no onion/garlic).'
+      } else {
+        breakfastHint = 'Common breakfasts: eggs (scrambled, fried, omelette), oatmeal, yogurt parfait, toast with toppings, smoothie, pancakes, breakfast burrito, avocado toast.'
+        lunchHint     = 'Common lunches: sandwich, wrap, soup, simple salad with protein, quesadilla, grilled cheese, tuna melt.'
+      }
 
       const plainLanguageRule = `PLAIN ENGLISH ONLY: Write ingredient names that any home cook would recognize. Never use French culinary terms or restaurant jargon. Examples: say "green beans" not "haricots verts", "pan sauce" not "jus", "mashed cauliflower" not "cauliflower purée", "pepper-crusted" not "au poivre". If a technique sounds fancy, simplify it.`
 
@@ -206,8 +292,8 @@ ${conditions ? `- Health conditions: ${conditions}` : ''}`
 === BREAKFAST & LUNCH MEALS ===
 Keep these quick, familiar, and easy — something a busy person can make in under 20 minutes on a weekday morning or midday.
 - Domestic, approachable meals only. No exotic cuisines or restaurant-style plating.
-- Common breakfast ideas: eggs (scrambled, fried, omelette), oatmeal, yogurt parfait, toast with toppings, smoothie, pancakes, breakfast burrito, avocado toast.${ketoMode ? ' Keto breakfasts: egg omelette, bacon and eggs, Greek yogurt (full-fat), avocado with eggs.' : ''}
-- Common lunch ideas: sandwich, wrap, soup, simple salad with protein, quesadilla, grilled cheese, tuna melt.${ketoMode ? ' Keto lunches: lettuce wrap, protein salad, egg salad, tuna salad, soup without noodles.' : ''}
+- ${breakfastHint}
+- ${lunchHint}
 - Each protein used AT MOST ONCE. Rotate from: ${commonProteins}, eggs.
 - Each carb base AT MOST ONCE. Rotate from: ${commonGrains}.
 - NO repeated primary vegetables across the week.
@@ -224,8 +310,8 @@ ${breakfastLunchSlots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}` : ''
 === DINNER MEALS ===
 ${complexityNote}
 ${randomCuisine ? `THIS DINNER MUST BE: ${randomCuisine} cuisine, primary cooking method: ${randomMethod}. Do not deviate.` : 'Draw from varied world cuisine traditions — Italian, Mexican, Indian, Middle Eastern, Greek, Korean, etc.'}
-- Each protein AT MOST ONCE. Rotate from: ${commonProteins}, lamb, shrimp.${ketoMode ? '' : ' lentils, chickpeas.'}
-- Each carb base AT MOST ONCE. Rotate from: ${commonGrains}.${ketoMode ? '' : ', couscous, farro, barley.'}
+- Each protein AT MOST ONCE. Rotate from: ${commonProteins}${dinnerExtraProteins}.
+- Each carb base AT MOST ONCE. Rotate from: ${commonGrains}${dinnerExtraGrains}.
 - NO generic "bowls". Be specific: "Baked Lemon Herb Chicken Thighs with Roasted Potatoes and Green Beans" not "Chicken Bowl".
 - Quinoa, salmon, avocado, sweet potato: fine but use each AT MOST ONCE per week.
 - Appetizing, specific names that include the cooking method and key flavors — in plain English.
@@ -237,7 +323,7 @@ ${dinnerSlots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}` : ''
 
 ${commonProfile}
 
-${ketoRule}
+${dietRules}
 
 ${plainLanguageRule}
 
