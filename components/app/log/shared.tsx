@@ -31,7 +31,7 @@ export function ErrorBanner({ message }: { message: string }) {
   )
 }
 
-export function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+export function Field({ label, required, children }: { label: React.ReactNode; required?: boolean; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-700)', letterSpacing: '0.02em' }}>
