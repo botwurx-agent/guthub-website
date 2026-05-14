@@ -49,7 +49,7 @@ export default function LogSymptom({ onSuccess }: { onSuccess: () => void }) {
 
   useEffect(() => {
     const supabase = createClient()
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toLocaleDateString('en-CA')
     supabase
       .from('meal_logs')
       .select('id, meal_name, meal_type, logged_at')
