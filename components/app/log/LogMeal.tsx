@@ -45,9 +45,10 @@ function PortionGuide({ onClose }: { onClose: () => void }) {
       />
       {/* Panel */}
       <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 201,
+        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+        width: '100%', maxWidth: 520, zIndex: 201,
         background: '#fff', borderRadius: '20px 20px 0 0',
-        boxShadow: '0 -8px 40px rgba(0,0,0,0.15)',
+        boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
         maxHeight: '72vh', display: 'flex', flexDirection: 'column',
         animation: 'slideUp 220ms var(--ease-out)',
       }}>
