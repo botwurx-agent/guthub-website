@@ -133,9 +133,8 @@ export default function AuthModal() {
     setError(null);
     const supabase = createClient();
     const returnTo = new URLSearchParams(window.location.search).get('return')
-    const callbackBase = window.location.hostname.endsWith('guthub.ai')
-      ? 'https://app.guthub.ai/auth/callback'
-      : `${window.location.origin}/auth/callback`
+    // Use same origin for callback so PKCE code verifier cookie is on the same domain
+    const callbackBase = `${window.location.origin}/auth/callback`
     const callbackUrl = returnTo ? `${callbackBase}?next=${encodeURIComponent(returnTo)}` : callbackBase
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
