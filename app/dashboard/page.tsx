@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getUserTimezone, todayInTz } from '@/lib/timezone'
 import ClientTime from '@/components/app/ClientTime'
@@ -35,7 +36,7 @@ export default async function DashboardPage() {
     { data: tonightSlot },
     { data: waterLogs },
   ] = await Promise.all([
-    supabase.from('profiles').select('name, weight_kg, health_profile, trial_ends_at, trial_email_sent').eq('id', user.id).single(),
+    supabase.from('profiles').select('name, weight_kg, health_profile, subscription_status, trial_ends_at, trial_email_sent').eq('id', user.id).single(),
     supabase.from('macro_targets').select('*').eq('user_id', user.id).order('target_date', { ascending: false }).limit(1).single(),
     supabase.from('daily_records').select('*').eq('user_id', user.id).eq('record_date', today).single(),
     supabase.from('symptom_logs').select('symptom_type, severity, notes, logged_at').eq('user_id', user.id).eq('log_date', today).order('logged_at', { ascending: false }),
@@ -48,8 +49,14 @@ export default async function DashboardPage() {
     supabase.from('water_logs').select('amount_ml').eq('user_id', user.id).eq('log_date', today),
   ])
 
-  // Day 5 trial reminder — fire once when ≤ 2 days remain
+  // Defense-in-depth: verify subscription even if middleware was bypassed
   const trialEndsAt = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
+  const trialActive = trialEndsAt ? trialEndsAt > new Date() : null
+  const hasAccess = profile?.subscription_status === 'active' ||
+    (profile?.subscription_status === 'trialing' && trialActive !== false)
+  if (!hasAccess) redirect('/pricing?reason=subscription_required')
+
+  // Day 5 trial reminder — fire once when ≤ 2 days remain
   const daysLeft = trialEndsAt ? Math.ceil((trialEndsAt.getTime() - Date.now()) / 86400000) : null
   if (daysLeft !== null && daysLeft <= 2 && daysLeft > 0 && !profile?.trial_email_sent && user.email) {
     const firstName = (profile?.name ?? '').split(' ')[0] || 'there'
