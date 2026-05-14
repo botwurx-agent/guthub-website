@@ -91,11 +91,18 @@ export async function middleware(request: NextRequest) {
 
   // 2. Logged in — check onboarding + subscription
   if (isProtected && user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('subscription_status, trial_ends_at, onboarding_completed')
-      .eq('id', user.id)
-      .single()
+    let profile: { subscription_status: string | null; trial_ends_at: string | null; onboarding_completed: boolean | null } | null = null
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('subscription_status, trial_ends_at, onboarding_completed')
+        .eq('id', user.id)
+        .single()
+      profile = data
+    } catch {
+      // DB unavailable — allow through rather than crashing middleware
+      return supabaseResponse
+    }
 
     // Redirect to onboarding if not yet completed (except /settings)
     if (!profile?.onboarding_completed && !pathname.startsWith('/settings')) {
