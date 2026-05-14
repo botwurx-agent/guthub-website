@@ -24,7 +24,12 @@ export async function GET(request: Request) {
         const appBase = process.env.NODE_ENV === 'production' ? 'https://app.guthub.ai' : origin
         return NextResponse.redirect(`${appBase}${destination}`)
       }
+      console.error('[auth/callback] exchangeCodeForSession succeeded but getUser() returned null')
+    } else {
+      console.error('[auth/callback] exchangeCodeForSession error:', error.message, error.status)
     }
+  } else {
+    console.error('[auth/callback] no code param — searchParams:', Object.fromEntries(searchParams))
   }
 
   const wwwBase = process.env.NODE_ENV === 'production' ? 'https://www.guthub.ai' : origin
