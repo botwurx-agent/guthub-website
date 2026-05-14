@@ -144,6 +144,11 @@ export default function SettingsClient({
     setPwForm({ current: '', next: '', confirm: '' })
   }
 
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    window.location.href = '/'
+  }
+
   async function handleDeleteAccount() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -431,6 +436,19 @@ export default function SettingsClient({
                     )}
                   </div>
                 </div>
+              </SettingsCard>
+
+              <SettingsCard title="Sign out">
+                <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--ink-500)', lineHeight: 1.6 }}>
+                  You&apos;re signed in as <strong>{email}</strong>. Signing out will end your session on this device.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  style={{ padding: '9px 20px', borderRadius: 9, border: '1.5px solid var(--ink-200)', background: '#fff', color: 'var(--ink-700)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Sign out
+                </button>
               </SettingsCard>
             </>
           )}
