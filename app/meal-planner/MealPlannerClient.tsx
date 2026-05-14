@@ -747,6 +747,8 @@ export default function MealPlannerClient() {
             </p>
           </div>
           <div className="plan-page-header-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flexShrink: 0 }}>
+            {/* Day count + complexity toggles — same width */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {/* Day count selector */}
             <div style={{ display: 'flex', background: 'var(--cream-100)', border: '1px solid var(--cream-200)', borderRadius: 10, padding: 3, gap: 2 }}>
               {([1, 3, 7] as const).map(d => (
@@ -754,7 +756,7 @@ export default function MealPlannerClient() {
                   key={d}
                   onClick={() => setPlanDays(d)}
                   style={{
-                    padding: '6px 14px', borderRadius: 8, border: 'none',
+                    flex: 1, padding: '6px 14px', borderRadius: 8, border: 'none',
                     fontSize: 13, fontWeight: 600, cursor: 'pointer',
                     background: planDays === d ? '#fff' : 'transparent',
                     color: planDays === d ? 'var(--ink-800)' : 'var(--ink-400)',
@@ -770,14 +772,14 @@ export default function MealPlannerClient() {
             {/* Complexity toggle */}
             <div style={{
               display: 'flex', alignItems: 'center',
-              background: 'var(--cream-100)', borderRadius: 10, padding: 3, gap: 2,
+              background: 'var(--cream-100)', border: '1px solid var(--cream-200)', borderRadius: 10, padding: 3, gap: 2,
             }}>
               {(['simple', 'weekend'] as const).map(c => (
                 <button
                   key={c}
                   onClick={() => setComplexity(c)}
                   style={{
-                    padding: '6px 13px', borderRadius: 8, border: 'none',
+                    flex: 1, padding: '6px 13px', borderRadius: 8, border: 'none',
                     fontSize: 13, fontWeight: 600, cursor: 'pointer',
                     background: complexity === c ? '#fff' : 'transparent',
                     color: complexity === c ? 'var(--ink-800)' : 'var(--ink-400)',
@@ -788,6 +790,7 @@ export default function MealPlannerClient() {
                   {c === 'simple' ? 'Quick & Easy' : 'Weekend Cook'}
                 </button>
               ))}
+            </div>
             </div>
 
             <button
