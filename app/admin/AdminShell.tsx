@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, CreditCard, BarChart2, ArrowLeft, Shield } from 'lucide-react'
+import { LayoutDashboard, Users, CreditCard, BarChart2, Mail, ArrowLeft, Shield } from 'lucide-react'
 
 const NAV = [
   { href: '/admin',         label: 'Overview',  icon: LayoutDashboard, exact: true },
   { href: '/admin/users',   label: 'Users',     icon: Users },
   { href: '/admin/revenue', label: 'Revenue',   icon: CreditCard },
   { href: '/admin/usage',   label: 'Usage',     icon: BarChart2 },
+  { href: '/admin/email',   label: 'Email',     icon: Mail },
 ]
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
