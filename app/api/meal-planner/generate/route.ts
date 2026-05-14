@@ -159,6 +159,24 @@ Return a single JSON object only — no markdown:
         existingWeekMeals = (weekMeals ?? []).map(m => `${m.plan_date} ${m.meal_type}: ${m.meal_name}`)
       }
 
+      // For single-slot swaps, pick a random cuisine + cooking method to guarantee variety
+      const CUISINES = [
+        'Italian', 'Mexican', 'Japanese', 'Thai', 'Indian', 'Middle Eastern',
+        'Greek', 'Vietnamese', 'Korean', 'Moroccan', 'Spanish', 'Caribbean',
+        'French bistro', 'American comfort (elevated)', 'Ethiopian', 'Turkish',
+        'Peruvian', 'Lebanese', 'Malaysian', 'Portuguese',
+      ]
+      const COOKING_METHODS = [
+        'roasted', 'braised', 'grilled', 'baked', 'stir-fried',
+        'slow-cooked', 'poached', 'steamed', 'broiled', 'sautéed',
+      ]
+      const randomCuisine = regenerate
+        ? CUISINES[Math.floor(Math.random() * CUISINES.length)]
+        : null
+      const randomMethod = regenerate
+        ? COOKING_METHODS[Math.floor(Math.random() * COOKING_METHODS.length)]
+        : null
+
       const prompt = `You are a creative, knowledgeable gut-health nutrition planner. Generate a meal plan that feels genuinely exciting and varied — meals a real person would look forward to eating, not generic "healthy eating" clichés.
 
 USER PROFILE:
@@ -167,16 +185,17 @@ USER PROFILE:
 - Macro split: breakfast 25% · lunch 35% · dinner 40% of daily targets
 ${allergies ? `- Allergies / avoid: ${allergies}` : ''}
 ${conditions ? `- Health conditions: ${conditions}` : ''}
+${randomCuisine ? `
+THIS MEAL MUST BE: ${randomCuisine} cuisine, primary cooking method: ${randomMethod}. Do not deviate from this — the user needs genuine variety, not the same Asian-inspired pan-seared dishes every time.` : ''}
 
 VARIETY RULES — strictly enforce these:
 1. Each protein may appear AT MOST ONCE across the full week. Rotate between: chicken thighs, chicken breast, ground turkey, beef, pork tenderloin, lamb, cod, tilapia, shrimp, tuna, eggs, tofu, tempeh, lentils, chickpeas, black beans, white beans.
 2. Each grain or carb base may appear AT MOST ONCE. Rotate between: rice, pasta, bread/toast, potatoes, oats, farro, polenta, corn tortillas, soba noodles, rice noodles, couscous, barley.
-3. Draw from a DIFFERENT cuisine tradition each day. Options: Italian, Mexican, Japanese, Thai, Indian, Middle Eastern, Greek, Vietnamese, Korean, Moroccan, American, French, Spanish, Caribbean.
-4. NO generic "bowls" (grain bowl, buddha bowl, power bowl) — be specific about the actual dish.
-5. Quinoa, salmon, avocado, and sweet potato are fine but use each AT MOST ONCE per week.
+3. NO generic "bowls" (grain bowl, buddha bowl, power bowl) — be specific about the actual dish.
+4. Quinoa, salmon, avocado, and sweet potato are fine but use each AT MOST ONCE per week.
 
 MEAL NAMING — be specific and appetizing:
-- Include cooking method + key flavors: "Pan-Seared Cod with Romesco and Roasted Red Peppers"
+- Include cooking method + key flavors: "Slow-Braised Lamb Shoulder with Harissa, Chickpeas and Preserved Lemon"
 - NOT vague: "Fish with Vegetables" or "Chicken Rice Bowl"
 - Names should make someone genuinely want to eat that meal
 
