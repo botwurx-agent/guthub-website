@@ -780,7 +780,7 @@ export default function MealPlannerClient() {
                   onClick={() => setComplexity(c)}
                   style={{
                     flex: 1, padding: '6px 13px', borderRadius: 8, border: 'none',
-                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
                     background: complexity === c ? '#fff' : 'transparent',
                     color: complexity === c ? 'var(--ink-800)' : 'var(--ink-400)',
                     boxShadow: complexity === c ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
