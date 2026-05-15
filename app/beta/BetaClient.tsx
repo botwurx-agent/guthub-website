@@ -69,11 +69,15 @@ export default function BetaClient() {
       }
     }
 
-    // Activate beta
+    // Activate beta — pass access token explicitly since cookies may not be set yet
     setStep('activating')
+    const accessToken = signUpData?.session?.access_token
     const activateRes = await fetch('/api/beta/activate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+      },
       body: JSON.stringify({ code: code.trim().toUpperCase(), name }),
     })
     const activateData = await activateRes.json()
