@@ -46,6 +46,9 @@ export default function BetaClient() {
 
     const supabase = createClient()
 
+    let userId: string | undefined
+    let accessToken: string | undefined
+
     // Try sign up first
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -54,25 +57,28 @@ export default function BetaClient() {
     })
 
     if (signUpError) {
-      // If already registered, try signing in instead
+      // If already registered (e.g. previous failed activation), sign in instead
       if (signUpError.message.toLowerCase().includes('already registered') || signUpError.message.toLowerCase().includes('already exists')) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
         if (signInError) {
           setAuthError('This email already has an account. Check your password and try again.')
           setAuthLoading(false)
           return
         }
+        userId = signInData.user?.id
+        accessToken = signInData.session?.access_token
       } else {
         setAuthError(signUpError.message)
         setAuthLoading(false)
         return
       }
+    } else {
+      userId = signUpData.user?.id
+      accessToken = signUpData.session?.access_token
     }
 
-    // Activate beta — session may be null if email confirmation is on, so send userId directly
+    // Activate beta — send userId explicitly; session may be null if email confirmation is required
     setStep('activating')
-    const accessToken = signUpData?.session?.access_token
-    const userId = signUpData?.user?.id
     const activateRes = await fetch('/api/beta/activate', {
       method: 'POST',
       headers: {
