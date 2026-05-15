@@ -3,7 +3,18 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user: cookieUser } } = await supabase.auth.getUser()
+  let user = cookieUser
+
+  // Fallback: read Bearer token from Authorization header (needed immediately after signUp before cookies propagate)
+  if (!user) {
+    const authHeader = req.headers.get('Authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      const { data: { user: tokenUser } } = await supabase.auth.getUser(authHeader.slice(7))
+      user = tokenUser
+    }
+  }
+
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { code, name } = await req.json()
