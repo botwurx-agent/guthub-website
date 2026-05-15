@@ -114,8 +114,8 @@ export default function InsightsClient() {
         supabase.from('weight_logs').select('log_date, weight_kg').gte('log_date', since).order('log_date'),
         supabase.from('symptom_logs').select('symptom_type, severity, log_date').gte('log_date', since).order('log_date'),
         supabase.from('bm_logs').select('log_date, bristol_type, urgency, pain').gte('log_date', since).order('log_date'),
-        supabase.from('correlations').select('*').order('correlation_score', { ascending: false }),
-        supabase.from('insights').select('*').eq('dismissed', false).order('created_at', { ascending: false }).limit(10),
+        user ? supabase.from('correlations').select('*').eq('user_id', user.id).order('correlation_score', { ascending: false }) : Promise.resolve({ data: [] }),
+        user ? supabase.from('insights').select('*').eq('user_id', user.id).eq('dismissed', false).order('created_at', { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
         user ? supabase.from('lab_reports').select('id, filename, report_date, analysis_summary, storage_path').eq('user_id', user.id).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
         supabase.from('meal_logs').select('protein_g, calories').gte('log_date', since),
         supabase.from('water_logs').select('amount_ml').gte('log_date', since),
@@ -239,8 +239,9 @@ export default function InsightsClient() {
   ).map(([type, v]) => ({ type, count: v.count, avgSev: Math.round(v.total / v.count) }))
     .sort((a, b) => b.count - a.count)
 
-  const goodInsights = insights.filter(i => ['positive', 'achievement', 'goal'].includes(i.insight_type))
-  const warnInsights = insights.filter(i => !['positive', 'achievement', 'goal'].includes(i.insight_type))
+  const POSITIVE_TYPES = new Set(['positive', 'achievement', 'goal', 'goal_analysis'])
+  const goodInsights = insights.filter(i => POSITIVE_TYPES.has(i.insight_type))
+  const warnInsights = insights.filter(i => !POSITIVE_TYPES.has(i.insight_type))
 
   if (loading) {
     return (
@@ -477,7 +478,7 @@ export default function InsightsClient() {
         <div style={{ background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 20 }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--ink-900)' }}>Trigger food correlations</h3>
-            <span style={{ fontSize: 13, color: 'var(--ink-400)' }}>Last 30 days · symptoms within 6 hrs of eating</span>
+            <span style={{ fontSize: 13, color: 'var(--ink-400)' }}>Last 30 days · food, hydration, and lifestyle triggers</span>
           </div>
 
           {correlations.length === 0 ? (

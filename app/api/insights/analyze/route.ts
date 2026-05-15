@@ -5,6 +5,12 @@ import { AI_MODEL } from '@/lib/ai-config'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
+// DB-allowed insight_type values — must match insights_insight_type_check constraint
+const ALLOWED_INSIGHT_TYPES = new Set([
+  'correlation', 'trend', 'weekly_summary', 'goal_analysis', 'lab_finding',
+  'positive', 'achievement', 'goal',
+])
+
 export async function POST() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -13,35 +19,41 @@ export async function POST() {
   const since = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
 
   const [
-    { data: gutScores },
     { data: symptoms },
     { data: bms },
     { data: meals },
     { data: weights },
+    { data: waterLogs },
   ] = await Promise.all([
-    supabase.from('gut_scores').select('score_date, score').eq('user_id', user.id).gte('score_date', since).order('score_date'),
     supabase.from('symptom_logs').select('log_date, symptom_type, severity, notes').eq('user_id', user.id).gte('log_date', since).order('log_date'),
     supabase.from('bm_logs').select('log_date, bristol_type, urgency, pain').eq('user_id', user.id).gte('log_date', since).order('log_date'),
     supabase.from('meal_logs').select('log_date, meal_name, meal_type, ingredients, calories, protein_g, carbs_g, fat_g').eq('user_id', user.id).gte('log_date', since).order('log_date'),
     supabase.from('weight_logs').select('log_date, weight_kg').eq('user_id', user.id).gte('log_date', since).order('log_date'),
+    supabase.from('water_logs').select('log_date, amount_ml').eq('user_id', user.id).gte('log_date', since).order('log_date'),
   ])
 
   const hasSufficientData = (symptoms?.length ?? 0) + (meals?.length ?? 0) >= 3
-
   if (!hasSufficientData) {
     return NextResponse.json({ error: 'insufficient_data' }, { status: 422 })
   }
 
-  // Summarize for the prompt
-  const gutScoreSummary = (gutScores ?? []).map(g => `${g.score_date}: ${Math.round(g.score)}`).join(', ')
+  // Aggregate water by date (sum ml per day, convert to oz)
+  const waterByDate: Record<string, number> = {}
+  for (const w of waterLogs ?? []) {
+    waterByDate[w.log_date] = (waterByDate[w.log_date] ?? 0) + Number(w.amount_ml ?? 0)
+  }
+  const waterSummary = Object.entries(waterByDate)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, ml]) => `${date}: ${Math.round(ml / 29.574)} oz (${ml} ml)`)
+    .join('\n') || 'No water logs'
 
   const symptomSummary = (symptoms ?? []).map(s =>
     `${s.log_date} — ${s.symptom_type} severity ${s.severity}${s.notes ? ` (${s.notes})` : ''}`
-  ).join('\n')
+  ).join('\n') || 'No symptoms logged'
 
   const bmSummary = (bms ?? []).map(b =>
     `${b.log_date} — Bristol type ${b.bristol_type}${b.urgency ? `, urgency ${b.urgency}` : ''}${b.pain ? `, pain ${b.pain}` : ''}`
-  ).join('\n')
+  ).join('\n') || 'No BM logs'
 
   const mealSummary = (meals ?? []).map(m => {
     const foods = Array.isArray(m.ingredients)
@@ -49,59 +61,68 @@ export async function POST() {
       : ''
     const macros = m.calories ? ` [${m.calories} kcal, ${m.protein_g}g protein, ${m.carbs_g}g carbs, ${m.fat_g}g fat]` : ''
     return `${m.log_date} (${m.meal_type ?? 'meal'}) — ${m.meal_name}${foods ? `: ${foods}` : ''}${macros}`
-  }).join('\n')
+  }).join('\n') || 'No meals logged'
 
-  const weightSummary = (weights ?? []).map(w => `${w.log_date}: ${w.weight_kg}kg`).join(', ')
+  const weightSummary = (weights ?? [])
+    .map(w => `${w.log_date}: ${w.weight_kg}kg`)
+    .join(', ') || 'No weight logs'
 
-  const prompt = `Analyze 30 days of gut health data and identify patterns.
+  // Compute average daily water for the period
+  const totalDaysWithWater = Object.keys(waterByDate).length
+  const avgWaterOz = totalDaysWithWater > 0
+    ? Math.round(Object.values(waterByDate).reduce((s, v) => s + v, 0) / totalDaysWithWater / 29.574)
+    : 0
+  const lowWaterDays = Object.entries(waterByDate).filter(([, ml]) => ml < 1000).map(([d]) => d)
 
-GUT SCORES (date: score):
-${gutScoreSummary || 'No data'}
+  const prompt = `You are a gut health analyst. Analyze the following 30 days of patient data and return a JSON object with exactly two keys: "correlations" and "insights".
 
 SYMPTOMS (date — type, severity 1-10):
-${symptomSummary || 'No symptoms logged'}
+${symptomSummary}
 
-BOWEL MOVEMENTS (Bristol scale 1-7, urgency/pain 1-10):
-${bmSummary || 'No BM logs'}
+BOWEL MOVEMENTS (Bristol scale 1-7; type 1-2=constipation, 3-5=normal, 6-7=loose; urgency/pain 1-10):
+${bmSummary}
 
-MEALS EATEN (date — name: foods):
-${mealSummary || 'No meals logged'}
+MEALS EATEN (date — name: foods [macros]):
+${mealSummary}
+
+WATER INTAKE (daily total; goal is 64 oz / 1,893 ml per day):
+${waterSummary}
+Average: ${avgWaterOz} oz/day${lowWaterDays.length > 0 ? `\nLow-water days (<34 oz): ${lowWaterDays.join(', ')}` : ''}
 
 WEIGHT (date: kg):
-${weightSummary || 'No weight logs'}
+${weightSummary}
 
-Based on this data, identify:
-1. Food-symptom correlations: which specific foods or food categories appear to precede symptoms
-2. Key trends in gut score, weight, or symptom frequency
-3. Observations about BM patterns or consistency
-4. Any positive patterns worth reinforcing
+INSTRUCTIONS:
+1. Cross-reference symptom dates with meal dates from 1-2 days prior to identify food triggers.
+2. Cross-reference low water intake days with constipation (Bristol 1-2), bloating, or high-severity symptoms.
+3. Look for patterns in BM consistency and urgency.
+4. Identify any positive trends to reinforce.
 
-Return JSON:
+Return ONLY this JSON structure, no other text:
 {
   "correlations": [
     {
-      "food_item": "dairy" | specific food,
+      "food_item": "name of food or category",
       "symptom_type": "bloating" | "gas" | "cramping" | "diarrhea" | "constipation" | "nausea" | "pain" | "fatigue",
-      "correlation_score": 0.1-1.0,
+      "correlation_score": 0.1 to 1.0,
       "occurrence_count": integer,
-      "llm_synthesis": "1-2 sentence plain-English finding"
+      "llm_synthesis": "1-2 sentence finding"
     }
   ],
   "insights": [
     {
-      "insight_type": "positive" | "achievement" | "correlation" | "trend" | "weekly_summary",
-      "title": "short title (max 8 words)",
-      "body": "2-3 sentence explanation with specific numbers or dates when possible"
+      "insight_type": "positive" | "achievement" | "trend" | "correlation" | "weekly_summary",
+      "title": "max 8 words",
+      "body": "2-3 sentences with specific numbers or dates"
     }
   ]
 }
 
-Use "positive" for any improving trend (gut score improving, symptoms reducing, good streak).
-Use "achievement" for milestones (7-day logging streak, hitting protein goal, weight progress).
-Use "correlation" or "trend" for neutral or concerning patterns.
-Use "weekly_summary" for an overall summary.
-
-Aim for at least 1-2 positive or achievement insights when the data supports it. Return 1-5 correlations and 3-5 insights total. Be specific and actionable.`
+Rules:
+- "correlations": 1-6 items covering food AND hydration triggers (include a water/hydration correlation if low-water days coincide with symptoms).
+- "insights": exactly 4-5 items. Use "positive" for improving trends. Use "achievement" for logging streaks or milestones. Use "trend" for concerning or neutral patterns. Use "weekly_summary" for one overall summary.
+- Be specific: use actual dates, numbers, and food names from the data.
+- If water intake is below 64 oz on days with symptoms, flag this as a correlation AND as a trend insight.`
 
   const completion = await openai.chat.completions.create({
     model: AI_MODEL,
@@ -110,7 +131,7 @@ Aim for at least 1-2 positive or achievement insights when the data supports it.
   })
 
   const raw = completion.choices[0].message.content ?? '{}'
-  console.log('[insights/analyze] raw AI response:', raw.slice(0, 800))
+  console.log('[insights/analyze] raw response (first 600):', raw.slice(0, 600))
 
   let parsed: Record<string, unknown> = {}
   try {
@@ -120,34 +141,34 @@ Aim for at least 1-2 positive or achievement insights when the data supports it.
     return NextResponse.json({ error: 'AI returned invalid JSON' }, { status: 500 })
   }
 
-  console.log('[insights/analyze] top-level keys:', Object.keys(parsed))
+  console.log('[insights/analyze] keys:', Object.keys(parsed))
 
-  // Find correlations array — explicit key or first array of objects with food_item
-  const correlations: unknown[] = (() => {
+  // Find correlations
+  const correlations: any[] = (() => {
     if (Array.isArray(parsed.correlations)) return parsed.correlations
     for (const val of Object.values(parsed)) {
-      if (Array.isArray(val) && val.length > 0 && (val[0] as any)?.food_item) return val
+      if (Array.isArray(val) && (val[0] as any)?.food_item) return val
     }
     return []
   })()
 
-  // Find insights array — explicit key or any array of objects with title+body
-  const insights: unknown[] = (() => {
-    for (const key of ['insights', 'insight', 'key_insights', 'observations', 'patterns', 'findings', 'analysis', 'recommendations', 'summary']) {
-      if (Array.isArray((parsed as any)[key]) && (parsed as any)[key].length > 0) {
-        console.log('[insights/analyze] found insights under key:', key, 'count:', (parsed as any)[key].length)
-        return (parsed as any)[key]
-      }
-    }
-    // Fallback: scan all arrays for objects that have title+body
-    for (const [k, val] of Object.entries(parsed)) {
-      if (k === 'correlations') continue
-      if (Array.isArray(val) && val.length > 0 && (val[0] as any)?.title && (val[0] as any)?.body) {
-        console.log('[insights/analyze] found insights via scan under key:', k, 'count:', val.length)
+  // Find insights — try known key names, then scan for title+body arrays
+  const insights: any[] = (() => {
+    for (const key of ['insights', 'insight', 'key_insights', 'findings', 'analysis', 'observations', 'recommendations']) {
+      const val = (parsed as any)[key]
+      if (Array.isArray(val) && val.length > 0) {
+        console.log('[insights/analyze] insights found under key:', key, 'count:', val.length)
         return val
       }
     }
-    console.warn('[insights/analyze] no insights array found. All keys:', Object.keys(parsed))
+    for (const [k, val] of Object.entries(parsed)) {
+      if (k === 'correlations') continue
+      if (Array.isArray(val) && val.length > 0 && (val[0] as any)?.title) {
+        console.log('[insights/analyze] insights found by scan, key:', k, 'count:', val.length)
+        return val as any[]
+      }
+    }
+    console.warn('[insights/analyze] no insights array found. keys:', Object.keys(parsed))
     return []
   })()
 
@@ -160,7 +181,7 @@ Aim for at least 1-2 positive or achievement insights when the data supports it.
         user_id:           user.id,
         food_item:         c.food_item,
         symptom_type:      c.symptom_type,
-        correlation_score: c.correlation_score,
+        correlation_score: Math.min(1, Math.max(0, Number(c.correlation_score) || 0.5)),
         occurrence_count:  c.occurrence_count ?? 0,
         observation_days:  30,
         llm_synthesis:     c.llm_synthesis,
@@ -171,24 +192,29 @@ Aim for at least 1-2 positive or achievement insights when the data supports it.
     if (corrErr) console.error('[insights/analyze] correlations upsert error:', corrErr)
   }
 
-  // Insert insights (delete old auto ones first to avoid clutter)
+  // Delete old auto insights, insert fresh ones
   await supabase.from('insights').delete()
-    .eq('user_id', user.id).eq('review_status', 'auto').eq('dismissed', false)
+    .eq('user_id', user.id).eq('review_status', 'auto')
 
   if (insights.length > 0) {
-    const { error: insErr } = await supabase.from('insights').insert(
-      insights.map((ins: any) => ({
+    // Sanitize insight_type to only allowed DB values
+    const sanitized = insights
+      .filter((ins: any) => ins.title && ins.body)
+      .map((ins: any) => ({
         user_id:       user.id,
-        insight_type:  ins.insight_type ?? 'trend',
-        title:         ins.title ?? '',
-        body:          ins.body ?? ins.description ?? ins.text ?? '',
+        insight_type:  ALLOWED_INSIGHT_TYPES.has(ins.insight_type) ? ins.insight_type : 'trend',
+        title:         String(ins.title).slice(0, 120),
+        body:          String(ins.body ?? ins.description ?? ins.text ?? ''),
         review_status: 'auto',
         dismissed:     false,
       }))
-    )
-    if (insErr) console.error('[insights/analyze] insights insert error:', insErr)
-  } else {
-    console.warn('[insights/analyze] insights array was empty — nothing to insert. Full parsed keys:', Object.keys(parsed))
+
+    const { error: insErr } = await supabase.from('insights').insert(sanitized)
+    if (insErr) {
+      console.error('[insights/analyze] insights insert error:', insErr)
+    } else {
+      console.log('[insights/analyze] inserted', sanitized.length, 'insights successfully')
+    }
   }
 
   return NextResponse.json({ correlations, insights })
