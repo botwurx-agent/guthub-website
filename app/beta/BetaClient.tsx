@@ -49,35 +49,39 @@ export default function BetaClient() {
     let userId: string | undefined
     let accessToken: string | undefined
 
-    // Try sign up first
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { name } },
     })
 
-    if (signUpError) {
-      // If already registered (e.g. previous failed activation), sign in instead
-      if (signUpError.message.toLowerCase().includes('already registered') || signUpError.message.toLowerCase().includes('already exists')) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-        if (signInError) {
-          setAuthError('This email already has an account. Check your password and try again.')
-          setAuthLoading(false)
-          return
-        }
-        userId = signInData.user?.id
-        accessToken = signInData.session?.access_token
-      } else {
-        setAuthError(signUpError.message)
+    if (!signUpError && signUpData.user && signUpData.session) {
+      // Fresh signup, email confirmation off — session returned immediately
+      userId = signUpData.user.id
+      accessToken = signUpData.session.access_token
+    } else if (!signUpError && signUpData.user && !signUpData.session) {
+      // Fresh signup, email confirmation on — user created but no session yet
+      userId = signUpData.user.id
+    } else {
+      // Either explicit error (already registered) or Supabase returned null user/session
+      // (fake success response for existing email when confirmation is on) — try signing in
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError) {
+        setAuthError(signUpError?.message ?? 'This email already has an account. Check your password and try again.')
         setAuthLoading(false)
         return
       }
-    } else {
-      userId = signUpData.user?.id
-      accessToken = signUpData.session?.access_token
+      userId = signInData.user?.id
+      accessToken = signInData.session?.access_token
     }
 
-    // Activate beta — send userId explicitly; session may be null if email confirmation is required
+    if (!userId) {
+      setAuthError('Unable to verify your account. Please try again.')
+      setAuthLoading(false)
+      return
+    }
+
+    // Activate beta — send userId and token explicitly; server has service role fallback
     setStep('activating')
     const activateRes = await fetch('/api/beta/activate', {
       method: 'POST',
