@@ -118,11 +118,13 @@ All env vars are set in Vercel. Supabase redirect URLs configured for both `guth
 - `lib/stripe.ts` — Stripe client + PLANS config (API version: `2026-04-22.dahlia`)
 - `lib/gut-score.ts` — computeGutScore(), gutScoreLabel()
 - `lib/coach-context.ts` — comprehensive AI context builder: all intake fields (nickname, eating_style, allergens, primary_goals, sleep_quality, energy_level, ed_history, etc.), water logs, note_logs, meal_plan_slots, symptom logs with onset_minutes
+- `lib/email-templates.ts` — `buildAdminEmailHtml({ subject, body, ctaLabel?, ctaUrl? })` — shared branded HTML email wrapper (forest header, white body, cream footer). Used by admin email composer and available for future transactional emails.
 - `lib/supabase/server.ts` — createClient(), createServiceClient()
 - `lib/supabase/client.ts` — browser createClient()
 - `lib/timezone.ts` — getUserTimezone(), todayInTz(), daysAgoInTz(), formatTimeInTz()
 - `components/app/ClientTime.tsx` — `'use client'` component that renders ISO timestamp in user's local timezone
 - `components/app/MealIllustration.tsx` — shared SVG illustrations for breakfast/lunch/dinner (server-compatible, used in dashboard + meal planner)
+- `components/app/log/shared.tsx` — shared form primitives: `SuccessBanner`, `ErrorBanner`, `Field` (label: ReactNode), `Input`, `Textarea`, `SubmitBtn`
 
 ## Settings page (`app/settings/SettingsClient.tsx`)
 Six tabs in left nav:
@@ -148,22 +150,26 @@ Multi-state nudge — picks the highest-priority scenario:
 ## Design tokens (in `app/globals.css`)
 Cream / forest / terracotta palette: `--cream-50/100/200`, `--forest-300/400/500/600`, `--terracotta-300/400/500/600`, `--ink-100..900`. Section backgrounds typically alternate `--cream-50` ↔ `--cream-100` ↔ `--terracotta-50` ↔ `--forest-500` (dark).
 
-## What's been built and confirmed working (as of 2026-05-11)
+## What's been built and confirmed working (as of 2026-05-15)
 
 ### ✅ Completed & live
 - **Marketing site** — full homepage, features, pricing, about pages
 - **Auth** — Google OAuth + email/password signup/signin via browser Supabase client. AuthModal auto-opens from `?auth=signin` URL param and respects `?return=` for post-login redirect.
 - **AppShell** — 248px forest sidebar, sticky topbar, logo-dark.png, terracotta active states, gradient avatar, "Restart onboarding" pill
 - **Onboarding** — 6-step form with AI macro calculation; `completeOnboarding` sets `trial_ends_at` only if not already set by Stripe, sends welcome email
-- **Dashboard** — gut score ring, macro progress bars, weight, water. Coach Proactive tile with 7 data-driven states. Tonight's Dinner tile with SVG illustration.
-- **Log** — tabbed: meal (+ Beverage chip), symptom, BM, water, weight, note
+- **Dashboard** — gut score ring, macro progress bars, weight, water. Coach Proactive tile with 7 data-driven states. Tonight's Dinner tile with SVG illustration. Defense-in-depth subscription check (redirects to `/pricing?reason=subscription_required` if no active sub/trial).
+- **Log** — tabbed: meal (+ Beverage chip), symptom, BM, water, weight, note. Meal log has a **Portion guide** — right-side drawer on desktop (380px, slides in from right), bottom sheet on mobile. Triggered by inline "Portion guide" link in the ingredients label.
 - **Coach** — SSE streaming AI chat, image upload, thread rename/delete, auto-title, Save to Planner card
-- **Meal Planner** — AI 7-day week grid, generate/swap/accept slots
-- **Insights** — SVG charts, symptom frequency, food-symptom correlations, AI analysis
+- **Meal Planner** — AI 7-day week grid, generate/swap/accept slots. Diet styles fully enforced (keto/vegan/vegetarian/pescatarian/paleo/low-fodmap) via explicit prompt rule blocks. Shopping list scoped to selected day only. Toggle buttons equal-width with `whiteSpace: nowrap`.
+- **Insights** — SVG charts, symptom frequency, food-symptom correlations, AI analysis. `What's working` / `What to watch` tiles populated by `insights` table after AI analysis.
 - **Subscribe page** (`/subscribe`) — custom Stripe Elements (SetupIntent → create-subscription), two-column layout, 7-day trial, redirects new users to onboarding
-- **Transactional emails** — welcome, day-5 reminder, trial expired, conversion confirmation (all from `hello@guthub.ai`)
-- **Settings** — 6-tab panel including Account & Security (password change with re-auth) and Subscription (Manage Billing → Stripe portal)
-- **Middleware** — protects app routes, redirects unauthenticated to `/?auth=signin&return=URL`, redirects pre-onboarding users to `/onboarding`, blocks expired trials to `/pricing?reason=subscription_required`
+- **Transactional emails** — welcome, day-5 reminder, trial expired, conversion confirmation (all from `hello@guthub.ai`). Template HTML shared via `lib/email-templates.ts` (`buildAdminEmailHtml`).
+- **Settings** — 6-tab panel including Account & Security (password change with re-auth, sign-out button) and Subscription (Manage Billing → Stripe portal)
+- **Middleware** — protects app routes, redirects unauthenticated to `/?auth=signin&return=URL`, redirects pre-onboarding users to `/onboarding`, blocks expired trials to `/pricing?reason=subscription_required`. All redirects use full URLs (Edge runtime requirement).
+- **Admin panel** (`/admin`) — protected by `ADMIN_PASSWORD` env var + `admin_session` cookie. Tabs: Overview, Users, Revenue, Usage, **Email**. `/admin/email` — compose branded emails with chip-tag To field, Write/Preview tabs, optional CTA button, sends via Resend individually per recipient.
+
+### 🔧 In progress / known issues
+- **Insights "What's working" / "What to watch" tiles empty** — `insights` table has 0 rows even after AI analysis runs. Correlations (9 rows) save fine, so the OpenAI call works. Likely the AI response uses a different key name for the insights array. Fix deployed: `app/api/insights/analyze/route.ts` now exhaustively scans all key aliases (`insights`, `key_insights`, `findings`, `analysis`, `recommendations`, etc.) and falls back to scanning any array with `title`+`body` objects. Logs the key found. **Next step**: user should run analysis again, then check Vercel runtime logs for `[insights/analyze]` lines to see which key was found or if the warn fires.
 
 ### Known gotchas & important fixes
 - **gpt-5-mini does NOT support `max_tokens`** — do not add it to `app/api/coach/stream/route.ts`
@@ -171,8 +177,11 @@ Cream / forest / terracotta palette: `--cream-50/100/200`, `--forest-300/400/500
 - **Stripe restricted key** (`rk_live_...`) must have write access for: Customers, SetupIntents, Subscriptions, PaymentMethods, BillingPortal. If any are missing → 500 on the relevant page.
 - **Stripe API version** must be `'2026-04-22.dahlia'` in `lib/stripe.ts` — any other version causes TypeScript build failure on Vercel.
 - **Beverage meal type**: DB constraint updated via migration 005. Chip row uses `flexWrap: 'wrap'`.
-- **`git push origin` 403s** — origin is a read-only local proxy. Always push to `https://github.com/botwurx-agent/guthub-website.git` directly. After pushing, run `git fetch origin <branch> && git branch --set-upstream-to=origin/<branch> <branch>` to clear the stop-hook warning.
+- **`git push origin` 403s** — origin is a read-only local proxy. Always push to `https://github.com/botwurx-agent/guthub-website.git` directly. After pushing, sync tracking ref with: `git fetch https://github.com/botwurx-agent/guthub-website.git claude/continue-guthub-development-o0zfs:refs/remotes/origin/claude/continue-guthub-development-o0zfs`
 - **`~/.netrc` PAT does NOT persist between sessions** — ask user for a fresh PAT (classic, `repo` scope) if `git push` returns 401.
+- **Google OAuth PKCE**: callback URL must use `window.location.origin` (not hardcoded `app.guthub.ai`) — cross-subdomain PKCE verifier mismatch causes `AuthApiError: Invalid`.
+- **Middleware Edge runtime**: `NextResponse.redirect()` requires full URLs — use `new URL('/path', request.url).toString()`, never relative paths.
+- **Admin email send**: `app/api/admin/send-email/route.ts` — auth checked via `admin_session` cookie vs `ADMIN_PASSWORD` env var. Sends one Resend call per recipient. Uses `buildAdminEmailHtml` from `lib/email-templates.ts`.
 
 ## AppShell details (`components/app/AppShell.tsx`)
 - 248px forest-500 sidebar, sticky, full viewport height
@@ -229,7 +238,7 @@ password ghp_XXXXXXXXXXXX
 
 ## Conventions
 - All interactive/animated components need `'use client'` at the top.
-- Animations: CSS keyframes defined in `globals.css` (bubbleIn, typing, barGrow, pulse, scanMove, popIn, slideUp, heroGlow, authFadeIn, authPopIn) — reference by name in component styles.
+- Animations: CSS keyframes defined in `globals.css` (bubbleIn, typing, barGrow, pulse, scanMove, popIn, slideUp, slideInRight, slideInBottom, heroGlow, authFadeIn, authPopIn, micPulse) — reference by name in component styles.
 - Auth modal: any component can call `openAuth('signup' | 'signin')` from `components/AuthModal.tsx`. It dispatches a `CustomEvent('open-auth')` that the modal listens for.
 - Grid layouts that need stable widths: use `minmax(0, 1fr)` instead of bare `1fr`.
 - Don't add Tailwind, CSS modules, or styled-components — match the existing inline-style + CSS-var pattern.
