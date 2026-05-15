@@ -110,11 +110,30 @@ Aim for at least 1-2 positive or achievement insights when the data supports it.
   })
 
   const raw = completion.choices[0].message.content ?? '{}'
-  const { correlations = [], insights = [] } = JSON.parse(raw)
+  console.log('[insights/analyze] raw AI response:', raw.slice(0, 500))
+
+  let parsed: Record<string, unknown> = {}
+  try {
+    parsed = JSON.parse(raw)
+  } catch (e) {
+    console.error('[insights/analyze] JSON.parse failed:', e)
+    return NextResponse.json({ error: 'AI returned invalid JSON' }, { status: 500 })
+  }
+
+  // Handle key aliases the model might use
+  const correlations: unknown[] = (parsed.correlations as unknown[] | undefined) ?? []
+  const insights: unknown[] = (
+    (parsed.insights as unknown[] | undefined) ??
+    (parsed.insight as unknown[] | undefined) ??
+    (parsed.observations as unknown[] | undefined) ??
+    (parsed.patterns as unknown[] | undefined) ??
+    []
+  )
+  console.log('[insights/analyze] correlations:', correlations.length, 'insights:', insights.length, 'keys:', Object.keys(parsed))
 
   // Upsert correlations
   if (correlations.length > 0) {
-    await supabase.from('correlations').upsert(
+    const { error: corrErr } = await supabase.from('correlations').upsert(
       correlations.map((c: any) => ({
         user_id:           user.id,
         food_item:         c.food_item,
@@ -127,6 +146,7 @@ Aim for at least 1-2 positive or achievement insights when the data supports it.
       })),
       { onConflict: 'user_id,food_item,symptom_type' }
     )
+    if (corrErr) console.error('[insights/analyze] correlations upsert error:', corrErr)
   }
 
   // Insert insights (delete old auto ones first to avoid clutter)
@@ -134,15 +154,19 @@ Aim for at least 1-2 positive or achievement insights when the data supports it.
     .eq('user_id', user.id).eq('review_status', 'auto').eq('dismissed', false)
 
   if (insights.length > 0) {
-    await supabase.from('insights').insert(
+    const { error: insErr } = await supabase.from('insights').insert(
       insights.map((ins: any) => ({
-        user_id:      user.id,
-        insight_type: ins.insight_type,
-        title:        ins.title,
-        body:         ins.body,
+        user_id:       user.id,
+        insight_type:  ins.insight_type ?? 'trend',
+        title:         ins.title ?? '',
+        body:          ins.body ?? ins.description ?? ins.text ?? '',
         review_status: 'auto',
+        dismissed:     false,
       }))
     )
+    if (insErr) console.error('[insights/analyze] insights insert error:', insErr)
+  } else {
+    console.warn('[insights/analyze] insights array was empty — nothing to insert. Full parsed keys:', Object.keys(parsed))
   }
 
   return NextResponse.json({ correlations, insights })
