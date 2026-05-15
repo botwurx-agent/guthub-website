@@ -110,7 +110,7 @@ Aim for at least 1-2 positive or achievement insights when the data supports it.
   })
 
   const raw = completion.choices[0].message.content ?? '{}'
-  console.log('[insights/analyze] raw AI response:', raw.slice(0, 500))
+  console.log('[insights/analyze] raw AI response:', raw.slice(0, 800))
 
   let parsed: Record<string, unknown> = {}
   try {
@@ -120,16 +120,38 @@ Aim for at least 1-2 positive or achievement insights when the data supports it.
     return NextResponse.json({ error: 'AI returned invalid JSON' }, { status: 500 })
   }
 
-  // Handle key aliases the model might use
-  const correlations: unknown[] = (parsed.correlations as unknown[] | undefined) ?? []
-  const insights: unknown[] = (
-    (parsed.insights as unknown[] | undefined) ??
-    (parsed.insight as unknown[] | undefined) ??
-    (parsed.observations as unknown[] | undefined) ??
-    (parsed.patterns as unknown[] | undefined) ??
-    []
-  )
-  console.log('[insights/analyze] correlations:', correlations.length, 'insights:', insights.length, 'keys:', Object.keys(parsed))
+  console.log('[insights/analyze] top-level keys:', Object.keys(parsed))
+
+  // Find correlations array — explicit key or first array of objects with food_item
+  const correlations: unknown[] = (() => {
+    if (Array.isArray(parsed.correlations)) return parsed.correlations
+    for (const val of Object.values(parsed)) {
+      if (Array.isArray(val) && val.length > 0 && (val[0] as any)?.food_item) return val
+    }
+    return []
+  })()
+
+  // Find insights array — explicit key or any array of objects with title+body
+  const insights: unknown[] = (() => {
+    for (const key of ['insights', 'insight', 'key_insights', 'observations', 'patterns', 'findings', 'analysis', 'recommendations', 'summary']) {
+      if (Array.isArray((parsed as any)[key]) && (parsed as any)[key].length > 0) {
+        console.log('[insights/analyze] found insights under key:', key, 'count:', (parsed as any)[key].length)
+        return (parsed as any)[key]
+      }
+    }
+    // Fallback: scan all arrays for objects that have title+body
+    for (const [k, val] of Object.entries(parsed)) {
+      if (k === 'correlations') continue
+      if (Array.isArray(val) && val.length > 0 && (val[0] as any)?.title && (val[0] as any)?.body) {
+        console.log('[insights/analyze] found insights via scan under key:', k, 'count:', val.length)
+        return val
+      }
+    }
+    console.warn('[insights/analyze] no insights array found. All keys:', Object.keys(parsed))
+    return []
+  })()
+
+  console.log('[insights/analyze] correlations:', correlations.length, 'insights:', insights.length)
 
   // Upsert correlations
   if (correlations.length > 0) {
