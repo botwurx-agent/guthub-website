@@ -47,7 +47,6 @@ export default function BetaClient() {
     const supabase = createClient()
 
     let userId: string | undefined
-    let accessToken: string | undefined
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -55,24 +54,27 @@ export default function BetaClient() {
       options: { data: { name } },
     })
 
-    if (!signUpError && signUpData.user && signUpData.session) {
-      // Fresh signup, email confirmation off — session returned immediately
+    if (!signUpError && signUpData.user) {
+      // Fresh signup — user created (session may be null if email confirmation is on)
       userId = signUpData.user.id
-      accessToken = signUpData.session.access_token
-    } else if (!signUpError && signUpData.user && !signUpData.session) {
-      // Fresh signup, email confirmation on — user created but no session yet
-      userId = signUpData.user.id
+      // If no session yet, sign in to get one so RPC can run as authenticated user
+      if (!signUpData.session) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        if (signInError) {
+          setAuthError('Account created — please check your email to confirm, then try signing in.')
+          setAuthLoading(false)
+          return
+        }
+      }
     } else {
-      // Either explicit error (already registered) or Supabase returned null user/session
-      // (fake success response for existing email when confirmation is on) — try signing in
+      // Existing account (error or Supabase fake-success for existing email) — sign in
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) {
-        setAuthError(signUpError?.message ?? 'This email already has an account. Check your password and try again.')
+        setAuthError('This email already has an account. Check your password and try again.')
         setAuthLoading(false)
         return
       }
       userId = signInData.user?.id
-      accessToken = signInData.session?.access_token
     }
 
     if (!userId) {
@@ -81,20 +83,16 @@ export default function BetaClient() {
       return
     }
 
-    // Activate beta — send userId and token explicitly; server has service role fallback
+    // Call RPC directly from the browser client — no server auth issues
     setStep('activating')
-    const activateRes = await fetch('/api/beta/activate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
-      },
-      body: JSON.stringify({ code: code.trim().toUpperCase(), name, userId }),
+    const { data: rpcData, error: rpcError } = await supabase.rpc('activate_beta_code', {
+      p_user_id: userId,
+      p_code: code.trim().toUpperCase(),
+      p_name: name || null,
     })
-    const activateData = await activateRes.json()
 
-    if (!activateRes.ok) {
-      setAuthError(activateData.error ?? 'Activation failed. Please contact support.')
+    if (rpcError || !rpcData?.ok) {
+      setAuthError(rpcData?.error ?? rpcError?.message ?? 'Activation failed. Please contact support.')
       setStep('signup')
       setAuthLoading(false)
       return
