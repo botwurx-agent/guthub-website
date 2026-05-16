@@ -20,7 +20,9 @@ export async function GET(request: Request) {
           .eq('id', user.id)
           .single()
 
-        const destination = profile?.onboarding_completed ? next : '/onboarding'
+        // Auth recovery flows go directly to next (e.g. reset-password), skip onboarding check
+        const isAuthFlow = next.startsWith('/auth/')
+        const destination = isAuthFlow ? next : (profile?.onboarding_completed ? next : '/onboarding')
         const appBase = process.env.NODE_ENV === 'production' ? 'https://app.guthub.ai' : origin
         return NextResponse.redirect(`${appBase}${destination}`)
       }
