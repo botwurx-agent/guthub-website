@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHmac } from 'crypto'
 import { Resend } from 'resend'
 import { buildAdminEmailHtml } from '@/lib/email-templates'
 
@@ -6,17 +7,37 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = 'GutHub <hello@guthub.ai>'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
-export async function POST(req: NextRequest) {
-  // Verify shared secret set in Supabase hook config
+function verifySignature(rawBody: string, req: NextRequest): boolean {
   const secret = process.env.SUPABASE_AUTH_HOOK_SECRET
-  if (secret) {
-    const auth = req.headers.get('Authorization')
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  if (!secret) return true
+
+  const webhookId = req.headers.get('webhook-id')
+  const webhookTimestamp = req.headers.get('webhook-timestamp')
+  const webhookSignature = req.headers.get('webhook-signature')
+
+  if (!webhookId || !webhookTimestamp || !webhookSignature) return false
+
+  // Secret format: "v1,whsec_<base64>"
+  const secretBase64 = secret.replace(/^v1,whsec_/, '')
+  const secretBytes = Buffer.from(secretBase64, 'base64')
+
+  const signedContent = `${webhookId}.${webhookTimestamp}.${rawBody}`
+  const hmac = createHmac('sha256', secretBytes)
+  hmac.update(signedContent)
+  const computed = `v1,${hmac.digest('base64')}`
+
+  // Header may contain multiple space-separated signatures
+  return webhookSignature.split(' ').some(sig => sig === computed)
+}
+
+export async function POST(req: NextRequest) {
+  const rawBody = await req.text()
+
+  if (!verifySignature(rawBody, req)) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
-  const payload = await req.json()
+  const payload = JSON.parse(rawBody)
   const { user, email_data } = payload ?? {}
   if (!user?.email || !email_data) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
@@ -46,7 +67,6 @@ export async function POST(req: NextRequest) {
     body = `Click the button below to sign in to GutHub. This link expires in 1 hour.`
     ctaLabel = 'Sign In to GutHub'
   } else {
-    // Unknown type — let Supabase handle it
     return NextResponse.json({ message: 'Unhandled type' }, { status: 200 })
   }
 
