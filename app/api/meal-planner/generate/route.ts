@@ -150,11 +150,15 @@ Return a single JSON object only — no markdown:
         }
       }
 
-      // Always fetch the rest of the week so the AI knows what's already
-      // planned and can avoid repeating proteins, formats, and dishes.
-      // Critical for single-slot and single-day generation where the AI
-      // would otherwise default to the same safe meals every call.
+      // Always fetch the full week context so the AI can avoid repeats.
+      // Two buckets:
+      // - existingWeekMeals: meals on OTHER slots (don't repeat these)
+      // - currentSlotMeals:  the CURRENT meal already in the slot being
+      //   swapped/regenerated — the AI needs to see this so it picks
+      //   something meaningfully different (without this, it can generate
+      //   the same meal twice in a row when the user swaps the same slot).
       let existingWeekMeals: string[] = []
+      let currentSlotMeals: string[] = []
       if (weekStart) {
         const weekEnd = new Date(weekStart)
         weekEnd.setUTCDate(weekEnd.getUTCDate() + 6)
@@ -168,6 +172,9 @@ Return a single JSON object only — no markdown:
         existingWeekMeals = (weekMeals ?? [])
           .filter(m => !targetKeys.has(`${m.plan_date}|${m.meal_type}`))
           .map(m => `${m.plan_date} ${m.meal_type}: ${m.meal_name}`)
+        currentSlotMeals = (weekMeals ?? [])
+          .filter(m => targetKeys.has(`${m.plan_date}|${m.meal_type}`))
+          .map(m => m.meal_name)
       }
 
       // Cuisine + method rotation for dinner — shuffled server-side so every
@@ -255,25 +262,25 @@ Return a single JSON object only — no markdown:
       let breakfastTypes: string
       let breakfastProteins: string
       if (ketoMode) {
-        breakfastTypes    = `eggs + cured meat (scrambled/fried/poached eggs with bacon or breakfast sausage) | omelette or egg scramble with cheese and vegetables | Greek yogurt bowl with nuts and low-carb berries | cottage cheese bowl with nuts or seeds | fried or poached eggs with avocado | egg muffins or baked egg cups | smoked salmon with eggs or cream cheese (simple plate)`
+        breakfastTypes    = `eggs + cured meat: eggs (any style) with bacon or sausage, optional cheese or simple leafy green — no exotic garnishes | omelette or scrambled eggs: eggs + 1-2 common veg (spinach, peppers, mushrooms, tomatoes) + cheese — no radish, no unusual veg | Greek yogurt bowl: plain full-fat Greek yogurt + berries (blueberries, raspberries) + nuts — no vegetables, no savory ingredients | cottage cheese bowl: cottage cheese + berries or fruit + nuts or seeds (walnuts, almonds, chia) — no vegetables, no radish, no savory ingredients | eggs with avocado: fried or poached eggs alongside sliced avocado, optional bacon or hot sauce — simple, 3 components max | egg muffins or baked egg cups: eggs baked in muffin tin with cheese and 1-2 mix-ins (diced peppers, bacon, spinach) | smoked salmon plate: smoked salmon + cream cheese or eggs + cucumber or capers — 3 components max`
         breakfastProteins = `eggs, bacon, breakfast sausage, ham, smoked salmon, Greek yogurt, cottage cheese`
       } else if (veganMode) {
-        breakfastTypes    = `oatmeal or porridge with fruit and nuts | smoothie or smoothie bowl | tofu scramble with vegetables | chia pudding with fruit | avocado toast | granola with plant milk and fruit | peanut or almond butter toast with banana`
+        breakfastTypes    = `oatmeal or porridge: rolled oats + fruit (banana, berries) + nut butter or nuts — simple toppings | smoothie or smoothie bowl: blended fruit + plant milk + protein (nut butter, seeds) — pour in bowl with toppings | tofu scramble: crumbled tofu + turmeric + 1-2 veg (spinach, peppers) + toast | chia pudding: chia seeds soaked in plant milk + fruit + nuts — prepare night before or quick-set | avocado toast: smashed avocado on toast + optional toppings (tomato, seeds) | granola with plant milk: store-bought or simple granola + plant milk + fresh fruit`
         breakfastProteins = `tofu, tempeh, nut butter, plant-based yogurt, oats`
       } else if (vegetarianMode) {
-        breakfastTypes    = `scrambled or fried eggs on toast | yogurt parfait with granola and fruit | oatmeal with fruit and nuts | avocado toast with egg | smoothie with protein | pancakes or waffles | frittata or egg bake with vegetables`
+        breakfastTypes    = `scrambled or fried eggs on toast: eggs + toast + optional cheese or avocado | yogurt parfait: Greek yogurt layered with granola and fresh fruit — no savory ingredients | oatmeal with fruit and nuts: oats + banana or berries + nut butter or nuts | avocado toast with egg: toast + smashed avocado + fried or poached egg | smoothie: fruit + yogurt or milk + optional protein powder | pancakes or waffles: classic batter, serve with fruit or maple syrup | frittata or egg bake: eggs + cheese + 1-2 veg baked in a pan`
         breakfastProteins = `eggs, Greek yogurt, cottage cheese, cheese`
       } else if (pescatarianMode) {
-        breakfastTypes    = `scrambled or fried eggs on toast | smoked salmon on toast or bagel | yogurt parfait with granola and fruit | oatmeal with fruit | avocado toast with egg | smoothie`
+        breakfastTypes    = `scrambled or fried eggs on toast: eggs + toast + optional veg or cheese | smoked salmon on toast: smoked salmon + cream cheese or avocado on toasted bread | yogurt parfait: Greek yogurt + granola + fresh fruit | oatmeal with fruit: oats + berries or banana + nuts | avocado toast with egg: toast + avocado + fried egg | smoothie: fruit + yogurt + milk`
         breakfastProteins = `eggs, smoked salmon, Greek yogurt, cottage cheese`
       } else if (paleoMode) {
-        breakfastTypes    = `scrambled or fried eggs with bacon or sausage | sweet potato hash with egg | fruit and nut bowl | omelette with vegetables | paleo pancakes (almond or coconut flour)`
+        breakfastTypes    = `scrambled or fried eggs with bacon or sausage: eggs cooked any style + bacon or sausage, optional simple veg | sweet potato hash with egg: diced sweet potato + egg fried on top + optional meat | fruit and nut bowl: mixed fresh fruit + nuts + seeds — no dairy | omelette with vegetables: eggs + 1-2 veg (spinach, peppers, mushrooms) — no cheese | paleo pancakes: almond or coconut flour batter + fresh fruit`
         breakfastProteins = `eggs, bacon, breakfast sausage`
       } else if (lowFodmapMode) {
-        breakfastTypes    = `scrambled or fried eggs on gluten-free toast | rice cakes with peanut butter and banana | gluten-free oats with safe fruit | fried egg with roasted tomatoes | smoothie with safe ingredients`
+        breakfastTypes    = `scrambled or fried eggs on gluten-free toast: eggs + GF toast + optional safe veg | rice cakes with peanut butter and banana: simple assembly, no cooking | gluten-free oats with safe fruit: GF oats + banana or blueberries + nuts | fried egg with roasted tomatoes: simple eggs + safe veg | smoothie: banana + lactose-free milk + peanut butter`
         breakfastProteins = `eggs, peanut butter, lactose-free yogurt`
       } else {
-        breakfastTypes    = `scrambled or fried eggs on toast | oatmeal with fruit and nuts | yogurt parfait with granola | avocado toast with egg | smoothie with protein | pancakes or waffles | breakfast burrito with eggs`
+        breakfastTypes    = `scrambled or fried eggs on toast: eggs + toast + optional cheese or veg | oatmeal with fruit and nuts: oats + banana or berries + nut butter | yogurt parfait: Greek yogurt + granola + fresh fruit — no savory ingredients | avocado toast with egg: toast + avocado + fried or poached egg | smoothie: fruit + yogurt or milk + optional extras | pancakes or waffles: classic, serve with fruit or syrup | breakfast burrito: eggs + cheese + optional meat wrapped in tortilla`
         breakfastProteins = `eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage`
       }
 
@@ -327,7 +334,7 @@ VARIETY RULES — MANDATORY (${totalSlots} meal${totalSlots !== 1 ? 's' : ''} in
 
 GUT HEALTH: Whole foods, anti-inflammatory, varied vegetables. Avoid heavily processed ingredients.
 
-${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do NOT repeat these meals, do NOT use the same main proteins or ingredient combinations:\n${existingWeekMeals.join('\n')}\n` : ''}
+${currentSlotMeals.length > 0 ? `PREVIOUSLY GENERATED FOR THIS SLOT — you must pick something MEANINGFULLY DIFFERENT (different type, different protein, different main ingredients):\n${currentSlotMeals.join('\n')}\n` : ''}${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do NOT repeat these meals, do NOT reuse the same main proteins or ingredient combinations:\n${existingWeekMeals.join('\n')}\n` : ''}
 ${breakfastSlots.length > 0 ? `
 === BREAKFAST (${breakfastSlots.length} meal${breakfastSlots.length !== 1 ? 's' : ''}) ===
 Breakfast must be a CLASSIC, RECOGNIZABLE morning meal — what a home cook makes in 10-15 minutes on a weekday.
