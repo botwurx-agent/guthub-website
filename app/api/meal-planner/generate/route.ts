@@ -541,14 +541,13 @@ Return a single JSON object only — no markdown:
         'steak','beef patty','turkey patty','chicken patty',
         'smoked salmon',
       ]
-      // Broad vegetable tracking — single root word catches singular/plural and
-      // variants ("pepper" catches bell pepper, red pepper, roasted red pepper).
+      // Breakfast-appropriate vegetables only. Dinner veg (asparagus, broccoli,
+      // cauliflower, brussels sprouts, collard greens, zucchini, kale, arugula)
+      // intentionally excluded — they were bleeding into the "unused → suggest"
+      // path and causing the AI to put dinner vegetables at breakfast.
       const VEG_TERMS = [
-        'spinach','kale','arugula','collard','swiss chard',
-        'pepper','mushroom','tomato',
-        'asparagus','broccoli','cauliflower',
-        'zucchini','avocado','cucumber',
-        'green bean','brussels sprout',
+        'avocado','pepper','jalapeño','tomato',
+        'mushroom','spinach','cucumber','scallion',
       ]
 
       const usedEggPreps = Object.entries(EGG_PREPS)
@@ -589,12 +588,29 @@ Return a single JSON object only — no markdown:
           varietyParts.push(`Proteins not yet used: ${underused.join(', ')} — consider rotating one of these in`)
         }
       }
+      // Avocado: keto staple — nudge when absent from recent slots.
+      // Overuse is already handled by VEG_TERMS tracking (fires at count >= 2).
+      if (ketoMode && totalBfCount >= 2) {
+        const avocadoUsed = allBfNames.some(n => n.includes('avocado'))
+        if (!avocadoUsed) {
+          varietyParts.push('Avocado not yet used — consider adding it (sliced alongside eggs, avocado boat, or as a side with feta)')
+        }
+      }
+      // Cheese: should appear frequently in keto breakfasts but is often omitted.
+      // Check meal names — if no cheese term appears, nudge the AI.
+      if (ketoMode && totalBfCount >= 2) {
+        const CHEESE_TERMS = ['cheddar','feta','goat cheese','cream cheese','mozzarella','parmesan','cotija','swiss','ricotta','cheese']
+        const cheeseUsed = allBfNames.some(n => CHEESE_TERMS.some(c => n.includes(c)))
+        if (!cheeseUsed) {
+          varietyParts.push('No cheese in recent breakfasts — keto breakfasts benefit from cheddar, feta, goat cheese, or cream cheese; include it in the meal name')
+        }
+      }
       if (usedVeg.length > 0) {
         const overused = usedVeg.filter(v => v.count >= 2)
         if (overused.length > 0) {
           const used = overused.map(v => `${v.term} (${v.count}x)`).join(', ')
           const unused = VEG_TERMS.filter(v => !usedVeg.some(u => u.term === v))
-          const altList = unused.length > 0 ? unused.slice(0, 10).join(', ') : 'spinach, kale, asparagus, broccoli, cauliflower, zucchini, tomato, avocado'
+          const altList = unused.length > 0 ? unused.slice(0, 8).join(', ') : 'avocado, bell peppers, jalapeño, cherry tomatoes, mushrooms, spinach, cucumber, scallion'
           varietyParts.push(`Vegetables overused: ${used} — pick a different vegetable: ${altList}`)
         }
       }
@@ -636,7 +652,8 @@ HARD RULES:
 4. Fruit and nuts belong ONLY in sweet breakfasts (yogurt bowls, cottage cheese bowls, oatmeal, chia pudding, pancakes, waffles, French toast, smoothies, granola, overnight oats). NEVER in savory breakfasts (egg + meat combos, omelettes, scrambles, shakshuka, skillets, frittatas, egg muffins, smoked salmon plates, cheese and charcuterie plates). Savory breakfasts get vegetables, herbs, or cheese — never fruit.
 5. When fruit IS used (sweet types only), vary across breakfasts — no fruit repeated. Same for nuts. Fruit range: strawberries, peaches, mango, kiwi, apple, banana, pineapple, grapes, cherries, plum, papaya, pear. Nut range: walnuts, pecans, pistachios, cashews, hazelnuts, macadamia.
 6. Write plain ingredient names — no diet qualifiers ("turkey bacon", not "maple-free turkey bacon").
-${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `7. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${varietyContext}
+${ketoMode ? `7. Keto breakfast vegetables — ONLY these are appropriate at breakfast: avocado, bell peppers, jalapeño, cherry tomatoes, mushrooms, spinach, scallion, cucumber. NEVER use at breakfast: asparagus, broccolini, broccoli, cauliflower, brussels sprouts, collard greens, zucchini, kale, arugula, swiss chard, green beans — those belong at lunch or dinner.
+8. Cheese belongs in keto breakfasts. Almost every savory egg dish, omelette, scramble, frittata, skillet, and meat plate should include a cheese: cheddar, feta, goat cheese, cream cheese, or ricotta. Name the cheese in the meal name (e.g. "Scrambled eggs with chorizo and cheddar", "Omelette with bell peppers and feta").\n` : ''}${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `${ketoMode ? 9 : 7}. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${varietyContext}
 Format inspiration — use these OR invent your own. This is not a checklist:
 ${breakfastExamples}
 
