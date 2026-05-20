@@ -291,17 +291,20 @@ Return a single JSON object only — no markdown:
       // Framed as examples, not assignments. AI can use these or invent its own.
       let breakfastExamples: string
       if (ketoMode) {
+        // Non-egg formats listed FIRST to counter AI bias toward eggs-as-default
         breakfastExamples = [
-          '• Egg plates — scrambled, fried, poached, or baked eggs with meat, cheese, or vegetables in any combination',
-          '• Meat-forward plates — steak and eggs, chorizo and eggs, pork belly and eggs, ground beef hash with a fried egg',
-          '• Baked egg dishes — frittata, shakshuka, egg cups or muffins, eggs en cocotte',
-          '• Smoked salmon plate — smoked salmon + cream cheese + cucumber or capers',
-          '• Yogurt or cottage cheese bowl (sweet) — full-fat plain Greek yogurt or cottage cheese + seasonal fruit + nuts',
-          '• Breakfast skillet — one pan: bacon or sausage + peppers or greens + egg on top',
+          '• Full-fat Greek yogurt bowl (sweet) — Greek yogurt + seasonal fruit + nuts or seeds, no eggs',
+          '• Cottage cheese bowl (sweet) — full-fat cottage cheese + seasonal fruit + nuts, no eggs',
+          '• Smoked salmon plate — smoked salmon + cream cheese + cucumber or capers, no eggs',
+          '• Cheese and charcuterie plate — cold assembly: hard cheeses + cured meats + olives + raw veg, no eggs',
+          '• Cream cheese pancakes or chaffles (sweet) — topped with fresh fruit and butter, no eggs as separate component',
+          '• Chia pudding (sweet) — chia seeds in coconut milk or heavy cream + seasonal fruit + nuts, no eggs',
+          '• Ricotta or mascarpone bowl (sweet) — full-fat ricotta + seasonal fruit + nuts, no eggs',
+          '• Avocado boat with tuna or salmon salad — halved avocado filled with tuna or salmon salad, no eggs',
+          '• Egg plates — scrambled, fried, poached, or baked eggs with cheese or veg (use sparingly — many other options above)',
+          '• Meat-forward plates — steak and eggs, chorizo and eggs, ground beef hash, pork belly and eggs',
+          '• Baked egg dishes — frittata, shakshuka, egg cups or muffins',
           '• Omelette or scramble — eggs + any filling (cheese, veg, cured meat, herbs)',
-          '• Cheese and charcuterie plate — cold assembly: cheeses, cured meats, olives, raw vegetables',
-          '• Cream cheese pancakes or chaffles (sweet) — topped with fresh fruit',
-          '• Avocado and egg plate — sliced avocado alongside eggs any style, optional bacon or hot sauce',
         ].join('\n')
       } else if (veganMode) {
         breakfastExamples = [
@@ -497,6 +500,21 @@ Return a single JSON object only — no markdown:
       const weekUsedFruits = FRUIT_TERMS.filter(f => allBfNames.some(n => n.includes(f)))
       const weekUsedNuts   = NUT_TERMS.filter(n  => allBfNames.some(name => name.includes(n)))
 
+      // Cross-call breakfast base/protein/green detection — pushes back when the
+      // AI converges on a single template (e.g. eggs+pork+spinach repeated all week).
+      const EGG_TERMS = ['scrambled egg','fried egg','sunny-side','sunny side','poached egg','baked egg','omelette','omelet','shakshuka','frittata','egg cup','egg muffin','egg salad','eggs benedict','breakfast sandwich','egg hash','egg skillet']
+      const PORK_TERMS = ['bacon','pork sausage','breakfast sausage','pork belly','ham','pancetta','prosciutto','chorizo']
+      const GREEN_TERMS = ['spinach','kale','arugula','collard','swiss chard','baby greens']
+      const eggBreakfastCount = allBfNames.filter(n => EGG_TERMS.some(t => n.includes(t))).length
+      const porkUsed   = PORK_TERMS.filter(p => allBfNames.some(n => n.includes(p)))
+      const greensUsed = GREEN_TERMS.filter(g => allBfNames.some(n => n.includes(g)))
+      // If 2+ breakfasts already lean egg-based, hard-ban eggs for this swap
+      const banEggs   = eggBreakfastCount >= 2
+      // If pork has appeared in 2+ breakfasts this week, ban it for this swap
+      const banPork   = porkUsed.length >= 2
+      // If the same green appears in any prior breakfast, ban it
+      const banGreens = greensUsed.length >= 1
+
       const complexityNote = complexity === 'simple'
         ? `Under 30 minutes. One or two pans. No specialist equipment.`
         : `More ambitious cooking welcome — longer times, marinating, multiple components.`
@@ -531,8 +549,7 @@ HARD RULES:
 4. Fruit and nuts belong ONLY in sweet breakfasts (yogurt bowls, cottage cheese bowls, oatmeal, chia pudding, pancakes, waffles, French toast, smoothies, granola, overnight oats). NEVER in savory breakfasts (egg + meat combos, omelettes, scrambles, shakshuka, skillets, frittatas, egg muffins, smoked salmon plates, cheese and charcuterie plates). Savory breakfasts get vegetables, herbs, or cheese — never fruit.
 5. When fruit IS used (sweet types only), vary across breakfasts — no fruit repeated. Same for nuts. Fruit range: strawberries, peaches, mango, kiwi, apple, banana, pineapple, grapes, cherries, plum, papaya, pear. Nut range: walnuts, pecans, pistachios, cashews, hazelnuts, macadamia.
 6. Write plain ingredient names — no diet qualifiers ("turkey bacon", not "maple-free turkey bacon").
-${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `7. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}` : ''}
-
+${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `7. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${banEggs ? `\nANTI-REPETITION OVERRIDE — CRITICAL:\nThe week already has ${eggBreakfastCount} egg-based breakfast${eggBreakfastCount === 1 ? '' : 's'}. This breakfast must be a NON-EGG format. Pick from: Greek yogurt bowl, cottage cheese bowl, smoked salmon plate (no eggs), cheese and charcuterie plate, cream cheese pancakes/chaffles, chia pudding, ricotta or mascarpone bowl, avocado boat with tuna or salmon salad. DO NOT include eggs in this breakfast.\n` : ''}${banPork ? `\nANTI-REPETITION OVERRIDE: The week already uses pork (${porkUsed.join(', ')}) in multiple breakfasts. DO NOT use any pork product (bacon, sausage, pork belly, ham, chorizo) in this breakfast.\n` : ''}${banGreens ? `\nANTI-REPETITION OVERRIDE: The week already uses ${greensUsed.join(', ')} in a prior breakfast. DO NOT use ${greensUsed.join(' or ')} in this breakfast. If you need a vegetable, use peppers, mushrooms, tomatoes, zucchini, asparagus, or cauliflower instead.\n` : ''}
 Format inspiration — use these OR invent your own. This is not a checklist:
 ${breakfastExamples}
 
