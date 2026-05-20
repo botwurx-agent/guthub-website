@@ -296,29 +296,31 @@ ${conditions ? `- Health conditions: ${conditions}` : ''}${labContext}`
       const breakfastSlots = breakfastLunchSlots.filter(s => s.meal_type === 'breakfast')
       const lunchSlots     = breakfastLunchSlots.filter(s => s.meal_type === 'lunch')
 
-      // Global variety caps (applied across ALL meal types for the full week)
+      // Global variety caps — phrased so they only describe the meals being generated NOW
+      const totalSlotsBeingGenerated = slots.length
       const globalVarietyRules = ketoMode
-        ? `GLOBAL VARIETY RULES — enforced across EVERY meal for the entire week (breakfast + lunch + dinner combined):
-- AVOCADO: use at most 3 times total across the whole week. Do NOT put avocado in every meal.
-- CAULIFLOWER RICE: use at most ONCE across the whole week (dinner only). All other meals use different vegetable bases.
-- EGGS: may appear at breakfast daily, but each egg FORMAT must be different (scrambled, fried, soft-boiled, omelette — not the same style twice).
-- Any single protein (chicken breast, chicken thighs, steak, ground beef, etc.): at most TWICE across the whole week.
-- Any single cooking method (pan-seared, baked, grilled, boiled, etc.): at most 3 times across the whole week. Vary cooking methods.
-- ZERO duplicate meals: every meal name across the entire week must be completely unique.
-- Lab results provide dietary context only — they do NOT override these variety requirements.`
-        : `GLOBAL VARIETY RULES — enforced across EVERY meal for the entire week (breakfast + lunch + dinner combined):
-- Any single protein: at most TWICE across the whole week.
-- Avocado, sweet potato, quinoa: at most 3 times each across the whole week.
-- Any cooking method: at most 3 times across the whole week. Vary methods.
-- ZERO duplicate meals: every meal name must be completely unique.
-- Lab results provide dietary context only — they do NOT override these variety requirements.`
+        ? `GLOBAL VARIETY RULES — enforced across every meal in this response (${totalSlotsBeingGenerated} meal${totalSlotsBeingGenerated !== 1 ? 's' : ''} total):
+- AVOCADO: use at most twice across all meals you generate. Not every meal needs avocado.
+- CAULIFLOWER RICE: use at most ONCE across all meals (dinner only if possible). All other meals must use a completely different vegetable base.
+- EGG FORMAT at breakfast: each egg preparation must be different — scrambled, fried, soft-boiled, omelette are distinct. Never repeat the same egg style.
+- Any single protein (chicken breast, chicken thighs, steak, ground beef, etc.): at most ONCE across ALL meals you generate.
+- Any cooking method (pan-seared, baked, grilled, boiled, etc.): at most TWICE across all meals.
+- CRITICAL: Every meal_name must be completely unique — no two meals can share the same protein + format combination. If you generate "Tuna Salad Lettuce Wraps" once, you cannot generate any variation of tuna lettuce wraps again.
+- ONLY generate meals for the slots listed below. Do not add extra meals or extra meal types.`
+        : `GLOBAL VARIETY RULES — enforced across every meal in this response (${totalSlotsBeingGenerated} meal${totalSlotsBeingGenerated !== 1 ? 's' : ''} total):
+- Any single protein: at most ONCE across all meals you generate.
+- Avocado, sweet potato, quinoa: at most twice each.
+- Any cooking method: at most TWICE across all meals.
+- CRITICAL: Every meal_name must be completely unique — no two meals can share the same protein + format combination.
+- ONLY generate meals for the slots listed below. Do not add extra meals or extra meal types.`
 
       const breakfastBlock = breakfastSlots.length > 0 ? `
 === BREAKFAST MEALS ===
-BREAKFAST RULE: Always FAST and SIMPLE — under 15 minutes, minimal prep, 2-3 components maximum. No complex combos.
-- Each breakfast MUST use a completely different FORMAT from the others (e.g. one scrambled eggs, one yogurt, one bacon, one smoked salmon — never the same format twice).
+BREAKFAST RULES:
+- Fast and simple: under 15 minutes, 2-3 components maximum.
 - No restaurant-style multi-component builds.
-- No lunch/dinner carb bases at breakfast (no cauliflower rice, no grain bowls, no zucchini noodles).
+- No lunch/dinner carb bases (no cauliflower rice, grain bowls, zucchini noodles).
+- FORMAT ROTATION IS MANDATORY: each breakfast must be a completely different category. Examples of distinct categories: [scrambled eggs], [fried/sunny-side eggs], [soft-boiled eggs], [omelette], [Greek yogurt], [bacon + eggs], [smoked salmon], [cottage cheese], [hard-boiled eggs]. If you use "scrambled eggs" for one slot, you CANNOT use "scrambled eggs" or "eggs scrambled" for any other slot — not even with different toppings.
 - ${breakfastHint}
 
 Slots:
@@ -327,10 +329,9 @@ ${breakfastSlots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}` : ''
       const lunchBlock = lunchSlots.length > 0 ? `
 === LUNCH MEALS ===
 Quick and familiar — something a busy person can make or assemble in under 20 minutes.
-- Each lunch must be a completely different dish and format from the others.
+- FORMAT ROTATION IS MANDATORY: each lunch must be a completely different dish. No two lunches can share the same protein. No two lunches can share the same format (e.g. only one salad, only one wrap, only one soup).
 - ${lunchHint}
-- Rotate proteins: each protein from [${commonProteins}] used AT MOST ONCE across all lunches.
-- Be specific: "Tuna Salad Lettuce Wraps with Cucumber and Red Onion" not just "Tuna Wrap".
+- Be specific: "Grilled Chicken Caesar Salad with Romaine and Parmesan" not just "Chicken Salad".
 
 Slots:
 ${lunchSlots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}` : ''
@@ -377,7 +378,12 @@ ${dinnerBlock}
 Return a JSON array only — no markdown, no explanation. Each object:
 {"date":"YYYY-MM-DD","meal_type":"breakfast|lunch|dinner","meal_name":"string","calories":number,"protein_g":number,"fat_g":number,"carbs_g":number}`
 
+      // Whitelist: only save meals that match a slot we actually requested
+      const allowedSlotKeys = new Set(slots.map(s => `${s.date}|${s.meal_type}`))
+
       const saveMeal = async (meal: Record<string, unknown>) => {
+        const key = `${meal.date}|${meal.meal_type}`
+        if (!allowedSlotKeys.has(key)) return  // reject any extra meals the AI hallucinated
         const row = {
           user_id:     user.id,
           plan_date:   meal.date as string,
