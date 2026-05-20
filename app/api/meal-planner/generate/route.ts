@@ -242,20 +242,34 @@ Return a single JSON object only — no markdown:
       else if (paleoMode)      dietRule = `PALEO: No grains, no legumes, no dairy, no processed foods. Meat, fish, eggs, vegetables, fruit, nuts, seeds only.`
       else if (lowFodmapMode)  dietRule = `LOW-FODMAP: No garlic, no onion, no wheat, no apples/pears/stone fruits, no lactose. Safe: white rice, potatoes, quinoa, hard cheeses, chicken, beef, fish, eggs, carrots, zucchini, bell peppers, spinach, tomatoes.`
 
-      // ── Breakfast format CATEGORIES per diet ─────────────────────────────
-      // Categories, NOT specific meals. The AI picks the actual dish within
-      // each category. Listing specific meals here anchors the AI to those
-      // exact ingredients (e.g. "smoked salmon with cucumber and cream cheese"
-      // becomes the default breakfast). Categories force format variety
-      // without dictating ingredients.
-      let breakfastCategories: string
-      if (ketoMode)            breakfastCategories = `egg-based dish | Greek yogurt or cottage cheese bowl | nut/seed-based (chia pudding, nut bowl) | cold protein plate (cheese + cured meat or smoked fish) | keto baked good (almond-flour pancakes, egg muffins)`
-      else if (veganMode)      breakfastCategories = `oatmeal or porridge | smoothie or smoothie bowl | tofu scramble | chia pudding | toast-based (avocado, nut butter) | granola with plant milk`
-      else if (vegetarianMode) breakfastCategories = `egg-based dish | yogurt parfait | oatmeal or porridge | toast-based (avocado, ricotta, nut butter) | smoothie or smoothie bowl | pancakes or waffles | frittata or breakfast bake`
-      else if (pescatarianMode) breakfastCategories = `egg-based dish | smoked or cured fish on toast | yogurt parfait | oatmeal or porridge | smoothie | toast-based`
-      else if (paleoMode)      breakfastCategories = `egg-based dish | sweet potato hash | fruit and nut bowl | breakfast meat with vegetables | paleo baked good (almond or coconut flour)`
-      else if (lowFodmapMode)  breakfastCategories = `egg-based dish | gluten-free toast with topping | gluten-free oats | rice cake with topping | low-FODMAP smoothie`
-      else                     breakfastCategories = `egg-based dish | yogurt parfait | oatmeal or porridge | toast-based (avocado, nut butter) | smoothie or smoothie bowl | pancakes or waffles | breakfast burrito or wrap`
+      // ── Breakfast types per diet ──────────────────────────────────────────
+      // Concrete breakfast TYPES, not specific meals. The AI picks the dish
+      // within the type. Types are grounded in real morning foods so the AI
+      // stays in breakfast territory and doesn't drift into dinner proteins.
+      let breakfastTypes: string
+      let breakfastProteins: string
+      if (ketoMode) {
+        breakfastTypes    = `eggs + cured meat (scrambled/fried/poached eggs with bacon or breakfast sausage) | omelette or egg scramble with cheese and vegetables | Greek yogurt bowl with nuts and low-carb berries | cottage cheese bowl with nuts or seeds | fried or poached eggs with avocado | egg muffins or baked egg cups | smoked salmon with eggs or cream cheese (simple plate)`
+        breakfastProteins = `eggs, bacon, breakfast sausage, ham, smoked salmon, Greek yogurt, cottage cheese`
+      } else if (veganMode) {
+        breakfastTypes    = `oatmeal or porridge with fruit and nuts | smoothie or smoothie bowl | tofu scramble with vegetables | chia pudding with fruit | avocado toast | granola with plant milk and fruit | peanut or almond butter toast with banana`
+        breakfastProteins = `tofu, tempeh, nut butter, plant-based yogurt, oats`
+      } else if (vegetarianMode) {
+        breakfastTypes    = `scrambled or fried eggs on toast | yogurt parfait with granola and fruit | oatmeal with fruit and nuts | avocado toast with egg | smoothie with protein | pancakes or waffles | frittata or egg bake with vegetables`
+        breakfastProteins = `eggs, Greek yogurt, cottage cheese, cheese`
+      } else if (pescatarianMode) {
+        breakfastTypes    = `scrambled or fried eggs on toast | smoked salmon on toast or bagel | yogurt parfait with granola and fruit | oatmeal with fruit | avocado toast with egg | smoothie`
+        breakfastProteins = `eggs, smoked salmon, Greek yogurt, cottage cheese`
+      } else if (paleoMode) {
+        breakfastTypes    = `scrambled or fried eggs with bacon or sausage | sweet potato hash with egg | fruit and nut bowl | omelette with vegetables | paleo pancakes (almond or coconut flour)`
+        breakfastProteins = `eggs, bacon, breakfast sausage`
+      } else if (lowFodmapMode) {
+        breakfastTypes    = `scrambled or fried eggs on gluten-free toast | rice cakes with peanut butter and banana | gluten-free oats with safe fruit | fried egg with roasted tomatoes | smoothie with safe ingredients`
+        breakfastProteins = `eggs, peanut butter, lactose-free yogurt`
+      } else {
+        breakfastTypes    = `scrambled or fried eggs on toast | oatmeal with fruit and nuts | yogurt parfait with granola | avocado toast with egg | smoothie with protein | pancakes or waffles | breakfast burrito with eggs`
+        breakfastProteins = `eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage`
+      }
 
       // ── Lunch format CATEGORIES per diet ─────────────────────────────────
       let lunchCategories: string
@@ -300,20 +314,22 @@ GUT HEALTH: Whole foods, anti-inflammatory, varied vegetables. Avoid heavily pro
 ${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do not repeat or echo these:\n${existingWeekMeals.join('\n')}\n` : ''}
 ${breakfastSlots.length > 0 ? `
 === BREAKFAST (${breakfastSlots.length} meal${breakfastSlots.length !== 1 ? 's' : ''}) ===
-Breakfast must feel like a natural, recognizable breakfast — what people actually eat in the morning at home.
-- 15 minutes max. Simple prep. Minimal dishes.
-- Use a DIFFERENT format category for each breakfast. Categories: ${breakfastCategories}
-- Pick the specific dish freely within whichever category you choose — be creative, vary ingredients each time.
-- Use specific descriptive names: "Soft-boiled eggs with avocado and chili flakes" not just "Eggs and avocado".
+Breakfast must be a CLASSIC, RECOGNIZABLE morning meal — what a home cook makes in 10-15 minutes on a weekday.
+HARD RULES:
+1. Proteins allowed at breakfast: ${breakfastProteins}. Do NOT use dinner proteins (turkey breast, ground beef, roasted meats, trout, steak) at breakfast.
+2. Maximum 3 main components. No exotic techniques — no pickling, no marinating, no multi-step prep.
+3. Name meals plainly: "Scrambled eggs with bacon and cheddar" not "Artisan Herb-Cured Egg Medallions with Crispy Pancetta".
+4. Use a DIFFERENT breakfast type for each slot: ${breakfastTypes}
 
 Slots:
 ${breakfastSlots.map(s => `- ${s.date} breakfast`).join('\n')}` : ''}
 ${lunchSlots.length > 0 ? `
 === LUNCH (${lunchSlots.length} meal${lunchSlots.length !== 1 ? 's' : ''}) ===
-Lunch must be quick, filling, and practical — 20 minutes or under.
-- Use a DIFFERENT format category for each lunch. Categories: ${lunchCategories}
-- Pick the specific dish freely within whichever category you choose.
-- Include a clear protein source. Use specific descriptive names: "Grilled chicken Caesar wrap" not "Chicken salad".
+Lunch must be quick, filling, and practical — 20 minutes or under. Standard everyday meals.
+HARD RULES:
+1. Use a DIFFERENT format for each lunch: ${lunchCategories}
+2. Include a clear protein source. Maximum 4 main components.
+3. Name meals plainly: "Grilled chicken Caesar wrap" not "Pan-Seared Herb Chicken with Ancient Grain Medley".
 
 Slots:
 ${lunchSlots.map(s => `- ${s.date} lunch`).join('\n')}` : ''}
