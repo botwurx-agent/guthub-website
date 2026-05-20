@@ -483,16 +483,17 @@ Return a single JSON object only — no markdown:
       // Scan existing week breakfast names for already-used fruits/nuts so we
       // can ban them in the prompt. Each swap is a separate API call, so the
       // "vary fruit and nuts" hard rule only applies within one response —
-      // this makes it span the whole week.
+      // this makes it span the whole week. Includes the slot being swapped
+      // so cycling the same slot keeps pushing toward fresh ingredients.
       const FRUIT_TERMS = ['raspberry','raspberries','blueberry','blueberries','strawberry','strawberries','mango','kiwi','apple','peach','peaches','pear','pineapple','banana','cherry','cherries','plum','grape','grapes','papaya','melon','fig','pomegranate']
       const NUT_TERMS   = ['almond','almonds','walnut','walnuts','pecan','pecans','pistachio','pistachios','cashew','cashews','hazelnut','hazelnuts','macadamia','pine nut','pine nuts']
 
-      const existingBfNames = rawWeekMeals
-        .filter(m => !targetKeys.has(`${m.plan_date}|${m.meal_type}`) && m.meal_type === 'breakfast')
+      const allBfNames = rawWeekMeals
+        .filter(m => m.meal_type === 'breakfast')
         .map(m => m.meal_name.toLowerCase())
 
-      const weekUsedFruits = FRUIT_TERMS.filter(f => existingBfNames.some(n => n.includes(f)))
-      const weekUsedNuts   = NUT_TERMS.filter(n  => existingBfNames.some(name => name.includes(n)))
+      const weekUsedFruits = FRUIT_TERMS.filter(f => allBfNames.some(n => n.includes(f)))
+      const weekUsedNuts   = NUT_TERMS.filter(n  => allBfNames.some(name => name.includes(n)))
 
       const complexityNote = complexity === 'simple'
         ? `Under 30 minutes. One or two pans. No specialist equipment.`
