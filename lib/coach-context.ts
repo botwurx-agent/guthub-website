@@ -25,6 +25,7 @@ export async function buildCoachContext(supabase: SupabaseClient, userId: string
     { data: recentSupplements },
     { data: mealPlan },
     { data: historicalSummary },
+    { data: labReports },
   ] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', userId).single(),
     supabase.from('daily_records').select('*').eq('user_id', userId).eq('record_date', today).single(),
@@ -47,6 +48,7 @@ export async function buildCoachContext(supabase: SupabaseClient, userId: string
       .select('plan_date, meal_type, meal_name, calories, protein_g, carbs_g, fat_g, accepted')
       .eq('user_id', userId).gte('plan_date', today).lte('plan_date', new Date(Date.now() + 6 * 86400000).toISOString().split('T')[0]).order('plan_date').order('meal_type').limit(21),
     supabase.from('historical_summaries').select('summary_text').eq('user_id', userId).order('summary_date', { ascending: false }).limit(1).single(),
+    supabase.from('lab_reports').select('filename, analysis_summary, report_date').eq('user_id', userId).not('analysis_summary', 'is', null).order('created_at', { ascending: false }).limit(5),
   ])
 
   const hp = (profile?.health_profile as Record<string, unknown>) ?? {}
@@ -192,5 +194,13 @@ ${notesSummary}`
     ? `## HISTORICAL SUMMARY\n${historicalSummary.summary_text as string}`
     : ''
 
-  return [profileSection, activeSection, logsSection, planSection, historySection].filter(Boolean).join('\n\n')
+  // ── Lab results ───────────────────────────────────────────────────────────
+  const labSection = labReports?.length
+    ? `## LAB & TEST RESULTS\nThe user has uploaded the following medical test reports. Factor these findings into all dietary, supplement, and lifestyle recommendations.\n\n` +
+      labReports.map(r =>
+        `### ${r.filename}${r.report_date ? ` (${r.report_date})` : ''}\n${r.analysis_summary}`
+      ).join('\n\n')
+    : ''
+
+  return [profileSection, activeSection, logsSection, planSection, labSection, historySection].filter(Boolean).join('\n\n')
 }

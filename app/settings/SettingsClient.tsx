@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { CreditCard, Download, Trash2, ExternalLink, Edit2, Shield, ChevronRight, KeyRound, Mail, CheckCircle2 } from 'lucide-react'
+import { CreditCard, Download, Trash2, ExternalLink, Edit2, Shield, ChevronRight, KeyRound, Mail, CheckCircle2, Paperclip, FileText, X } from 'lucide-react'
 
 type Profile = {
   name: string | null
@@ -60,6 +60,9 @@ export default function SettingsClient({
 }) {
   const [activeSection, setActiveSection] = useState('profile')
   const [portalLoading, setPortalLoading] = useState(false)
+  const [labUploading, setLabUploading] = useState(false)
+  const [labUploadDone, setLabUploadDone] = useState(false)
+  const labFileRef = useRef<HTMLInputElement>(null)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
   const [pwLoading, setPwLoading] = useState(false)
@@ -219,6 +222,59 @@ export default function SettingsClient({
                   <SettingRow label="Allergens & sensitivities" value={allergies || 'None listed'} />
                   <SettingRow label="Eating style"           value={eatingStyle} />
                   {meds && <SettingRow label="Medications" value={meds} />}
+                </div>
+              </SettingsCard>
+
+              <SettingsCard title="Lab & test results">
+                <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--ink-500)', lineHeight: 1.6 }}>
+                  Upload new test results as they come in — your AI coach and meal planner will factor them into every recommendation automatically.
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => labFileRef.current?.click()}
+                    disabled={labUploading}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 8,
+                      background: 'var(--terracotta-500)', color: '#fff', border: 'none',
+                      borderRadius: 10, padding: '10px 18px', fontSize: 14, fontWeight: 600,
+                      cursor: labUploading ? 'not-allowed' : 'pointer', opacity: labUploading ? 0.7 : 1,
+                      fontFamily: 'var(--font-body)',
+                    }}
+                  >
+                    <Paperclip size={14} />
+                    {labUploading ? 'Uploading…' : 'Upload results'}
+                  </button>
+                  {labUploadDone && (
+                    <span style={{ fontSize: 13, color: '#16a34a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <CheckCircle2 size={14} /> Uploaded — coach has been updated
+                    </span>
+                  )}
+                  <input
+                    ref={labFileRef}
+                    type="file"
+                    accept=".pdf,image/*"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={async e => {
+                      if (!e.target.files?.length) return
+                      setLabUploading(true)
+                      setLabUploadDone(false)
+                      const formData = new FormData()
+                      Array.from(e.target.files).forEach(f => formData.append('files', f))
+                      await fetch('/api/lab-results/upload', { method: 'POST', body: formData })
+                      setLabUploading(false)
+                      setLabUploadDone(true)
+                      e.target.value = ''
+                    }}
+                  />
+                </div>
+                <p style={{ margin: '12px 0 0', fontSize: 12, color: 'var(--ink-300)' }}>
+                  PDF, JPG, or PNG · stool tests, food sensitivity panels, blood work, and more · encrypted at rest
+                </p>
+                <div style={{ marginTop: 14 }}>
+                  <a href="/insights?tab=labs" style={{ fontSize: 13, color: 'var(--terracotta-500)', fontWeight: 600, textDecoration: 'none' }}>
+                    View all uploaded reports →
+                  </a>
                 </div>
               </SettingsCard>
             </>

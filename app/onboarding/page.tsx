@@ -9,7 +9,7 @@ import {
   CONDITION_TIER2, CONDITION_TIER3, ALLERGEN_TIER2, EATING_STYLE_TIER2, TIER3_REDIRECT_MESSAGE,
 } from '@/lib/intake-tiers'
 
-const TOTAL_STEPS = 6
+const TOTAL_STEPS = 7
 
 type StepDef = {
   sidebarLabel: string
@@ -68,6 +68,14 @@ const STEPS: StepDef[] = [
     titleEm: 'note',
     titleEnd: ' before we begin.',
     subtitle: 'Anything else that would help your coach understand you?',
+  },
+  {
+    sidebarLabel: 'Test results',
+    eyebrow: '07 — TEST RESULTS',
+    titleStart: 'Upload any ',
+    titleEm: 'lab results',
+    titleEnd: ' you have.',
+    subtitle: 'Your coach and meal planner will factor these in automatically. Completely optional — you can add more anytime.',
   },
 ]
 
@@ -219,6 +227,11 @@ export default function OnboardingPage() {
   const [edHistory, setEdHistory] = useState('')
   const [isPregnant, setIsPregnant] = useState('')
 
+  // Step 7 — lab upload
+  const [labFiles, setLabFiles] = useState<File[]>([])
+  const [labUploading, setLabUploading] = useState(false)
+  const labFileRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -333,12 +346,25 @@ export default function OnboardingPage() {
 
     } else if (step === 5) {
       startTransition(async () => {
-        await saveProfileStep(6, {
+        const res = await saveProfileStep(6, {
           health_profile: {
             ed_history: edHistory || null,
             is_pregnant: isPregnant || null,
           },
         })
+        if (res?.error) setError(res.error)
+        else setStep(6)
+      })
+    } else if (step === 6) {
+      // Lab upload step — upload files if any, then complete onboarding
+      if (labFiles.length > 0) {
+        setLabUploading(true)
+        const formData = new FormData()
+        labFiles.forEach(f => formData.append('files', f))
+        await fetch('/api/lab-results/upload', { method: 'POST', body: formData })
+        setLabUploading(false)
+      }
+      startTransition(async () => {
         const res = await completeOnboarding()
         if (res?.error) setError(res.error)
       })
@@ -462,6 +488,56 @@ export default function OnboardingPage() {
           {step === 3 && <StepGoals {...{ goals, setGoals, specificConcerns, setSpecificConcerns, priorRd, setPriorRd, activityLevel, setActivityLevel, targetWeightLbs, setTargetWeightLbs }} />}
           {step === 4 && <StepLifestyle {...{ sleepQuality, setSleepQuality, sleepHours, setSleepHours, energyLevel, setEnergyLevel, stressLevel, setStressLevel, exerciseRoutine, setExerciseRoutine, additionalNotes, setAdditionalNotes }} />}
           {step === 5 && <StepFinish {...{ isPending, edHistory, setEdHistory, isPregnant, setIsPregnant }} />}
+          {step === 6 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div
+                onClick={() => labFileRef.current?.click()}
+                style={{
+                  border: '2px dashed var(--cream-200)', borderRadius: 16,
+                  padding: '36px 24px', textAlign: 'center', cursor: 'pointer',
+                  background: 'var(--cream-50)', transition: 'border-color 140ms',
+                }}
+              >
+                <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>
+                  Choose files to upload
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--ink-400)' }}>
+                  PDF, JPG, or PNG · stool tests, food sensitivity panels, blood work
+                </div>
+                <input
+                  ref={labFileRef}
+                  type="file"
+                  accept=".pdf,image/*"
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={e => {
+                    if (e.target.files?.length) {
+                      setLabFiles(prev => [...prev, ...Array.from(e.target.files!)])
+                    }
+                  }}
+                />
+              </div>
+              {labFiles.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {labFiles.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#fff', borderRadius: 10, border: '1px solid var(--cream-200)' }}>
+                      <span style={{ fontSize: 13, flex: 1, color: 'var(--ink-700)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                      <button
+                        onClick={() => setLabFiles(prev => prev.filter((_, j) => j !== i))}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-400)', padding: 2, display: 'flex' }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-400)', textAlign: 'center' }}>
+                Your files are encrypted and never shared with third parties.
+              </p>
+            </div>
+          )}
         </div>
 
         {error && (
@@ -513,10 +589,12 @@ export default function OnboardingPage() {
                 transition: 'background 200ms',
               }}
             >
-              {isPending ? (
-                <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Saving…</>
+              {isPending || labUploading ? (
+                <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> {labUploading ? 'Uploading…' : 'Saving…'}</>
+              ) : step === 6 ? (
+                <>{labFiles.length > 0 ? 'Upload & finish' : 'Finish'} <ChevronRight size={16} /></>
               ) : step === 5 ? (
-                <>Build my plan <ChevronRight size={16} /></>
+                <>Next <ChevronRight size={16} /></>
               ) : (
                 <>Continue <ChevronRight size={16} /></>
               )}

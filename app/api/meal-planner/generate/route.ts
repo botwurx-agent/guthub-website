@@ -20,9 +20,10 @@ export async function POST(request: Request) {
     complexity = 'simple',           // 'simple' = weeknight friendly | 'weekend' = ambitious dishes
   } = await request.json()
 
-  const [{ data: profile }, { data: macroTarget }] = await Promise.all([
+  const [{ data: profile }, { data: macroTarget }, { data: labReports }] = await Promise.all([
     supabase.from('profiles').select('diet_mode, health_profile').eq('id', user.id).single(),
     supabase.from('macro_targets').select('*').eq('user_id', user.id).order('target_date', { ascending: false }).limit(1).single(),
+    supabase.from('lab_reports').select('filename, analysis_summary').eq('user_id', user.id).not('analysis_summary', 'is', null).order('created_at', { ascending: false }).limit(3),
   ])
 
   const calories = macroTarget?.total_calories ?? 2000
@@ -36,6 +37,9 @@ export async function POST(request: Request) {
   const eatingStyle  = hp.eating_style ?? ''
   const resolvedDiet = dietOverride ?? profile?.diet_mode ?? 'default'
   const dietLabel    = resolvedDiet !== 'default' ? resolvedDiet.replace(/_/g, ' ') : (eatingStyle || 'balanced')
+  const labContext   = labReports?.length
+    ? '\n\nLAB RESULTS TO CONSIDER:\n' + labReports.map(r => `${r.filename}: ${r.analysis_summary}`).join('\n\n')
+    : ''
 
   const encoder = new TextEncoder()
 
@@ -188,7 +192,7 @@ Return a single JSON object only — no markdown:
 - Daily targets: ${calories} kcal | Protein ${protein}g | Carbs ${carbs}g | Fat ${fat}g
 - Macro split: breakfast 25% · lunch 35% · dinner 40% of daily targets
 ${allergies ? `- Allergies / avoid: ${allergies}` : ''}
-${conditions ? `- Health conditions: ${conditions}` : ''}`
+${conditions ? `- Health conditions: ${conditions}` : ''}${labContext}`
 
       const ketoMode        = resolvedDiet === 'keto'      || dietLabel.toLowerCase().includes('keto')
       const veganMode       = resolvedDiet === 'vegan'      || dietLabel.toLowerCase().includes('vegan')

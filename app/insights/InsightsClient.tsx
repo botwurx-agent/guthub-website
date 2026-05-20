@@ -168,19 +168,12 @@ export default function InsightsClient() {
     setAnalyzing(false)
   }
 
-  async function uploadLab(file: File) {
+  async function uploadLabs(files: FileList | File[]) {
     setUploading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setUploading(false); return }
-    const path = `${user.id}/${Date.now()}-${file.name}`
-    const { error: upErr } = await supabase.storage.from('lab-reports').upload(path, file)
-    if (!upErr) {
-      await supabase.from('lab_reports').insert({
-        user_id: user.id, filename: file.name, storage_path: path,
-        report_date: new Date().toISOString().split('T')[0],
-      })
-      await fetchAll()
-    }
+    const formData = new FormData()
+    Array.from(files).forEach(f => formData.append('files', f))
+    await fetch('/api/lab-results/upload', { method: 'POST', body: formData })
+    await fetchAll()
     setUploading(false)
   }
 
@@ -633,8 +626,9 @@ export default function InsightsClient() {
                 ref={fileRef}
                 type="file"
                 accept=".pdf,image/*"
+                multiple
                 style={{ display: 'none' }}
-                onChange={e => { const f = e.target.files?.[0]; if (f) uploadLab(f) }}
+                onChange={e => { if (e.target.files?.length) uploadLabs(e.target.files) }}
               />
               <div style={{ fontSize: 12, color: 'var(--ink-300)', marginTop: 12 }}>Encrypted · HIPAA-aligned · never shared</div>
             </div>
