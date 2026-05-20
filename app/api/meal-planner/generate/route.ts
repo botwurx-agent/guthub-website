@@ -14,16 +14,21 @@ export async function POST(request: Request) {
     regenerate,
     days = 7,
     dietOverride,
-    mealTypes: mealTypesFilter,     // e.g. ['breakfast'] for parallel requests
-    phase = 'quick',                 // 'quick' = name+macros only | 'recipe' = ingredients+directions
-    existingMeal,                    // { name, date, meal_type } for recipe-only fetch
-    complexity = 'simple',           // 'simple' = weeknight friendly | 'weekend' = ambitious dishes
+    mealTypes: mealTypesFilter,
+    phase = 'quick',
+    existingMeal,
+    complexity = 'simple',
   } = await request.json()
 
-  const [{ data: profile }, { data: macroTarget }, { data: labReports }] = await Promise.all([
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0]
+
+  const [{ data: profile }, { data: macroTarget }, { data: labReports }, { data: mealHistory }] = await Promise.all([
     supabase.from('profiles').select('diet_mode, health_profile').eq('id', user.id).single(),
     supabase.from('macro_targets').select('*').eq('user_id', user.id).order('target_date', { ascending: false }).limit(1).single(),
     supabase.from('lab_reports').select('filename, analysis_summary').eq('user_id', user.id).not('analysis_summary', 'is', null).order('created_at', { ascending: false }).limit(3),
+    supabase.from('meal_plan_slots').select('meal_name, meal_type').eq('user_id', user.id).gte('plan_date', thirtyDaysAgoStr).not('meal_name', 'is', null),
   ])
 
   const calories = macroTarget?.total_calories ?? 2000
@@ -101,7 +106,6 @@ Return a single JSON object only — no markdown:
                 try {
                   const parsed = JSON.parse(candidate)
                   if (parsed.ingredients || parsed.directions) {
-                    // Upsert only the recipe fields
                     await supabase.from('meal_plan_slots')
                       .update({
                         ingredients: parsed.ingredients ?? [],
@@ -153,11 +157,8 @@ Return a single JSON object only — no markdown:
       // Always fetch the full week context so the AI can avoid repeats.
       // Two buckets:
       // - existingWeekMeals: meals on OTHER slots (don't repeat these)
-      // - currentSlotMeals:  the CURRENT meal already in the slot being
-      //   swapped/regenerated — the AI needs to see this so it picks
-      //   something meaningfully different (without this, it can generate
-      //   the same meal twice in a row when the user swaps the same slot).
-      // Hoist targetKeys so it's available for both the fetch filter and saveMeal
+      // - currentSlotMeals:  the CURRENT meal already in the slot being swapped —
+      //   so the AI picks something meaningfully different on repeated swaps.
       const targetKeys = new Set(slots.map(s => `${s.date}|${s.meal_type}`))
       let existingWeekMeals: string[] = []
       let currentSlotMeals: string[] = []
@@ -181,8 +182,7 @@ Return a single JSON object only — no markdown:
       }
 
       // Cuisine + method rotation for dinner — shuffled server-side so every
-      // generation call gets a fresh ordering. Forces real variety without
-      // pre-assigning specific meals.
+      // generation call gets a fresh ordering.
       const DINNER_CUISINES = [
         'Italian', 'Mexican', 'Japanese', 'Thai', 'Indian', 'Middle Eastern',
         'Greek', 'Vietnamese', 'Korean', 'Moroccan', 'Spanish', 'Caribbean',
@@ -203,7 +203,7 @@ Return a single JSON object only — no markdown:
 
       const isDinnerOnly = slots.every(s => s.meal_type === 'dinner')
       const dinnerSlotsCount = slots.filter(s => s.meal_type === 'dinner').length
-      // Filter cuisines already used elsewhere this week so swaps don't pick a repeat
+      // Filter cuisines already used this week so swaps don't pick a repeat
       const usedDinnerCuisines = new Set(
         rawWeekMeals
           .filter(m => !targetKeys.has(`${m.plan_date}|${m.meal_type}`) && m.meal_type === 'dinner' && m.meal_category)
@@ -214,7 +214,7 @@ Return a single JSON object only — no markdown:
       const shuffledCuisines = shuffle(cuisineSource)
       const cuisinePool = shuffledCuisines.slice(0, Math.max(dinnerSlotsCount, 1))
       const methodPool = complexity === 'weekend' ? WEEKEND_METHODS : SIMPLE_METHODS
-      // For single-slot swap, pre-select one cuisine + method so the AI commits to a specific direction
+      // For single dinner swap, pre-select one cuisine + method so the AI commits to a direction
       const randomCuisine = (regenerate && isDinnerOnly) ? shuffledCuisines[0] : null
       const randomMethod = (regenerate && isDinnerOnly)
         ? methodPool[Math.floor(Math.random() * methodPool.length)]
@@ -252,205 +252,19 @@ Return a single JSON object only — no markdown:
 
       // ── Dinner vegetable bases per diet ──────────────────────────────────
       let dinnerBases: string
-      if (ketoMode)        dinnerBases = `zucchini noodles, spaghetti squash, shirataki noodles, roasted broccoli, roasted asparagus, roasted Brussels sprouts, sautéed green beans, roasted cauliflower, wilted spinach`
-      else if (paleoMode)  dinnerBases = `sweet potato, roasted root vegetables, butternut squash, spaghetti squash, plantain`
+      if (ketoMode)           dinnerBases = `zucchini noodles, spaghetti squash, shirataki noodles, roasted broccoli, roasted asparagus, roasted Brussels sprouts, sautéed green beans, roasted cauliflower, wilted spinach`
+      else if (paleoMode)     dinnerBases = `sweet potato, roasted root vegetables, butternut squash, spaghetti squash, plantain`
       else if (lowFodmapMode) dinnerBases = `white rice, quinoa, gluten-free pasta, roasted potatoes, polenta`
-      else                 dinnerBases = `rice, pasta, roasted potatoes, noodles, couscous, farro, quinoa`
+      else                    dinnerBases = `rice, pasta, roasted potatoes, noodles, couscous, farro, quinoa`
 
       // ── Diet restriction rule (what is NOT allowed) ───────────────────────
       let dietRule = ''
-      if (ketoMode)            dietRule = `KETO: No grains, no bread, no rice, no pasta, no oats, no corn, no beans, no lentils, no potatoes. Every meal must be low-carb. Use meat, fish, eggs, cheese, and non-starchy vegetables.`
-      else if (veganMode)      dietRule = `VEGAN: No meat, poultry, fish, dairy, or eggs. 100% plant-based only.`
-      else if (vegetarianMode) dietRule = `VEGETARIAN: No meat, poultry, or fish. Eggs and dairy are fine.`
+      if (ketoMode)             dietRule = `KETO: No grains, no bread, no rice, no pasta, no oats, no corn, no beans, no lentils, no potatoes. Every meal must be low-carb. Use meat, fish, eggs, cheese, and non-starchy vegetables.`
+      else if (veganMode)       dietRule = `VEGAN: No meat, poultry, fish, dairy, or eggs. 100% plant-based only.`
+      else if (vegetarianMode)  dietRule = `VEGETARIAN: No meat, poultry, or fish. Eggs and dairy are fine.`
       else if (pescatarianMode) dietRule = `PESCATARIAN: No beef, pork, chicken, turkey, or any land animal. Fish and seafood only as animal protein.`
-      else if (paleoMode)      dietRule = `PALEO: No grains, no legumes, no dairy, no processed foods. Meat, fish, eggs, vegetables, fruit, nuts, seeds only.`
-      else if (lowFodmapMode)  dietRule = `LOW-FODMAP: No garlic, no onion, no wheat, no apples/pears/stone fruits, no lactose. Safe: white rice, potatoes, quinoa, hard cheeses, chicken, beef, fish, eggs, carrots, zucchini, bell peppers, spinach, tomatoes.`
-
-      // ── Breakfast types per diet ──────────────────────────────────────────
-      // Concrete breakfast TYPES, not specific meals. The AI picks the dish
-      // within the type. Types are grounded in real morning foods so the AI
-      // stays in breakfast territory and doesn't drift into dinner proteins.
-      let breakfastTypes: string
-      let breakfastProteins: string
-      if (ketoMode) {
-        breakfastTypes = [
-          'Eggs + cured meat: eggs any style + bacon/sausage/ham, optional leafy green',
-          'Omelette or scramble with cheese and vegetables: eggs + cheese + 1-2 common veg (spinach, peppers, mushrooms, tomatoes)',
-          'Greek yogurt bowl: full-fat plain Greek yogurt + fresh seasonal fruit + nuts or granola — no vegetables, no savory ingredients',
-          'Cottage cheese bowl: cottage cheese + fruit or berries + nuts or seeds — no vegetables, no savory ingredients',
-          'Eggs with avocado: fried or poached eggs alongside sliced avocado, optional bacon or hot sauce — 3 components max',
-          'Baked egg muffins or egg cups: eggs + cheese + 1-2 mix-ins (peppers, bacon, spinach), baked in muffin tin',
-          'Smoked salmon plate: smoked salmon + cream cheese or eggs + cucumber or capers — 3 components max',
-          'Steak and eggs: pan-seared steak strips or skirt steak + fried or scrambled eggs — no bread, no grains',
-          'Frittata with vegetables and cheese: eggs + cheese + 1-2 veg, baked',
-          'Egg salad: chopped eggs + mayo or avocado, served on greens, in avocado halves, or stuffed in a pepper',
-          'Chorizo and eggs: crumbled Mexican chorizo + scrambled or fried eggs, optional cheese',
-          'Cream cheese pancakes: cream cheese and eggs blended into pancake batter, topped with fresh fruit — no ricotta',
-          'Breakfast skillet: ground sausage + eggs + peppers, one pan',
-          'Cheese and cured meat plate: hard cheeses + cured meats + nuts or olives — assembly only, no cooking',
-          'Stuffed avocado boats: halved avocado filled with egg, salmon, or tuna salad',
-          'Ground beef and egg hash: ground beef + diced bell pepper + fried or scrambled egg, one pan',
-          'Shakshuka: eggs poached in tomato and bell pepper sauce',
-          'Pork belly and fried eggs: pan-crisped pork belly slices + fried eggs, optional greens',
-          'Ricotta or mascarpone bowl: with fresh seasonal fruit and nuts — no vegetables, no savory ingredients',
-          'Breakfast sandwich on lettuce wrap or chaffle: eggs + cheese + meat',
-        ].join(' | ')
-        breakfastProteins = 'eggs, bacon, breakfast sausage, ham, steak, ground beef, chorizo, pork belly, smoked salmon, Greek yogurt, cottage cheese, ricotta'
-      } else if (veganMode) {
-        breakfastTypes = [
-          'Oatmeal with fruit and nuts: rolled oats + fruit + nut butter or nuts',
-          'Smoothie or smoothie bowl: blended fruit + plant milk + protein (nut butter, seeds)',
-          'Tofu scramble with vegetables: crumbled tofu + turmeric + 1-2 veg, optional toast',
-          'Chia pudding: chia seeds in plant milk + fruit + optional nuts',
-          'Avocado toast: smashed avocado on toast + optional toppings (tomato, seeds)',
-          'Granola with plant milk and fruit: simple granola + plant milk + fresh fruit',
-          'Nut butter toast with banana or fruit: peanut or almond butter on toast + fruit',
-          'Overnight oats: rolled oats soaked in plant milk + fruit and nuts',
-          'Açaí or pitaya bowl: blended frozen fruit + toppings (granola, coconut, fruit)',
-          'Coconut or almond yogurt parfait: plant yogurt + granola + fresh fruit',
-          'Tofu breakfast burrito or wrap: scrambled tofu + beans + veg in tortilla',
-          'Vegan pancakes: banana or flax-based batter + maple syrup or fruit',
-          'Quinoa breakfast porridge: cooked quinoa + plant milk + fruit and nuts',
-          'Buckwheat porridge with fresh fruit: cooked buckwheat + plant milk + fresh seasonal fruit',
-          'Polenta breakfast bowl: cooked polenta + maple syrup or savory toppings',
-          'Vegan French toast: chickpea-flour batter on bread + maple syrup',
-          'Potato hash with tempeh: diced potatoes + crumbled tempeh + veg',
-          'Fruit and seed bowl: mixed fresh fruit + seeds + nuts — no dairy',
-          'Tofu and avocado savory bowl: pan-seared tofu + avocado + greens',
-          'Hemp or flax breakfast pudding: hemp or flax seeds in plant milk + fruit',
-        ].join(' | ')
-        breakfastProteins = 'tofu, tempeh, nut butter, plant-based yogurt, oats, hemp/flax seeds, chia seeds'
-      } else if (vegetarianMode) {
-        breakfastTypes = [
-          'Scrambled or fried eggs on toast: eggs + toast + optional cheese or avocado',
-          'Yogurt parfait with granola: Greek yogurt + granola + fresh fruit — no savory ingredients',
-          'Oatmeal with fruit and nuts: oats + fruit + nut butter or nuts',
-          'Avocado toast with egg: toast + smashed avocado + fried or poached egg',
-          'Smoothie with fruit and yogurt: blended fruit + yogurt or milk + optional extras',
-          'Pancakes or waffles: classic batter + fresh fruit or maple syrup',
-          'Frittata or egg bake: eggs + cheese + 1-2 veg, baked',
-          'Omelette with cheese and vegetables: eggs + cheese + common veg',
-          'Cottage cheese bowl with fruit and nuts: cottage cheese + fruit + nuts — no vegetables, no savory',
-          'Chia pudding with fruit: chia seeds in milk + fruit + optional nuts',
-          'French toast with fruit: classic French toast + maple syrup and fruit',
-          'Eggs Benedict: poached eggs on English muffin + hollandaise',
-          'Breakfast burrito with eggs and cheese: scrambled eggs + cheese + veg in tortilla',
-          'Shakshuka: eggs poached in tomato sauce',
-          'Yogurt smoothie bowl: blended yogurt + fruit + toppings',
-          'Ricotta toast with honey and fruit: ricotta on toast + honey + fresh fruit',
-          'Breakfast sandwich (egg + cheese): eggs + cheese on muffin or bread',
-          'Quiche slice with fruit: pre-baked quiche slice + side fruit',
-          'Overnight oats with yogurt: rolled oats + yogurt + fruit and nuts',
-          'Cheesy baked egg muffins: eggs + cheese + veg, baked in muffin tin',
-        ].join(' | ')
-        breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, ricotta'
-      } else if (pescatarianMode) {
-        breakfastTypes = [
-          'Scrambled or fried eggs on toast: eggs + toast + optional cheese or veg',
-          'Smoked salmon on toast or bagel: smoked salmon + cream cheese or avocado on bread',
-          'Yogurt parfait with granola: Greek yogurt + granola + fresh fruit',
-          'Oatmeal with fruit and nuts: oats + fruit + nut butter',
-          'Avocado toast with egg: toast + avocado + fried egg',
-          'Smoothie with fruit: blended fruit + yogurt or milk',
-          'Pancakes or waffles: classic batter + fruit or syrup',
-          'Frittata with vegetables and cheese: eggs + cheese + veg, baked',
-          'Omelette with cheese and vegetables: eggs + cheese + common veg',
-          'Cottage cheese bowl with fruit and nuts: cottage cheese + fruit + nuts — no vegetables',
-          'Chia pudding with fruit: chia seeds in milk + fruit + optional nuts',
-          'Eggs Benedict with smoked salmon: poached eggs + smoked salmon on muffin',
-          'Tuna or salmon salad on toast: tuna or salmon with mayo on toast',
-          'Smoked salmon and cream cheese bagel: bagel + cream cheese + smoked salmon',
-          'Baked egg muffins with cheese: eggs + cheese + veg, baked',
-          'Breakfast burrito with eggs: scrambled eggs + cheese + veg in tortilla',
-          'Shakshuka: eggs poached in tomato sauce',
-          'Ricotta toast with honey and fruit: ricotta on toast + honey + fruit',
-          'French toast with fruit: classic French toast + syrup and fruit',
-          'Smoked salmon avocado bowl: smoked salmon + avocado + greens or rice',
-        ].join(' | ')
-        breakfastProteins = 'eggs, smoked salmon, tuna, Greek yogurt, cottage cheese, cheese'
-      } else if (paleoMode) {
-        breakfastTypes = [
-          'Scrambled or fried eggs with bacon or sausage: eggs + breakfast meat',
-          'Sweet potato hash with egg: diced sweet potato + egg fried on top',
-          'Fruit and nut bowl: mixed fresh fruit + nuts + seeds — no dairy',
-          'Omelette with vegetables: eggs + 1-2 veg — no cheese, no dairy',
-          'Paleo pancakes: almond or coconut flour batter + fresh fruit',
-          'Breakfast skillet: ground sausage + eggs + peppers',
-          'Egg muffins with vegetables and bacon: eggs + veg + bacon, baked',
-          'Smoked salmon plate: smoked salmon + cucumber + greens — no cream cheese',
-          'Paleo smoothie: fruit + nut milk + nut butter',
-          'Chia pudding: chia seeds in coconut milk + fresh seasonal fruit',
-          'Paleo breakfast bowl: eggs + avocado + bacon or sausage',
-          'Plantain or banana pancakes: blended batter + fresh fruit',
-          'Coconut yogurt parfait: coconut yogurt + fruit + grain-free granola',
-          'Avocado boats with eggs: halved avocado + baked egg in the well',
-          'Baked eggs over greens: eggs baked over sautéed spinach or kale',
-          'Grain-free granola with coconut milk: nuts + seeds + coconut milk + fruit',
-          'Mushroom and spinach scramble: eggs + sautéed mushrooms + spinach',
-          'Paleo waffles: almond or coconut flour batter + fresh fruit',
-          'Sausage and egg patties: breakfast sausage + fried egg, plated',
-          'Salmon and avocado breakfast plate: fresh or smoked salmon + avocado + greens',
-        ].join(' | ')
-        breakfastProteins = 'eggs, bacon, breakfast sausage, salmon'
-      } else if (lowFodmapMode) {
-        breakfastTypes = [
-          'Scrambled or fried eggs on gluten-free toast: eggs + GF toast',
-          'Rice cakes with peanut butter and banana: simple assembly',
-          'Gluten-free oats with safe fruit: GF oats + banana or blueberries + nuts',
-          'Fried egg with roasted tomatoes: simple eggs + safe veg',
-          'Smoothie: banana + lactose-free milk + peanut butter',
-          'Omelette with safe vegetables: eggs + spinach, peppers, or zucchini — no garlic or onion',
-          'Lactose-free yogurt parfait: lactose-free yogurt + safe granola + fruit',
-          'Chia pudding: chia in lactose-free milk + fresh seasonal fruit',
-          'Eggs Benedict on gluten-free muffin: poached eggs on GF muffin',
-          'Potato and egg breakfast hash: diced potato + egg — no onion or garlic',
-          'Quinoa breakfast porridge: cooked quinoa + lactose-free milk + fresh seasonal fruit',
-          'Lactose-free cottage cheese bowl: cottage cheese + safe fruit + nuts',
-          'Peanut butter and banana toast (GF): GF bread + peanut butter + banana',
-          'Egg muffins with safe vegetables: eggs + spinach or peppers, baked',
-          'Gluten-free pancakes with fruit: GF pancakes + maple syrup + fruit',
-          'Polenta breakfast bowl with maple: cooked polenta + maple syrup + fruit',
-          'Low-FODMAP smoothie bowl: blended safe fruit + lactose-free milk + toppings',
-          'Baked eggs with spinach and tomato: eggs baked on spinach + tomato',
-          'Rice porridge: cooked rice + lactose-free milk, sweet or savory',
-          'Gluten-free French toast with fresh fruit: GF bread + egg dip + fresh seasonal fruit',
-        ].join(' | ')
-        breakfastProteins = 'eggs, peanut butter, lactose-free yogurt, lactose-free cottage cheese'
-      } else {
-        breakfastTypes = [
-          'Scrambled or fried eggs on toast: eggs + toast + optional cheese or veg',
-          'Oatmeal with fruit and nuts: oats + fruit + nut butter',
-          'Yogurt parfait with granola: yogurt + granola + fresh fruit — no savory',
-          'Avocado toast with egg: toast + avocado + fried or poached egg',
-          'Smoothie with fruit: blended fruit + yogurt or milk',
-          'Pancakes or waffles: classic batter + fruit or syrup',
-          'Breakfast burrito: scrambled eggs + cheese + meat in tortilla',
-          'Omelette with cheese and vegetables: eggs + cheese + common veg',
-          'Cottage cheese bowl with fruit and nuts: cottage cheese + fruit + nuts — no vegetables',
-          'Chia pudding with fruit: chia + milk + fruit + optional nuts',
-          'French toast with fruit and syrup: classic French toast',
-          'Eggs Benedict: poached eggs on English muffin + hollandaise',
-          'Breakfast sandwich: eggs + cheese + meat on bread or muffin',
-          'Shakshuka: eggs poached in tomato sauce',
-          'Frittata or quiche: eggs + cheese + veg, baked',
-          'Granola bowl with milk and fruit: granola + milk + fresh fruit',
-          'Egg muffins with cheese and vegetables: eggs + cheese + veg, baked',
-          'Breakfast hash: diced potato + breakfast meat + egg',
-          'Ricotta toast with honey and fruit: ricotta on toast + honey + fruit',
-          'Overnight oats with fruit and nuts: oats + milk + fruit + nuts',
-        ].join(' | ')
-        breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage, ham'
-      }
-
-      // ── Lunch format CATEGORIES per diet ─────────────────────────────────
-      let lunchCategories: string
-      if (ketoMode)            lunchCategories = `protein-and-greens salad | lettuce wrap | protein bowl over cauliflower rice or zoodles | hearty soup (no grains) | stuffed vegetable (bell pepper, mushroom) | cold plate (deli meats, cheese, veg)`
-      else if (veganMode)      lunchCategories = `grain bowl | bean or lentil soup | wrap or sandwich | hearty salad with plant protein | stir-fry over grain | stuffed vegetable`
-      else if (vegetarianMode) lunchCategories = `sandwich or wrap | grain bowl | soup | salad with cheese or egg | quesadilla or flatbread | stir-fry`
-      else if (pescatarianMode) lunchCategories = `fish sandwich or wrap | grain bowl with fish | salad with fish | seafood soup | fish tacos | poke-style bowl`
-      else if (paleoMode)      lunchCategories = `protein-and-vegetables salad | lettuce wrap | broth-based soup | hash or skillet | grilled protein plate with vegetables`
-      else if (lowFodmapMode)  lunchCategories = `protein-and-vegetables salad | rice bowl | gluten-free wrap or sandwich | safe broth-based soup | rice noodle bowl`
-      else                     lunchCategories = `sandwich or wrap | grain bowl | hearty salad with protein | soup | stir-fry | quesadilla or flatbread | hot plate (protein + grain + veg)`
+      else if (paleoMode)       dietRule = `PALEO: No grains, no legumes, no dairy, no processed foods. Meat, fish, eggs, vegetables, fruit, nuts, seeds only.`
+      else if (lowFodmapMode)   dietRule = `LOW-FODMAP: No garlic, no onion, no wheat, no apples/pears/stone fruits, no lactose. Safe: white rice, potatoes, quinoa, hard cheeses, chicken, beef, fish, eggs, carrots, zucchini, bell peppers, spinach, tomatoes.`
 
       // ── Slot lists ────────────────────────────────────────────────────────
       const breakfastSlots = slots.filter(s => s.meal_type === 'breakfast')
@@ -458,61 +272,221 @@ Return a single JSON object only — no markdown:
       const dinnerSlots    = slots.filter(s => s.meal_type === 'dinner')
       const totalSlots     = slots.length
 
-      // ── Per-slot type pools ──────────────────────────────────────────────
-      // Same pattern as dinner cuisines: shuffle the type list, slice to the
-      // slot count, and assign one type per slot. Prevents the AI from
-      // defaulting to the same 1-2 safest options (eggs+bacon, yogurt+nuts)
-      // every call. Each generation gets a different randomized assignment.
-      const breakfastTypeList = breakfastTypes.split(' | ')
-      const lunchTypeList     = lunchCategories.split(' | ')
+      // Dinner cuisine map — tracks which cuisine was assigned to which slot
+      // so saveMeal can persist it to meal_category for future dedup
+      const dinnerCuisineMap = new Map<string, string>()
+      dinnerSlots.forEach((s, i) => dinnerCuisineMap.set(`${s.date}|${s.meal_type}`, cuisinePool[i % cuisinePool.length]))
 
-      // Exclude category-strings already assigned to other slots this week so
-      // the same type never appears twice. Falls back to the full list when
-      // every available type is already used (e.g. 7-slot week, 6 categories).
-      const buildUsedSet = (mealType: string) => new Set(
-        rawWeekMeals
-          .filter(m => !targetKeys.has(`${m.plan_date}|${m.meal_type}`) && m.meal_type === mealType && m.meal_category)
-          .map(m => m.meal_category as string)
-      )
-      const pickPool = (full: string[], used: Set<string>, need: number) => {
-        const available = full.filter(t => !used.has(t))
-        return shuffle(available.length >= Math.max(need, 1) ? available : full).slice(0, Math.max(need, 1))
+      // ── Breakfast proteins (guards against dinner proteins bleeding into breakfast) ─
+      let breakfastProteins: string
+      if (ketoMode)             breakfastProteins = 'eggs, bacon, breakfast sausage, ham, steak, ground beef, chorizo, pork belly, smoked salmon, Greek yogurt, cottage cheese, ricotta'
+      else if (veganMode)       breakfastProteins = 'tofu, tempeh, nut butter, plant-based yogurt, oats, hemp seeds, chia seeds'
+      else if (vegetarianMode)  breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, ricotta'
+      else if (pescatarianMode) breakfastProteins = 'eggs, smoked salmon, tuna, Greek yogurt, cottage cheese, cheese'
+      else if (paleoMode)       breakfastProteins = 'eggs, bacon, breakfast sausage, salmon'
+      else if (lowFodmapMode)   breakfastProteins = 'eggs, peanut butter, lactose-free yogurt, lactose-free cottage cheese'
+      else                      breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage, ham'
+
+      // ── Breakfast format inspiration per diet ─────────────────────────────
+      // Framed as examples, not assignments. AI can use these or invent its own.
+      let breakfastExamples: string
+      if (ketoMode) {
+        breakfastExamples = [
+          '• Egg plates — scrambled, fried, poached, or baked eggs with meat, cheese, or vegetables in any combination',
+          '• Meat-forward plates — steak and eggs, chorizo and eggs, pork belly and eggs, ground beef hash with a fried egg',
+          '• Baked egg dishes — frittata, shakshuka, egg cups or muffins, eggs en cocotte',
+          '• Smoked salmon plate — smoked salmon + cream cheese + cucumber or capers',
+          '• Yogurt or cottage cheese bowl (sweet) — full-fat plain Greek yogurt or cottage cheese + seasonal fruit + nuts',
+          '• Breakfast skillet — one pan: bacon or sausage + peppers or greens + egg on top',
+          '• Omelette or scramble — eggs + any filling (cheese, veg, cured meat, herbs)',
+          '• Cheese and charcuterie plate — cold assembly: cheeses, cured meats, olives, raw vegetables',
+          '• Cream cheese pancakes or chaffles (sweet) — topped with fresh fruit',
+          '• Avocado and egg plate — sliced avocado alongside eggs any style, optional bacon or hot sauce',
+        ].join('\n')
+      } else if (veganMode) {
+        breakfastExamples = [
+          '• Hot cereals — oatmeal, congee, quinoa porridge, millet porridge with fruit and seeds',
+          '• Smoothies or smoothie bowls — blended fruit + plant milk + nut butter or seeds',
+          '• Toast-based — avocado toast, nut butter toast, banana toast, hummus toast',
+          '• Tofu scramble — crumbled tofu + turmeric + vegetables, optional toast',
+          '• Sweet bowls — acai bowl, pitaya bowl, overnight oats, chia pudding with fruit',
+          '• Vegan pancakes, waffles, or French toast (sweet)',
+          '• Grain bowls — quinoa or millet with fruit, nuts, and plant milk',
+          '• Potato or tempeh hash with vegetables',
+          '• Burritos or wraps — scrambled tofu + beans + veg in tortilla',
+          '• Plant yogurt parfait — coconut or almond yogurt + granola + fruit',
+        ].join('\n')
+      } else if (vegetarianMode) {
+        breakfastExamples = [
+          '• Egg plates — scrambled, fried, poached, or baked eggs any style',
+          '• Toast-based — avocado toast with egg, ricotta toast with honey and fruit, egg on toast with toppings',
+          '• Sweet bowls — yogurt parfait, cottage cheese bowl with fruit and nuts, smoothie bowl, granola bowl',
+          '• Hot cereals — oatmeal, overnight oats, porridge with fruit',
+          '• Pancakes, waffles, or French toast (sweet)',
+          '• Omelettes or frittatas — eggs + cheese + any vegetables',
+          '• Shakshuka — eggs poached in spiced tomato sauce',
+          '• Breakfast burritos or sandwiches — eggs + cheese + veg',
+          '• Chia pudding with seasonal fruit',
+          '• Quiche slice or savory egg bake',
+        ].join('\n')
+      } else if (pescatarianMode) {
+        breakfastExamples = [
+          '• Egg plates — scrambled, fried, poached, or baked eggs',
+          '• Smoked salmon dishes — on toast, bagel, or alongside eggs',
+          '• Sweet bowls — yogurt parfait with granola and fruit, cottage cheese bowl',
+          '• Oatmeal or overnight oats with fruit and nuts',
+          '• Avocado toast with egg or tuna',
+          '• Shakshuka or baked eggs in sauce',
+          '• Pancakes, French toast, or waffles (sweet)',
+          '• Chia pudding with seasonal fruit',
+          '• Tuna salad on toast or in avocado',
+          '• Rice or grain bowl with fish, egg, or vegetables',
+        ].join('\n')
+      } else if (paleoMode) {
+        breakfastExamples = [
+          '• Egg plates — any style eggs with bacon, sausage, or vegetables',
+          '• Sweet potato or root vegetable hash with fried egg on top',
+          '• Fruit and nut bowl — mixed seasonal fruit + nuts + seeds (no dairy)',
+          '• Paleo pancakes or waffles — almond or coconut flour batter (sweet, with fruit)',
+          '• Coconut yogurt parfait — with fruit and grain-free granola',
+          '• Paleo smoothie — fruit + nut milk + nut butter',
+          '• Egg muffins with bacon or vegetables, baked',
+          '• Plantain or banana pancakes (sweet, with fresh fruit)',
+          '• Breakfast skillet — ground sausage or beef + eggs + vegetables, one pan',
+          '• Smoked salmon plate with cucumber and avocado (no cream cheese)',
+        ].join('\n')
+      } else if (lowFodmapMode) {
+        breakfastExamples = [
+          '• Egg plates — scrambled, fried, or poached on gluten-free toast',
+          '• Rice cakes with peanut butter and banana',
+          '• Gluten-free oats with safe fruit (banana, blueberries)',
+          '• Omelette with safe vegetables (spinach, peppers, zucchini — no garlic or onion)',
+          '• Lactose-free yogurt parfait with safe granola and fruit',
+          '• Chia pudding in lactose-free milk with safe seasonal fruit',
+          '• Potato and egg hash (no garlic or onion)',
+          '• Gluten-free pancakes or French toast (sweet, with safe fruit)',
+          '• Smoothie — banana + lactose-free milk + peanut butter',
+          '• Quinoa porridge with lactose-free milk and safe fruit',
+        ].join('\n')
+      } else {
+        breakfastExamples = [
+          '• Egg plates — scrambled, fried, poached, or baked — with any topping or side',
+          '• Toast-based — avocado toast, smoked salmon toast, ricotta toast with honey, egg on toast',
+          '• Sweet bowls — yogurt parfait, cottage cheese bowl, smoothie bowl, granola bowl',
+          '• Hot cereals — oatmeal, overnight oats, porridge with fruit and nuts',
+          '• Pancakes, waffles, or French toast (sweet)',
+          '• Breakfast burritos, wraps, or sandwiches with eggs and protein',
+          '• Hashes or skillets — potato or sweet potato + meat + egg, one pan',
+          '• Shakshuka or baked eggs in a sauce',
+          '• Omelettes or frittatas with any fillings',
+          '• Chia or seed pudding with fruit',
+        ].join('\n')
       }
 
-      const usedBreakfastCategories = buildUsedSet('breakfast')
-      const usedLunchCategories     = buildUsedSet('lunch')
-      const breakfastTypePool       = pickPool(breakfastTypeList, usedBreakfastCategories, breakfastSlots.length)
-      const lunchTypePool           = pickPool(lunchTypeList, usedLunchCategories, lunchSlots.length)
+      // ── Lunch format inspiration per diet ────────────────────────────────
+      let lunchExamples: string
+      if (ketoMode) {
+        lunchExamples = [
+          '• Protein-and-greens salad — protein over leafy greens, olive oil dressing, no croutons or grains',
+          '• Lettuce wraps — spiced protein + crunchy veg wrapped in iceberg or butter lettuce',
+          '• Low-carb bowl — protein + cauliflower rice or zoodles + sauce',
+          '• Stuffed vegetable — bell pepper, mushroom cap, or zucchini boat filled with meat and cheese',
+          '• Keto soup — creamy or broth-based, no grains or starchy vegetables',
+          '• Cold plate — sliced cured meats + hard cheeses + pickles + raw veg',
+          '• Egg or tuna salad in avocado halves or over greens',
+          '• Bunless burger or meatball bowl over greens or cauliflower rice',
+        ].join('\n')
+      } else if (veganMode) {
+        lunchExamples = [
+          '• Grain bowls — farro, quinoa, or rice + plant protein + roasted or raw veg',
+          '• Bean or lentil soup or stew',
+          '• Wraps or sandwiches — plant protein + veg in tortilla or bread',
+          '• Hearty salads with tofu, tempeh, chickpeas, or beans',
+          '• Stir-fries over rice or noodles',
+          '• Stuffed vegetables — peppers or squash filled with grain and bean mix',
+          '• Buddha bowls — assorted veg + grain + tahini or sauce',
+          '• Noodle dishes — soba, rice noodles, or pasta with plant protein',
+        ].join('\n')
+      } else if (vegetarianMode) {
+        lunchExamples = [
+          '• Sandwiches or wraps — egg, cheese, or vegetable filling',
+          '• Grain bowls — quinoa or rice + roasted veg + cheese or egg',
+          '• Soups — tomato, lentil, minestrone, or creamy vegetable',
+          '• Salads with cheese, egg, or legumes as the protein',
+          '• Quesadillas or flatbreads with cheese and vegetables',
+          '• Pasta with a vegetarian sauce',
+          '• Stir-fries with tofu or tempeh over rice',
+          '• Frittata or savory egg bake with salad',
+        ].join('\n')
+      } else if (pescatarianMode) {
+        lunchExamples = [
+          '• Fish sandwiches or wraps — grilled, baked, or pan-seared fish',
+          '• Grain bowls with fish or shrimp over rice or farro',
+          '• Salads with tuna, salmon, or shrimp',
+          '• Seafood soup or chowder',
+          '• Fish tacos or poke-style bowls',
+          '• Pasta with seafood sauce',
+          '• Sushi-style rice bowls',
+          '• Smoked salmon or tuna on crackers or toast with sides',
+        ].join('\n')
+      } else if (paleoMode) {
+        lunchExamples = [
+          '• Protein-and-vegetables salad over leafy greens',
+          '• Lettuce wraps with grilled or ground meat',
+          '• Broth-based soups with meat and vegetables, no grains',
+          '• Hash or skillet — ground meat + roasted vegetables',
+          '• Grilled protein plate with two vegetable sides',
+          '• Sweet potato bowl with protein on top',
+          '• Cold plate — sliced meats + raw or roasted veg',
+          '• Stuffed vegetables with ground meat filling',
+        ].join('\n')
+      } else if (lowFodmapMode) {
+        lunchExamples = [
+          '• Protein-and-safe-vegetables salad (no garlic or onion in dressing)',
+          '• Rice bowl with protein and safe vegetables',
+          '• Gluten-free wrap or sandwich',
+          '• Safe broth-based soup with protein and vegetables',
+          '• Rice noodle bowl with protein',
+          '• Baked or grilled protein + potato or rice side',
+          '• Quinoa bowl with protein and safe vegetables',
+          '• GF pasta with safe sauce and protein',
+        ].join('\n')
+      } else {
+        lunchExamples = [
+          '• Sandwiches, wraps, or rolls — any protein, any bread style',
+          '• Grain or rice bowls — protein + grain + veg + sauce',
+          '• Hearty salads with protein — Caesar, Cobb, grain salad, etc.',
+          '• Soups or stews — noodle, bean, creamy, or broth-based',
+          '• Stir-fries over rice or noodles',
+          '• Flatbreads, quesadillas, or tacos',
+          '• Hot protein plates — grilled or baked protein + veg side + starch',
+          '• Pasta dishes with any sauce',
+          '• Noodle bowls — ramen, soba, pho-style',
+        ].join('\n')
+      }
 
-      // Remember which type was assigned to each slot so we can persist it
-      const slotTypeMap = new Map<string, string>()
-      breakfastSlots.forEach((s, i) => slotTypeMap.set(`${s.date}|${s.meal_type}`, breakfastTypePool[i % breakfastTypePool.length]))
-      lunchSlots.forEach((s, i) => slotTypeMap.set(`${s.date}|${s.meal_type}`, lunchTypePool[i % lunchTypePool.length]))
-      dinnerSlots.forEach((s, i) => slotTypeMap.set(`${s.date}|${s.meal_type}`, cuisinePool[i % cuisinePool.length]))
+      // ── 30-day meal history (prevents long-term name repetition) ─────────
+      const historyByType: Record<string, string[]> = { breakfast: [], lunch: [], dinner: [] }
+      for (const m of mealHistory ?? []) {
+        const name = m.meal_name as string | null
+        if (name && m.meal_type in historyByType && !historyByType[m.meal_type].includes(name)) {
+          historyByType[m.meal_type].push(name)
+        }
+      }
+      const historyLines: string[] = []
+      for (const mt of activeMealTypes) {
+        const names = historyByType[mt]
+        if (names.length > 0) {
+          historyLines.push(`${mt.charAt(0).toUpperCase() + mt.slice(1)}s: ${names.slice(0, 40).join(', ')}`)
+        }
+      }
+      const historyContext = historyLines.length > 0
+        ? `MEAL HISTORY — last 30 days — NEVER repeat any of these exact meal names:\n${historyLines.join('\n')}\n\n`
+        : ''
 
-      // Eager-save meal_category to each existing slot BEFORE the AI streams.
-      // Without this, two rapid-fire swaps on different slots can both fetch
-      // before either has saved its type assignment, then both happen to pick
-      // the same type (e.g. two "Pork belly and fried eggs" in one week).
-      // UPDATE is a no-op for slots that don't exist yet (fresh week generation).
-      await Promise.all(
-        slots.map(s => {
-          const cat = slotTypeMap.get(`${s.date}|${s.meal_type}`)
-          if (!cat) return Promise.resolve()
-          return supabase
-            .from('meal_plan_slots')
-            .update({ meal_category: cat })
-            .eq('user_id', user.id)
-            .eq('plan_date', s.date)
-            .eq('meal_type', s.meal_type)
-        })
-      )
-
-      // Scan existing week breakfast names for already-used fruits/nuts so we
-      // can ban them in the prompt. Each swap is a separate API call, so the
-      // "vary fruit and nuts" hard rule only applies within one response —
-      // this makes it span the whole week. Includes the slot being swapped
-      // so cycling the same slot keeps pushing toward fresh ingredients.
+      // Scan existing week breakfast names for already-used fruits/nuts.
+      // Each swap is a separate API call — this makes the ban span the whole week
+      // so the same fruit/nut doesn't appear in multiple sweet breakfasts.
       const FRUIT_TERMS = ['raspberry','raspberries','blueberry','blueberries','strawberry','strawberries','mango','kiwi','apple','peach','peaches','pear','pineapple','banana','cherry','cherries','plum','grape','grapes','papaya','melon','fig','pomegranate']
       const NUT_TERMS   = ['almond','almonds','walnut','walnuts','pecan','pecans','pistachio','pistachios','cashew','cashews','hazelnut','hazelnuts','macadamia','pine nut','pine nuts']
 
@@ -539,54 +513,59 @@ ${labContext ? `\nLAB RESULTS (context only — do not restrict variety based on
 ${dietRule ? `\nDIET RULE — STRICT: ${dietRule}` : ''}
 
 VARIETY RULES — MANDATORY (${totalSlots} meal${totalSlots !== 1 ? 's' : ''} in this response):
-- Every meal name must be unique. No duplicates, no near-duplicates.
-- Each main protein source appears AT MOST ONCE across ALL meals in this response.
-- Each cooking method (baked, grilled, pan-seared, etc.) AT MOST TWICE.
-- Within each meal type (breakfast, lunch, dinner), each format CATEGORY is used AT MOST ONCE — never two egg-based breakfasts, never two salad lunches, etc.
-- ONLY generate meals for the slots listed. Do not add extras.
+- Every meal name must be unique. No duplicates or near-duplicates.
+- Each main protein used AT MOST ONCE across ALL meals in this response — no exceptions.
+- Each cooking method (baked, grilled, pan-seared, stir-fried, etc.) AT MOST TWICE.
+- Breakfasts should feel genuinely different from each other — different protein, different style, different format.
+- Lunches should feel genuinely different from each other — different protein, different format, different flavor profile.
+- ONLY generate meals for the slots listed below. Do not add extras.
 
 GUT HEALTH: Whole foods, anti-inflammatory, varied vegetables. Avoid heavily processed ingredients.
 
-${currentSlotMeals.length > 0 ? `PREVIOUSLY GENERATED FOR THIS SLOT — you must pick something MEANINGFULLY DIFFERENT (different type, different protein, different main ingredients):\n${currentSlotMeals.join('\n')}\n` : ''}${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do NOT repeat these meals, do NOT reuse the same main proteins or ingredient combinations:\n${existingWeekMeals.join('\n')}\n` : ''}
-${breakfastSlots.length > 0 ? `
-=== BREAKFAST (${breakfastSlots.length} meal${breakfastSlots.length !== 1 ? 's' : ''}) ===
-Breakfast must be a CLASSIC, RECOGNIZABLE morning meal — what a home cook makes in 10-15 minutes on a weekday.
+${historyContext}${currentSlotMeals.length > 0 ? `PREVIOUSLY GENERATED FOR THIS SLOT — pick something MEANINGFULLY DIFFERENT (different protein, different style, different main ingredients):\n${currentSlotMeals.join('\n')}\n\n` : ''}${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do NOT repeat these meals or reuse the same main proteins:\n${existingWeekMeals.join('\n')}\n\n` : ''}${breakfastSlots.length > 0 ? `=== BREAKFAST (${breakfastSlots.length} meal${breakfastSlots.length !== 1 ? 's' : ''}) ===
+Classic, recognizable morning meal — 10-15 minutes, home-cook simple.
 HARD RULES:
-1. Proteins allowed at breakfast: ${breakfastProteins}. Do NOT use dinner proteins (turkey breast, ground beef, roasted meats, trout, steak) at breakfast.
-2. Maximum 3 main components. No exotic techniques — no pickling, no marinating, no multi-step prep.
-3. Name meals plainly: "Scrambled eggs with bacon and cheddar" not "Artisan Herb-Cured Egg Medallions with Crispy Pancetta".
-4. Each slot has a PRE-ASSIGNED breakfast type below. Build the meal within that type — be creative with the specific ingredients but stay in the assigned type. Do NOT substitute a different type.
-5. Fruit and nuts ONLY belong in sweet breakfast types — yogurt bowls, cottage cheese bowls, ricotta/mascarpone bowls, chia pudding, pancakes, waffles, French toast, smoothie/açaí bowls, granola bowls, overnight oats, oatmeal/porridge. Do NOT add fruit, berries, or nuts to savory types: eggs + cured meat, omelettes/scrambles, shakshuka, steak and eggs, chorizo and eggs, ground beef hash, pork belly, breakfast skillets, frittatas, egg salad, egg muffins/cups, smoked salmon plates, breakfast sandwiches, cheese plates, stuffed avocado boats (savory fillings only). Savory breakfasts get vegetables, herbs, or cheese — never fruit.
-6. When fruit IS used (sweet types only), never repeat the same fruit across multiple breakfasts. Same for nuts. Fruit range: strawberries, peaches, mango, kiwi, apple, banana, pineapple, grapes, cherries, plum, papaya, pear. Nut range: walnuts, pecans, pistachios, cashews, hazelnuts, macadamia.
-7. Ingredient naming: do not prefix ingredients with "maple-free", "sugar-free", "unsweetened", or other diet qualifiers — just write the plain ingredient name (e.g., "turkey bacon", not "maple-free turkey bacon").
-${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `8. ALREADY USED THIS WEEK — do NOT repeat these in any breakfast:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}` : ''}
+1. Breakfast proteins only: ${breakfastProteins}. NEVER use dinner proteins (turkey breast, roasted chicken, smoked trout, lamb, shrimp) at breakfast.
+2. Maximum 3 main components. No exotic prep (no pickling, no marinating, no multi-step curing).
+3. Plain, natural names: "Scrambled eggs with bacon and cheddar", not "Artisan Herb-Cured Egg Medallions."
+4. Fruit and nuts belong ONLY in sweet breakfasts (yogurt bowls, cottage cheese bowls, oatmeal, chia pudding, pancakes, waffles, French toast, smoothies, granola, overnight oats). NEVER in savory breakfasts (egg + meat combos, omelettes, scrambles, shakshuka, skillets, frittatas, egg muffins, smoked salmon plates, cheese and charcuterie plates). Savory breakfasts get vegetables, herbs, or cheese — never fruit.
+5. When fruit IS used (sweet types only), vary across breakfasts — no fruit repeated. Same for nuts. Fruit range: strawberries, peaches, mango, kiwi, apple, banana, pineapple, grapes, cherries, plum, papaya, pear. Nut range: walnuts, pecans, pistachios, cashews, hazelnuts, macadamia.
+6. Write plain ingredient names — no diet qualifiers ("turkey bacon", not "maple-free turkey bacon").
+${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `7. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}` : ''}
 
-Slots (use the assigned type for each):
-${breakfastSlots.map((s, i) => `- ${s.date} breakfast — type: ${breakfastTypePool[i % breakfastTypePool.length]}`).join('\n')}` : ''}
-${lunchSlots.length > 0 ? `
-=== LUNCH (${lunchSlots.length} meal${lunchSlots.length !== 1 ? 's' : ''}) ===
-Lunch must be quick, filling, and practical — 20 minutes or under. Standard everyday meals.
+Format inspiration — use these OR invent your own. This is not a checklist:
+${breakfastExamples}
+
+Slots:
+${breakfastSlots.map(s => `- ${s.date} breakfast`).join('\n')}
+
+` : ''}${lunchSlots.length > 0 ? `=== LUNCH (${lunchSlots.length} meal${lunchSlots.length !== 1 ? 's' : ''}) ===
+Quick, filling, practical — 20 minutes or under.
 HARD RULES:
-1. Each slot has a PRE-ASSIGNED lunch format below. Build the meal within that format — vary the specific protein and ingredients but stay in the assigned format.
-2. Include a clear protein source. Maximum 4 main components.
-3. Name meals plainly: "Grilled chicken Caesar wrap" not "Pan-Seared Herb Chicken with Ancient Grain Medley".
+1. Include a clear protein. Maximum 4 main components.
+2. Each lunch must have a DIFFERENT protein AND a DIFFERENT format from every other lunch in this response.
+3. Do not reuse any protein already assigned at breakfast in this response.
+4. Plain, natural names — no flowery descriptions.
 
-Slots (use the assigned format for each):
-${lunchSlots.map((s, i) => `- ${s.date} lunch — format: ${lunchTypePool[i % lunchTypePool.length]}`).join('\n')}` : ''}
-${dinnerSlots.length > 0 ? `
-=== DINNER (${dinnerSlots.length} meal${dinnerSlots.length !== 1 ? 's' : ''}) ===
+Format inspiration — use these OR invent your own:
+${lunchExamples}
+
+Slots:
+${lunchSlots.map(s => `- ${s.date} lunch`).join('\n')}
+
+` : ''}${dinnerSlots.length > 0 ? `=== DINNER (${dinnerSlots.length} meal${dinnerSlots.length !== 1 ? 's' : ''}) ===
 ${complexityNote}
 ${randomCuisine
   ? `Cuisine for this dinner: ${randomCuisine}. Cooking method: ${randomMethod}.`
-  : `Cuisines to use — pick one per dinner from this list, each cuisine at most once: ${cuisinePool.join(', ')}. These have been pre-shuffled; use them in any order, but every dinner must come from a different cuisine.`}
+  : `Cuisines to use — one per dinner, each cuisine at most once: ${cuisinePool.join(', ')}.`}
 Protein options to rotate (each at most once across all dinners): ${proteins}${dinnerOnlyProteins}
 Side / base options: ${dinnerBases}
 Use specific, descriptive names: "Baked Lemon-Herb Salmon with Roasted Asparagus" not "Salmon with Vegetables".
 
 Slots:
-${dinnerSlots.map(s => `- ${s.date} dinner`).join('\n')}` : ''}
+${dinnerSlots.map(s => `- ${s.date} dinner`).join('\n')}
 
-Return a JSON array only — no markdown. Each object:
+` : ''}Return a JSON array only — no markdown. Each object:
 {"date":"YYYY-MM-DD","meal_type":"breakfast|lunch|dinner","meal_name":"string","calories":number,"protein_g":number,"fat_g":number,"carbs_g":number}`
 
       const saveMeal = async (meal: Record<string, unknown>) => {
@@ -597,7 +576,7 @@ Return a JSON array only — no markdown. Each object:
           plan_date:     meal.date as string,
           meal_type:     meal.meal_type as string,
           meal_name:     meal.meal_name as string,
-          meal_category: slotTypeMap.get(key) ?? null,
+          meal_category: dinnerCuisineMap.get(key) ?? null,
           ingredients:   [],
           directions:    '',
           calories:      meal.calories as number,
