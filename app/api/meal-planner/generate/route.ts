@@ -164,7 +164,9 @@ Return a single JSON object only — no markdown:
         existingWeekMeals = (weekMeals ?? []).map(m => `${m.plan_date} ${m.meal_type}: ${m.meal_name}`)
       }
 
-      // Cuisine + method rotation for dinner single-slot swaps
+      // Cuisine + method rotation for dinner — shuffled server-side so every
+      // generation call gets a fresh ordering. Forces real variety without
+      // pre-assigning specific meals.
       const DINNER_CUISINES = [
         'Italian', 'Mexican', 'Japanese', 'Thai', 'Indian', 'Middle Eastern',
         'Greek', 'Vietnamese', 'Korean', 'Moroccan', 'Spanish', 'Caribbean',
@@ -174,11 +176,22 @@ Return a single JSON object only — no markdown:
       const SIMPLE_METHODS   = ['baked', 'grilled', 'sautéed', 'stir-fried', 'roasted', 'broiled']
       const WEEKEND_METHODS  = ['slow-braised', 'slow-roasted', 'poached', 'roasted', 'grilled', 'baked', 'broiled']
 
+      function shuffle<T>(arr: T[]): T[] {
+        const a = [...arr]
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1))
+          ;[a[i], a[j]] = [a[j], a[i]]
+        }
+        return a
+      }
+
       const isDinnerOnly = slots.every(s => s.meal_type === 'dinner')
-      const randomCuisine = (regenerate && isDinnerOnly)
-        ? DINNER_CUISINES[Math.floor(Math.random() * DINNER_CUISINES.length)]
-        : null
+      const dinnerSlotsCount = slots.filter(s => s.meal_type === 'dinner').length
+      const shuffledCuisines = shuffle(DINNER_CUISINES)
+      const cuisinePool = shuffledCuisines.slice(0, Math.max(dinnerSlotsCount, 1))
       const methodPool = complexity === 'weekend' ? WEEKEND_METHODS : SIMPLE_METHODS
+      // For single-slot swap, pre-select one cuisine + method so the AI commits to a specific direction
+      const randomCuisine = (regenerate && isDinnerOnly) ? shuffledCuisines[0] : null
       const randomMethod = (regenerate && isDinnerOnly)
         ? methodPool[Math.floor(Math.random() * methodPool.length)]
         : null
@@ -229,25 +242,30 @@ Return a single JSON object only — no markdown:
       else if (paleoMode)      dietRule = `PALEO: No grains, no legumes, no dairy, no processed foods. Meat, fish, eggs, vegetables, fruit, nuts, seeds only.`
       else if (lowFodmapMode)  dietRule = `LOW-FODMAP: No garlic, no onion, no wheat, no apples/pears/stone fruits, no lactose. Safe: white rice, potatoes, quinoa, hard cheeses, chicken, beef, fish, eggs, carrots, zucchini, bell peppers, spinach, tomatoes.`
 
-      // ── Breakfast format options per diet ────────────────────────────────
-      let breakfastFormats: string
-      if (ketoMode)            breakfastFormats = `scrambled eggs with cheese, fried eggs with bacon, soft-boiled eggs with sautéed mushrooms, full-fat Greek yogurt with nuts and berries, smoked salmon with cucumber and cream cheese, cottage cheese with walnuts, omelette with vegetables and cheese`
-      else if (veganMode)      breakfastFormats = `oatmeal with fruit, avocado toast, chia pudding, smoothie bowl, tofu scramble, granola with plant milk, peanut butter toast`
-      else if (vegetarianMode) breakfastFormats = `scrambled eggs on toast, yogurt parfait, oatmeal with fruit, avocado toast with fried egg, smoothie, pancakes, frittata`
-      else if (pescatarianMode) breakfastFormats = `scrambled eggs on toast, smoked salmon on toast, yogurt parfait, oatmeal with fruit, avocado toast with egg`
-      else if (paleoMode)      breakfastFormats = `scrambled eggs, fried eggs with bacon, sweet potato hash with egg, fruit bowl with nuts, omelette with vegetables`
-      else if (lowFodmapMode)  breakfastFormats = `scrambled eggs on gluten-free toast, rice cakes with peanut butter, gluten-free oats with banana, fried egg with roasted tomatoes`
-      else                     breakfastFormats = `scrambled eggs on toast, oatmeal with fruit, yogurt parfait, avocado toast with egg, smoothie, pancakes, breakfast burrito`
+      // ── Breakfast format CATEGORIES per diet ─────────────────────────────
+      // Categories, NOT specific meals. The AI picks the actual dish within
+      // each category. Listing specific meals here anchors the AI to those
+      // exact ingredients (e.g. "smoked salmon with cucumber and cream cheese"
+      // becomes the default breakfast). Categories force format variety
+      // without dictating ingredients.
+      let breakfastCategories: string
+      if (ketoMode)            breakfastCategories = `egg-based dish | Greek yogurt or cottage cheese bowl | nut/seed-based (chia pudding, nut bowl) | cold protein plate (cheese + cured meat or smoked fish) | keto baked good (almond-flour pancakes, egg muffins)`
+      else if (veganMode)      breakfastCategories = `oatmeal or porridge | smoothie or smoothie bowl | tofu scramble | chia pudding | toast-based (avocado, nut butter) | granola with plant milk`
+      else if (vegetarianMode) breakfastCategories = `egg-based dish | yogurt parfait | oatmeal or porridge | toast-based (avocado, ricotta, nut butter) | smoothie or smoothie bowl | pancakes or waffles | frittata or breakfast bake`
+      else if (pescatarianMode) breakfastCategories = `egg-based dish | smoked or cured fish on toast | yogurt parfait | oatmeal or porridge | smoothie | toast-based`
+      else if (paleoMode)      breakfastCategories = `egg-based dish | sweet potato hash | fruit and nut bowl | breakfast meat with vegetables | paleo baked good (almond or coconut flour)`
+      else if (lowFodmapMode)  breakfastCategories = `egg-based dish | gluten-free toast with topping | gluten-free oats | rice cake with topping | low-FODMAP smoothie`
+      else                     breakfastCategories = `egg-based dish | yogurt parfait | oatmeal or porridge | toast-based (avocado, nut butter) | smoothie or smoothie bowl | pancakes or waffles | breakfast burrito or wrap`
 
-      // ── Lunch format options per diet ────────────────────────────────────
-      let lunchFormats: string
-      if (ketoMode)            lunchFormats = `chicken Caesar salad (no croutons), tuna lettuce wraps, steak salad with mixed greens, egg salad in bell pepper halves, ground turkey zucchini soup, BLT salad, shrimp and cucumber salad`
-      else if (veganMode)      lunchFormats = `lentil soup, grain bowl with roasted vegetables, black bean wrap, chickpea salad, vegetable stir-fry, stuffed bell peppers`
-      else if (vegetarianMode) lunchFormats = `caprese salad, egg salad sandwich, lentil soup, grilled cheese, veggie wrap, quesadilla`
-      else if (pescatarianMode) lunchFormats = `tuna salad sandwich, salmon wrap, shrimp salad, fish tacos, tuna melt`
-      else if (paleoMode)      lunchFormats = `grilled chicken salad, lettuce-wrap burger, chicken soup, steak salad`
-      else if (lowFodmapMode)  lunchFormats = `grilled chicken salad, rice bowl with vegetables, gluten-free sandwich`
-      else                     lunchFormats = `sandwich, wrap, soup, salad with protein, quesadilla, grilled cheese, tuna melt`
+      // ── Lunch format CATEGORIES per diet ─────────────────────────────────
+      let lunchCategories: string
+      if (ketoMode)            lunchCategories = `protein-and-greens salad | lettuce wrap | protein bowl over cauliflower rice or zoodles | hearty soup (no grains) | stuffed vegetable (bell pepper, mushroom) | cold plate (deli meats, cheese, veg)`
+      else if (veganMode)      lunchCategories = `grain bowl | bean or lentil soup | wrap or sandwich | hearty salad with plant protein | stir-fry over grain | stuffed vegetable`
+      else if (vegetarianMode) lunchCategories = `sandwich or wrap | grain bowl | soup | salad with cheese or egg | quesadilla or flatbread | stir-fry`
+      else if (pescatarianMode) lunchCategories = `fish sandwich or wrap | grain bowl with fish | salad with fish | seafood soup | fish tacos | poke-style bowl`
+      else if (paleoMode)      lunchCategories = `protein-and-vegetables salad | lettuce wrap | broth-based soup | hash or skillet | grilled protein plate with vegetables`
+      else if (lowFodmapMode)  lunchCategories = `protein-and-vegetables salad | rice bowl | gluten-free wrap or sandwich | safe broth-based soup | rice noodle bowl`
+      else                     lunchCategories = `sandwich or wrap | grain bowl | hearty salad with protein | soup | stir-fry | quesadilla or flatbread | hot plate (protein + grain + veg)`
 
       // ── Slot lists ────────────────────────────────────────────────────────
       const breakfastSlots = slots.filter(s => s.meal_type === 'breakfast')
@@ -268,40 +286,46 @@ USER PROFILE:
 ${allergies ? `- Avoid: ${allergies}` : ''}
 ${conditions ? `- Health conditions: ${conditions}` : ''}
 ${labContext ? `\nLAB RESULTS (context only — do not restrict variety based on these):\n${labContext}` : ''}
-${dietRule ? `\nDIET RULE: ${dietRule}` : ''}
+${dietRule ? `\nDIET RULE — STRICT: ${dietRule}` : ''}
 
-VARIETY RULES (${totalSlots} meal${totalSlots !== 1 ? 's' : ''} in this response — all rules apply across every meal):
+VARIETY RULES — MANDATORY (${totalSlots} meal${totalSlots !== 1 ? 's' : ''} in this response):
 - Every meal name must be unique. No duplicates, no near-duplicates.
-- Each protein appears AT MOST ONCE across all meals.
+- Each main protein source appears AT MOST ONCE across ALL meals in this response.
 - Each cooking method (baked, grilled, pan-seared, etc.) AT MOST TWICE.
-- ONLY generate meals for the slots listed. No extras.
+- Within each meal type (breakfast, lunch, dinner), each format CATEGORY is used AT MOST ONCE — never two egg-based breakfasts, never two salad lunches, etc.
+- ONLY generate meals for the slots listed. Do not add extras.
 
-GUT HEALTH: Whole foods, anti-inflammatory, varied vegetables across meals.
+GUT HEALTH: Whole foods, anti-inflammatory, varied vegetables. Avoid heavily processed ingredients.
 
-${existingWeekMeals.length > 0 ? `ALREADY THIS WEEK — do not repeat these:\n${existingWeekMeals.join('\n')}\n` : ''}
+${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do not repeat or echo these:\n${existingWeekMeals.join('\n')}\n` : ''}
 ${breakfastSlots.length > 0 ? `
-=== BREAKFAST (${breakfastSlots.length} meals) ===
-Fast and simple. 15 minutes max. 2-3 ingredients. No complex builds.
-Each breakfast must use a DIFFERENT FORMAT. Format categories: ${breakfastFormats}
-These are examples — you can vary the ingredients freely within any format. You can also use other simple keto breakfast formats not listed. Never use the same format category twice (e.g. only one scrambled eggs meal, only one yogurt meal).
+=== BREAKFAST (${breakfastSlots.length} meal${breakfastSlots.length !== 1 ? 's' : ''}) ===
+Breakfast must feel like a natural, recognizable breakfast — what people actually eat in the morning at home.
+- 15 minutes max. Simple prep. Minimal dishes.
+- Use a DIFFERENT format category for each breakfast. Categories: ${breakfastCategories}
+- Pick the specific dish freely within whichever category you choose — be creative, vary ingredients each time.
+- Use specific descriptive names: "Soft-boiled eggs with avocado and chili flakes" not just "Eggs and avocado".
 
 Slots:
 ${breakfastSlots.map(s => `- ${s.date} breakfast`).join('\n')}` : ''}
 ${lunchSlots.length > 0 ? `
-=== LUNCH (${lunchSlots.length} meals) ===
-Quick, under 20 minutes. Each lunch must be a different dish and format.
-Format examples: ${lunchFormats}
-These are starting points — vary the proteins and ingredients freely. You can use other quick lunch formats not listed. No two lunches share the same protein or format type.
+=== LUNCH (${lunchSlots.length} meal${lunchSlots.length !== 1 ? 's' : ''}) ===
+Lunch must be quick, filling, and practical — 20 minutes or under.
+- Use a DIFFERENT format category for each lunch. Categories: ${lunchCategories}
+- Pick the specific dish freely within whichever category you choose.
+- Include a clear protein source. Use specific descriptive names: "Grilled chicken Caesar wrap" not "Chicken salad".
 
 Slots:
 ${lunchSlots.map(s => `- ${s.date} lunch`).join('\n')}` : ''}
 ${dinnerSlots.length > 0 ? `
-=== DINNER (${dinnerSlots.length} meals) ===
+=== DINNER (${dinnerSlots.length} meal${dinnerSlots.length !== 1 ? 's' : ''}) ===
 ${complexityNote}
-${randomCuisine ? `Cuisine: ${randomCuisine}, method: ${randomMethod}.` : 'Vary world cuisines — Italian, Mexican, Indian, Middle Eastern, Greek, Korean, Thai, Japanese, Moroccan, etc. Each dinner a different cuisine.'}
-Proteins to rotate (each at most once, choose freely beyond this list too): ${proteins}${dinnerOnlyProteins}
-Side/base options to rotate (each at most once, feel free to use other keto-friendly vegetables too): ${dinnerBases}
-Specific descriptive names: "Baked Lemon-Herb Salmon with Roasted Asparagus" not "Salmon with Vegetables".
+${randomCuisine
+  ? `Cuisine for this dinner: ${randomCuisine}. Cooking method: ${randomMethod}.`
+  : `Cuisines to use — pick one per dinner from this list, each cuisine at most once: ${cuisinePool.join(', ')}. These have been pre-shuffled; use them in any order, but every dinner must come from a different cuisine.`}
+Protein options to rotate (each at most once across all dinners): ${proteins}${dinnerOnlyProteins}
+Side / base options: ${dinnerBases}
+Use specific, descriptive names: "Baked Lemon-Herb Salmon with Roasted Asparagus" not "Salmon with Vegetables".
 
 Slots:
 ${dinnerSlots.map(s => `- ${s.date} dinner`).join('\n')}` : ''}
