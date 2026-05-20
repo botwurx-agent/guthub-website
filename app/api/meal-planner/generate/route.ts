@@ -149,19 +149,24 @@ Return a single JSON object only — no markdown:
         }
       }
 
-      // For single-slot swaps, fetch the rest of the week so the AI can avoid repeating proteins/cuisines
+      // Always fetch the rest of the week so the AI knows what's already
+      // planned and can avoid repeating proteins, formats, and dishes.
+      // Critical for single-slot and single-day generation where the AI
+      // would otherwise default to the same safe meals every call.
       let existingWeekMeals: string[] = []
-      if (regenerate && weekStart) {
+      if (weekStart) {
         const weekEnd = new Date(weekStart)
         weekEnd.setUTCDate(weekEnd.getUTCDate() + 6)
+        const targetKeys = new Set(slots.map(s => `${s.date}|${s.meal_type}`))
         const { data: weekMeals } = await supabase
           .from('meal_plan_slots')
           .select('meal_name, meal_type, plan_date')
           .eq('user_id', user.id)
           .gte('plan_date', weekStart)
           .lte('plan_date', weekEnd.toISOString().split('T')[0])
-          .neq('plan_date', regenerate.date)
-        existingWeekMeals = (weekMeals ?? []).map(m => `${m.plan_date} ${m.meal_type}: ${m.meal_name}`)
+        existingWeekMeals = (weekMeals ?? [])
+          .filter(m => !targetKeys.has(`${m.plan_date}|${m.meal_type}`))
+          .map(m => `${m.plan_date} ${m.meal_type}: ${m.meal_name}`)
       }
 
       // Cuisine + method rotation for dinner — shuffled server-side so every
@@ -287,6 +292,16 @@ Return a single JSON object only — no markdown:
       const dinnerSlots    = slots.filter(s => s.meal_type === 'dinner')
       const totalSlots     = slots.length
 
+      // ── Per-slot type pools ──────────────────────────────────────────────
+      // Same pattern as dinner cuisines: shuffle the type list, slice to the
+      // slot count, and assign one type per slot. Prevents the AI from
+      // defaulting to the same 1-2 safest options (eggs+bacon, yogurt+nuts)
+      // every call. Each generation gets a different randomized assignment.
+      const breakfastTypeList = breakfastTypes.split(' | ')
+      const lunchTypeList     = lunchCategories.split(' | ')
+      const breakfastTypePool = shuffle(breakfastTypeList).slice(0, Math.max(breakfastSlots.length, 1))
+      const lunchTypePool     = shuffle(lunchTypeList).slice(0, Math.max(lunchSlots.length, 1))
+
       const complexityNote = complexity === 'simple'
         ? `Under 30 minutes. One or two pans. No specialist equipment.`
         : `More ambitious cooking welcome — longer times, marinating, multiple components.`
@@ -311,7 +326,7 @@ VARIETY RULES — MANDATORY (${totalSlots} meal${totalSlots !== 1 ? 's' : ''} in
 
 GUT HEALTH: Whole foods, anti-inflammatory, varied vegetables. Avoid heavily processed ingredients.
 
-${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do not repeat or echo these:\n${existingWeekMeals.join('\n')}\n` : ''}
+${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do NOT repeat these meals, do NOT use the same main proteins or ingredient combinations:\n${existingWeekMeals.join('\n')}\n` : ''}
 ${breakfastSlots.length > 0 ? `
 === BREAKFAST (${breakfastSlots.length} meal${breakfastSlots.length !== 1 ? 's' : ''}) ===
 Breakfast must be a CLASSIC, RECOGNIZABLE morning meal — what a home cook makes in 10-15 minutes on a weekday.
@@ -319,20 +334,20 @@ HARD RULES:
 1. Proteins allowed at breakfast: ${breakfastProteins}. Do NOT use dinner proteins (turkey breast, ground beef, roasted meats, trout, steak) at breakfast.
 2. Maximum 3 main components. No exotic techniques — no pickling, no marinating, no multi-step prep.
 3. Name meals plainly: "Scrambled eggs with bacon and cheddar" not "Artisan Herb-Cured Egg Medallions with Crispy Pancetta".
-4. Use a DIFFERENT breakfast type for each slot: ${breakfastTypes}
+4. Each slot has a PRE-ASSIGNED breakfast type below. Build the meal within that type — be creative with the specific ingredients but stay in the assigned type. Do NOT substitute a different type.
 
-Slots:
-${breakfastSlots.map(s => `- ${s.date} breakfast`).join('\n')}` : ''}
+Slots (use the assigned type for each):
+${breakfastSlots.map((s, i) => `- ${s.date} breakfast — type: ${breakfastTypePool[i % breakfastTypePool.length]}`).join('\n')}` : ''}
 ${lunchSlots.length > 0 ? `
 === LUNCH (${lunchSlots.length} meal${lunchSlots.length !== 1 ? 's' : ''}) ===
 Lunch must be quick, filling, and practical — 20 minutes or under. Standard everyday meals.
 HARD RULES:
-1. Use a DIFFERENT format for each lunch: ${lunchCategories}
+1. Each slot has a PRE-ASSIGNED lunch format below. Build the meal within that format — vary the specific protein and ingredients but stay in the assigned format.
 2. Include a clear protein source. Maximum 4 main components.
 3. Name meals plainly: "Grilled chicken Caesar wrap" not "Pan-Seared Herb Chicken with Ancient Grain Medley".
 
-Slots:
-${lunchSlots.map(s => `- ${s.date} lunch`).join('\n')}` : ''}
+Slots (use the assigned format for each):
+${lunchSlots.map((s, i) => `- ${s.date} lunch — format: ${lunchTypePool[i % lunchTypePool.length]}`).join('\n')}` : ''}
 ${dinnerSlots.length > 0 ? `
 === DINNER (${dinnerSlots.length} meal${dinnerSlots.length !== 1 ? 's' : ''}) ===
 ${complexityNote}
