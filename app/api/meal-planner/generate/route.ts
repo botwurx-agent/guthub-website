@@ -273,21 +273,21 @@ Return a single JSON object only — no markdown:
           'Eggs with avocado: fried or poached eggs alongside sliced avocado, optional bacon or hot sauce — 3 components max',
           'Baked egg muffins or egg cups: eggs + cheese + 1-2 mix-ins (peppers, bacon, spinach), baked in muffin tin',
           'Smoked salmon plate: smoked salmon + cream cheese or eggs + cucumber or capers — 3 components max',
-          'Chia pudding: chia seeds in coconut or almond milk + fresh seasonal fruit + optional nuts',
+          'Steak and eggs: pan-seared steak strips or skirt steak + fried or scrambled eggs — no bread, no grains',
           'Frittata with vegetables and cheese: eggs + cheese + 1-2 veg, baked',
           'Egg salad: chopped eggs + mayo or avocado, served on greens, in avocado halves, or stuffed in a pepper',
-          'Almond-flour pancakes or waffles: almond flour batter + fresh fruit or low-carb syrup',
-          'Cream cheese pancakes: cream cheese and eggs blended into pancake batter',
+          'Chorizo and eggs: crumbled Mexican chorizo + scrambled or fried eggs, optional cheese',
+          'Cream cheese pancakes: cream cheese and eggs blended into pancake batter, topped with fresh fruit — no ricotta',
           'Breakfast skillet: ground sausage + eggs + peppers, one pan',
           'Cheese and cured meat plate: hard cheeses + cured meats + nuts or olives — assembly only, no cooking',
           'Stuffed avocado boats: halved avocado filled with egg, salmon, or tuna salad',
-          'Keto smoothie: avocado + protein powder + nut butter + almond or coconut milk',
+          'Ground beef and egg hash: ground beef + diced bell pepper + fried or scrambled egg, one pan',
           'Shakshuka: eggs poached in tomato and bell pepper sauce',
-          'Chaffles or cloud bread with savory or sweet topping',
+          'Pork belly and fried eggs: pan-crisped pork belly slices + fried eggs, optional greens',
           'Ricotta or mascarpone bowl: with fresh seasonal fruit and nuts — no vegetables, no savory ingredients',
           'Breakfast sandwich on lettuce wrap or chaffle: eggs + cheese + meat',
         ].join(' | ')
-        breakfastProteins = 'eggs, bacon, breakfast sausage, ham, smoked salmon, Greek yogurt, cottage cheese, ricotta'
+        breakfastProteins = 'eggs, bacon, breakfast sausage, ham, steak, ground beef, chorizo, pork belly, smoked salmon, Greek yogurt, cottage cheese, ricotta'
       } else if (veganMode) {
         breakfastTypes = [
           'Oatmeal with fruit and nuts: rolled oats + fruit + nut butter or nuts',
@@ -480,6 +480,20 @@ Return a single JSON object only — no markdown:
       lunchSlots.forEach((s, i) => slotTypeMap.set(`${s.date}|${s.meal_type}`, lunchTypePool[i % lunchTypePool.length]))
       dinnerSlots.forEach((s, i) => slotTypeMap.set(`${s.date}|${s.meal_type}`, cuisinePool[i % cuisinePool.length]))
 
+      // Scan existing week breakfast names for already-used fruits/nuts so we
+      // can ban them in the prompt. Each swap is a separate API call, so the
+      // "vary fruit and nuts" hard rule only applies within one response —
+      // this makes it span the whole week.
+      const FRUIT_TERMS = ['raspberry','raspberries','blueberry','blueberries','strawberry','strawberries','mango','kiwi','apple','peach','peaches','pear','pineapple','banana','cherry','cherries','plum','grape','grapes','papaya','melon','fig','pomegranate']
+      const NUT_TERMS   = ['almond','almonds','walnut','walnuts','pecan','pecans','pistachio','pistachios','cashew','cashews','hazelnut','hazelnuts','macadamia','pine nut','pine nuts']
+
+      const existingBfNames = rawWeekMeals
+        .filter(m => !targetKeys.has(`${m.plan_date}|${m.meal_type}`) && m.meal_type === 'breakfast')
+        .map(m => m.meal_name.toLowerCase())
+
+      const weekUsedFruits = FRUIT_TERMS.filter(f => existingBfNames.some(n => n.includes(f)))
+      const weekUsedNuts   = NUT_TERMS.filter(n  => existingBfNames.some(name => name.includes(n)))
+
       const complexityNote = complexity === 'simple'
         ? `Under 30 minutes. One or two pans. No specialist equipment.`
         : `More ambitious cooking welcome — longer times, marinating, multiple components.`
@@ -514,6 +528,7 @@ HARD RULES:
 3. Name meals plainly: "Scrambled eggs with bacon and cheddar" not "Artisan Herb-Cured Egg Medallions with Crispy Pancetta".
 4. Each slot has a PRE-ASSIGNED breakfast type below. Build the meal within that type — be creative with the specific ingredients but stay in the assigned type. Do NOT substitute a different type.
 5. Vary fruit and nuts: never use the same fruit or nut more than once across all breakfast slots in this response. Range of fruit to draw from: strawberries, peaches, mango, kiwi, apple, banana, pineapple, grapes, cherries, plum, papaya, pear. Range of nuts to draw from: walnuts, pecans, pistachios, cashews, hazelnuts, macadamia, pine nuts.
+${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `6. ALREADY USED THIS WEEK — do NOT repeat these in any breakfast:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}` : ''}
 
 Slots (use the assigned type for each):
 ${breakfastSlots.map((s, i) => `- ${s.date} breakfast — type: ${breakfastTypePool[i % breakfastTypePool.length]}`).join('\n')}` : ''}
