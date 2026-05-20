@@ -229,12 +229,13 @@ Return a single JSON object only — no markdown:
         ? methodPool[Math.floor(Math.random() * methodPool.length)]
         : null
 
-      const ketoMode        = resolvedDiet === 'keto'      || dietLabel.toLowerCase().includes('keto')
-      const veganMode       = resolvedDiet === 'vegan'      || dietLabel.toLowerCase().includes('vegan')
-      const vegetarianMode  = veganMode                     || dietLabel.toLowerCase().includes('vegetarian')
-      const pescatarianMode = dietLabel.toLowerCase().includes('pescatarian')
-      const paleoMode       = resolvedDiet === 'paleo'      || dietLabel.toLowerCase().includes('paleo')
-      const lowFodmapMode   = resolvedDiet === 'low_fodmap' || dietLabel.toLowerCase().includes('fodmap')
+      const ketoMode          = resolvedDiet === 'keto'          || dietLabel.toLowerCase().includes('keto')
+      const veganMode         = resolvedDiet === 'vegan'         || dietLabel.toLowerCase().includes('vegan')
+      const vegetarianMode    = veganMode                        || dietLabel.toLowerCase().includes('vegetarian')
+      const pescatarianMode   = dietLabel.toLowerCase().includes('pescatarian')
+      const paleoMode         = resolvedDiet === 'paleo'         || dietLabel.toLowerCase().includes('paleo')
+      const lowFodmapMode     = resolvedDiet === 'low_fodmap'    || dietLabel.toLowerCase().includes('fodmap')
+      const mediterraneanMode = resolvedDiet === 'mediterranean' || dietLabel.toLowerCase().includes('mediterranean')
 
       // ── Protein options per diet ──────────────────────────────────────────
       let proteins: string
@@ -254,6 +255,9 @@ Return a single JSON object only — no markdown:
       } else if (paleoMode) {
         proteins           = `chicken breast, chicken thighs, ground beef, steak, ground turkey, pork chops, salmon`
         dinnerOnlyProteins = `, lamb, shrimp, venison`
+      } else if (mediterraneanMode) {
+        proteins           = `salmon, sea bass, cod, shrimp, chicken breast, chicken thighs, eggs, lentils, chickpeas`
+        dinnerOnlyProteins = `, lamb, mussels, octopus, sardines, white beans, halloumi`
       } else {
         proteins           = `chicken breast, chicken thighs, steak, salmon, ground beef, ground turkey, pork chops, shrimp`
         dinnerOnlyProteins = `, lamb, cod, lentils, chickpeas`
@@ -262,9 +266,10 @@ Return a single JSON object only — no markdown:
       // ── Dinner vegetable bases per diet ──────────────────────────────────
       let dinnerBases: string
       if (ketoMode)           dinnerBases = `zucchini noodles, spaghetti squash, shirataki noodles, roasted broccoli, roasted asparagus, roasted Brussels sprouts, sautéed green beans, roasted cauliflower, wilted spinach`
-      else if (paleoMode)     dinnerBases = `sweet potato, roasted root vegetables, butternut squash, spaghetti squash, plantain`
-      else if (lowFodmapMode) dinnerBases = `white rice, quinoa, gluten-free pasta, roasted potatoes, polenta`
-      else                    dinnerBases = `rice, pasta, roasted potatoes, noodles, couscous, farro, quinoa`
+      else if (paleoMode)         dinnerBases = `sweet potato, roasted root vegetables, butternut squash, spaghetti squash, plantain`
+      else if (lowFodmapMode)     dinnerBases = `white rice, quinoa, gluten-free pasta, roasted potatoes, polenta`
+      else if (mediterraneanMode) dinnerBases = `farro, bulgur, freekeh, brown rice, whole-wheat pasta, couscous, quinoa, roasted potatoes, lentils, chickpeas`
+      else                        dinnerBases = `rice, pasta, roasted potatoes, noodles, couscous, farro, quinoa`
 
       // ── Diet restriction rule (what is NOT allowed) ───────────────────────
       let dietRule = ''
@@ -273,7 +278,8 @@ Return a single JSON object only — no markdown:
       else if (vegetarianMode)  dietRule = `VEGETARIAN: No meat, poultry, or fish. Eggs and dairy are fine.`
       else if (pescatarianMode) dietRule = `PESCATARIAN: No beef, pork, chicken, turkey, or any land animal. Fish and seafood only as animal protein.`
       else if (paleoMode)       dietRule = `PALEO: No grains, no legumes, no dairy, no processed foods. Meat, fish, eggs, vegetables, fruit, nuts, seeds only.`
-      else if (lowFodmapMode)   dietRule = `LOW-FODMAP: No garlic, no onion, no wheat, no apples/pears/stone fruits, no lactose. Safe: white rice, potatoes, quinoa, hard cheeses, chicken, beef, fish, eggs, carrots, zucchini, bell peppers, spinach, tomatoes.`
+      else if (lowFodmapMode)     dietRule = `LOW-FODMAP: No garlic, no onion, no wheat, no apples/pears/stone fruits, no lactose. Safe: white rice, potatoes, quinoa, hard cheeses, chicken, beef, fish, eggs, carrots, zucchini, bell peppers, spinach, tomatoes.`
+      else if (mediterraneanMode) dietRule = `MEDITERRANEAN: Olive oil is the primary fat. Heavy emphasis on vegetables, legumes, whole grains, fish, seafood, eggs, nuts, fresh herbs, and Mediterranean cheeses (feta, halloumi, ricotta, parmesan, manchego). Red meat occasionally only. No deep-frying, no heavy cream sauces, no processed foods. Signature ingredients: tomatoes, cucumber, olives, olive oil, lemon, garlic, fresh herbs (parsley, oregano, mint, dill, basil), feta, yogurt, tahini, hummus.`
 
       // ── Slot lists ────────────────────────────────────────────────────────
       const breakfastSlots = slots.filter(s => s.meal_type === 'breakfast')
@@ -293,8 +299,9 @@ Return a single JSON object only — no markdown:
       else if (vegetarianMode)  breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, ricotta'
       else if (pescatarianMode) breakfastProteins = 'eggs, smoked salmon, tuna, Greek yogurt, cottage cheese, cheese'
       else if (paleoMode)       breakfastProteins = 'eggs, bacon, breakfast sausage, salmon'
-      else if (lowFodmapMode)   breakfastProteins = 'eggs, peanut butter, lactose-free yogurt, lactose-free cottage cheese'
-      else                      breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage, ham'
+      else if (lowFodmapMode)     breakfastProteins = 'eggs, peanut butter, lactose-free yogurt, lactose-free cottage cheese'
+      else if (mediterraneanMode) breakfastProteins = 'eggs, Greek yogurt, feta, halloumi, ricotta, labneh, cottage cheese, smoked salmon, tuna, hummus'
+      else                        breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage, ham'
 
       // ── Breakfast format inspiration per diet ─────────────────────────────
       // Framed as examples, not assignments. AI can use these or invent its own.
@@ -372,6 +379,32 @@ Return a single JSON object only — no markdown:
           '• Plantain or banana pancakes (sweet, with fresh fruit)',
           '• Breakfast skillet — ground sausage or beef + eggs + vegetables, one pan',
           '• Smoked salmon plate with cucumber and avocado (no cream cheese)',
+        ].join('\n')
+      } else if (mediterraneanMode) {
+        // Mediterranean format inspiration — split into DISTINCT items so the
+        // AI doesn't collapse into "Greek yogurt bowl" every time. Cucumber,
+        // tomato, olives, and Mediterranean cheeses are signature ingredients.
+        breakfastExamples = [
+          '• Scrambled eggs with feta — soft scrambled with crumbled feta, fresh herbs, optional cherry tomato or spinach',
+          '• Mediterranean omelette — folded with feta plus one of: spinach and tomato, olives and sun-dried tomato, roasted peppers, mushroom, or fresh herbs. Variations: Greek (feta, spinach, tomato), Spanish (chorizo, peppers, manchego), three-cheese (feta, mozzarella, parmesan), goat cheese and herbs, smoked salmon and dill, halloumi and tomato',
+          '• Sunny-side or fried eggs — over sautéed spinach with tomato and feta, or alongside halloumi and cucumber',
+          '• Poached or soft-boiled eggs — over labneh with olive oil, za\'atar, and toast, or with smoked salmon and cucumber',
+          '• Shakshuka — eggs poached in spiced tomato and pepper sauce, topped with feta and parsley',
+          '• Frittata — baked egg pie with feta, spinach, tomato, zucchini, or herbs',
+          '• Egg cups or muffins — eggs baked with feta, spinach, sun-dried tomato, or olives',
+          '• Greek yogurt bowl — full-fat Greek yogurt + seasonal fruit + nuts + honey drizzle, optional seeds',
+          '• Labneh toast — labneh on whole-grain toast with cucumber, tomato, olive oil, za\'atar',
+          '• Ricotta toast — fresh ricotta on whole-grain toast with honey and figs, peaches, berries, or pear',
+          '• Hummus toast — hummus on whole-grain toast topped with cucumber, tomato, olives, and parsley',
+          '• Avocado toast Mediterranean-style — mashed avocado on whole-grain toast with feta, cherry tomato, and herbs',
+          '• Smoked salmon plate — smoked salmon with cucumber, tomato, olives, soft-boiled egg, capers, lemon',
+          '• Halloumi plate — pan-seared halloumi with tomato, cucumber, olives, and fresh herbs',
+          '• Cottage cheese bowl — cottage cheese with seasonal fruit, nuts, and honey, or savory with cucumber and tomato',
+          '• Mezze breakfast plate — feta, olives, cucumber, tomato, hard-boiled egg, hummus, pita',
+          '• Savory oats — oats cooked savory with feta, herbs, and a soft-poached egg on top',
+          '• Tuna salad toast — Mediterranean tuna with olives, capers, lemon, parsley on whole-grain toast',
+          '• Chia pudding — chia in Greek yogurt or almond milk with seasonal fruit and honey',
+          '• Spanakopita-inspired eggs — eggs scrambled with spinach, feta, and dill',
         ].join('\n')
       } else if (lowFodmapMode) {
         breakfastExamples = [
@@ -458,6 +491,20 @@ Return a single JSON object only — no markdown:
           '• Cold plate — sliced meats + raw or roasted veg',
           '• Stuffed vegetables with ground meat filling',
         ].join('\n')
+      } else if (mediterraneanMode) {
+        lunchExamples = [
+          '• Greek salad with grilled protein — feta, cucumber, tomato, olives, red onion, olive oil, with grilled chicken, fish, or shrimp',
+          '• Grain bowls — farro, bulgur, freekeh, or quinoa + roasted vegetables + protein + tahini or lemon-olive-oil dressing',
+          '• Pita-based — grilled chicken, falafel, or kebab pita with hummus, vegetables, tzatziki',
+          '• Lentil or chickpea stew — Moroccan, Greek, or Italian style',
+          '• Tabbouleh or fattoush — herb-heavy bulgur or pita salad with grilled protein',
+          '• Fish plate — grilled white fish, salmon, or sardines with vegetables, lemon, herbs',
+          '• Stuffed vegetables — peppers, tomatoes, or grape leaves with grain and protein filling',
+          '• Mezze plate lunch — hummus, baba ganoush, tabbouleh, olives, feta, pita, grilled protein',
+          '• Whole-grain pasta with seafood or beans, olive oil, herbs (no cream sauces)',
+          '• Niçoise-style salad — tuna, olives, eggs, green beans, potatoes',
+          '• Shawarma or souvlaki bowl with grain, salad, hummus, tzatziki',
+        ].join('\n')
       } else if (lowFodmapMode) {
         lunchExamples = [
           '• Protein-and-safe-vegetables salad (no garlic or onion in dressing)',
@@ -541,14 +588,37 @@ Return a single JSON object only — no markdown:
         'steak','beef patty','turkey patty','chicken patty',
         'smoked salmon',
       ]
-      // Breakfast-appropriate vegetables only. Dinner veg (asparagus, broccoli,
-      // cauliflower, brussels sprouts, collard greens, zucchini, kale, arugula)
-      // intentionally excluded — they were bleeding into the "unused → suggest"
-      // path and causing the AI to put dinner vegetables at breakfast.
-      const VEG_TERMS = [
-        'avocado','pepper','jalapeño','tomato',
-        'mushroom','spinach','cucumber','scallion',
-      ]
+      // Breakfast-appropriate vegetables only — diet-aware. Mediterranean swaps
+      // jalapeño/mushroom for olive/arugula (signature Mediterranean veg).
+      // Dinner veg (asparagus, broccoli, cauliflower, brussels sprouts, collard
+      // greens, zucchini, kale) intentionally excluded across diets.
+      const VEG_TERMS = mediterraneanMode
+        ? ['tomato','cucumber','spinach','pepper','olive','arugula','avocado','scallion']
+        : ['avocado','pepper','jalapeño','tomato','mushroom','spinach','cucumber','scallion']
+
+      // Mediterranean breakfast format tracking — parallel to EGG_PREPS for keto.
+      // The AI defaults to "Greek yogurt bowl" repeatedly without this surfaced.
+      const MED_FORMATS: Record<string, string[]> = {
+        'Greek yogurt bowl':  ['greek yogurt'],
+        'cottage cheese bowl': ['cottage cheese'],
+        'scrambled eggs':     ['scrambled egg'],
+        'omelette':           ['omelette', 'omelet'],
+        'frittata':           ['frittata'],
+        'shakshuka':          ['shakshuka'],
+        'fried/sunny eggs':   ['fried egg', 'sunny-side', 'sunny side', 'over-easy', 'over easy'],
+        'poached/boiled eggs': ['poached egg', 'boiled egg', 'soft-boiled', 'hard-boiled', 'soft boiled', 'hard boiled'],
+        'egg cups':           ['egg cup', 'egg muffin'],
+        'labneh toast':       ['labneh'],
+        'ricotta toast':      ['ricotta toast', 'ricotta on'],
+        'hummus toast':       ['hummus toast', 'hummus on'],
+        'avocado toast':      ['avocado toast'],
+        'smoked salmon plate': ['smoked salmon plate', 'smoked salmon with'],
+        'halloumi plate':     ['halloumi'],
+        'mezze plate':        ['mezze', 'breakfast plate', 'cold plate'],
+        'savory oats':        ['savory oats', 'savoury oats'],
+        'chia pudding':       ['chia pudding'],
+        'tuna toast':         ['tuna salad toast', 'tuna on toast', 'tuna toast'],
+      }
 
       const usedEggPreps = Object.entries(EGG_PREPS)
         .map(([prep, terms]) => ({ prep, count: allBfNames.filter(n => terms.some(t => n.includes(t))).length }))
@@ -606,10 +676,57 @@ Return a single JSON object only — no markdown:
         }
       }
       // Omelettes are a high-variety format that the AI tends to skip — nudge when absent.
-      if (ketoMode && totalBfCount >= 3) {
+      if ((ketoMode || mediterraneanMode) && totalBfCount >= 3) {
         const omeletteUsed = allBfNames.some(n => n.includes('omelette') || n.includes('omelet'))
         if (!omeletteUsed) {
-          varietyParts.push('No omelette generated yet — consider one. Many variations: Western, Greek (feta + spinach), goat cheese and mushroom, Spanish (chorizo + manchego), smoked salmon and cream cheese, three-cheese, jalapeño popper, Mediterranean, mushroom and Swiss')
+          const variations = mediterraneanMode
+            ? 'Greek (feta + spinach + tomato), Mediterranean (feta + olives + sun-dried tomato), Spanish (chorizo + peppers + manchego), three-cheese (feta + mozzarella + parmesan), goat cheese and herbs, smoked salmon and dill, halloumi and tomato, mushroom and herbs'
+            : 'Western, Greek (feta + spinach), goat cheese and mushroom, Spanish (chorizo + manchego), smoked salmon and cream cheese, three-cheese, jalapeño popper, Mediterranean, mushroom and Swiss'
+          varietyParts.push(`No omelette generated yet — consider one. Many variations: ${variations}`)
+        }
+      }
+      // ─── Mediterranean-specific nudges ────────────────────────────────────
+      if (mediterraneanMode) {
+        // Format-repeat detection — Mediterranean breakfasts collapse into
+        // "Greek yogurt bowl" without this. Parallel to keto's EGG_PREPS.
+        const usedMedFormats = Object.entries(MED_FORMATS)
+          .map(([fmt, terms]) => ({ fmt, count: allBfNames.filter(n => terms.some(t => n.includes(t))).length }))
+          .filter(x => x.count > 0)
+        const unusedMedFormats = Object.keys(MED_FORMATS).filter(f => !usedMedFormats.some(u => u.fmt === f))
+        if (usedMedFormats.length > 0) {
+          const overusedFmt = usedMedFormats.filter(f => f.count >= 2)
+          if (overusedFmt.length > 0) {
+            const used = overusedFmt.map(f => `${f.fmt} (${f.count}x)`).join(', ')
+            const alts = unusedMedFormats.length > 0 ? unusedMedFormats.slice(0, 10).join(', ') : ''
+            varietyParts.push(`Mediterranean formats overused: ${used} — try a different format: ${alts}`)
+          } else if (totalBfCount >= 2) {
+            const used = usedMedFormats.map(f => f.fmt).join(', ')
+            const alts = unusedMedFormats.slice(0, 10).join(', ')
+            varietyParts.push(`Formats used so far: ${used}. Unused options to consider: ${alts}`)
+          }
+        }
+        // Mediterranean cheese: feta is the default, halloumi/ricotta/labneh also signature.
+        if (totalBfCount >= 2) {
+          const MED_CHEESES = ['feta','halloumi','ricotta','labneh','manchego','parmesan','mozzarella']
+          const cheeseUsed = allBfNames.some(n => MED_CHEESES.some(c => n.includes(c)))
+          if (!cheeseUsed) {
+            varietyParts.push('No Mediterranean cheese in recent breakfasts — feta is the signature cheese, also halloumi, ricotta, or labneh. Cooked INTO the dish (scrambled with feta, ricotta on toast, labneh spread), not as a side')
+          }
+        }
+        // Cucumber + tomato are signature Mediterranean ingredients.
+        if (totalBfCount >= 2) {
+          const tomatoUsed = allBfNames.some(n => n.includes('tomato'))
+          const cucumberUsed = allBfNames.some(n => n.includes('cucumber'))
+          if (!tomatoUsed && !cucumberUsed) {
+            varietyParts.push('Neither tomato nor cucumber used yet — these are signature Mediterranean breakfast ingredients and should appear in most savory dishes')
+          }
+        }
+        // Olives are another Mediterranean signature.
+        if (totalBfCount >= 3) {
+          const olivesUsed = allBfNames.some(n => n.includes('olive'))
+          if (!olivesUsed) {
+            varietyParts.push('Olives not yet used — they belong in Mediterranean breakfasts (in mezze plates, with eggs, on labneh toast, in Greek salad-style preparations)')
+          }
         }
       }
       if (usedVeg.length > 0) {
@@ -617,7 +734,10 @@ Return a single JSON object only — no markdown:
         if (overused.length > 0) {
           const used = overused.map(v => `${v.term} (${v.count}x)`).join(', ')
           const unused = VEG_TERMS.filter(v => !usedVeg.some(u => u.term === v))
-          const altList = unused.length > 0 ? unused.slice(0, 8).join(', ') : 'avocado, bell peppers, jalapeño, cherry tomatoes, mushrooms, spinach, cucumber, scallion'
+          const fallback = mediterraneanMode
+            ? 'tomatoes, cucumber, spinach, peppers, olives, arugula, avocado, scallion'
+            : 'avocado, bell peppers, jalapeño, cherry tomatoes, mushrooms, spinach, cucumber, scallion'
+          const altList = unused.length > 0 ? unused.slice(0, 8).join(', ') : fallback
           varietyParts.push(`Vegetables overused: ${used} — pick a different vegetable: ${altList}`)
         }
       }
@@ -661,7 +781,11 @@ HARD RULES:
 6. Write plain ingredient names — no diet qualifiers ("turkey bacon", not "maple-free turkey bacon").
 ${ketoMode ? `7. Keto breakfast vegetables — ONLY these are appropriate at breakfast: avocado, bell peppers, jalapeño, cherry tomatoes, mushrooms, spinach, scallion, cucumber. NEVER use at breakfast: asparagus, broccolini, broccoli, cauliflower, brussels sprouts, collard greens, zucchini, kale, arugula, swiss chard, green beans — those belong at lunch or dinner.
 8. Cheese belongs INSIDE keto breakfast dishes — melted into scrambles, omelettes, frittatas, egg cups, shakshuka, and skillets. Not as a side cheese plate. Use cheddar, feta, goat cheese, cream cheese, gruyère, manchego, cotija, swiss, or ricotta. Name the cheese in the meal name (e.g. "Scrambled eggs with chorizo and cheddar", "Greek omelette with feta and spinach"). A cheese plate or charcuterie board is a separate format — fine occasionally, but the default is cheese cooked INTO the eggs.
-9. Omelettes are a high-variety format and should appear regularly. Rotate the style each time: Western (ham, peppers, cheddar), Greek (feta, spinach, tomato), goat cheese and mushroom, Spanish (chorizo, peppers, manchego), smoked salmon and cream cheese, bacon and cheddar, three-cheese, jalapeño popper, Mediterranean (feta, olives), mushroom and Swiss, sausage and feta. Pick a different combination each time.\n` : ''}${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `${ketoMode ? 10 : 7}. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${varietyContext}
+9. Omelettes are a high-variety format and should appear regularly. Rotate the style each time: Western (ham, peppers, cheddar), Greek (feta, spinach, tomato), goat cheese and mushroom, Spanish (chorizo, peppers, manchego), smoked salmon and cream cheese, bacon and cheddar, three-cheese, jalapeño popper, Mediterranean (feta, olives), mushroom and Swiss, sausage and feta. Pick a different combination each time.\n` : ''}${mediterraneanMode ? `7. Mediterranean breakfast vegetables — emphasize tomatoes (cherry, sun-dried, sliced), cucumber, spinach, peppers (bell, roasted), olives, arugula, and avocado. Most savory Mediterranean breakfasts include tomato and/or cucumber. NEVER use at breakfast: asparagus, broccoli, cauliflower, brussels sprouts, collard greens, zucchini, kale (as a side) — those belong at lunch or dinner.
+8. Mediterranean cheese belongs INSIDE the dish — feta crumbled into scrambled eggs, ricotta spread on toast, labneh under poached eggs, halloumi pan-seared on the plate, parmesan or mozzarella melted into a frittata. Use feta, halloumi, ricotta, labneh, parmesan, manchego, or mozzarella. Feta is the default Mediterranean cheese. Name the cheese in the meal name (e.g. "Scrambled eggs with feta and tomato", "Labneh toast with cucumber and za'atar"). Cheese is integrated into the meal, not served as a side plate.
+9. Format rotation — many distinct Mediterranean breakfast formats are available: scrambled eggs with feta, Mediterranean omelette, shakshuka, frittata, sunny-side eggs over greens, poached eggs with labneh, Greek yogurt bowl, labneh toast, ricotta toast, hummus toast, avocado toast, smoked salmon plate, halloumi plate, cottage cheese bowl, mezze breakfast plate, savory oats, chia pudding, tuna salad toast, spanakopita-style eggs. Pick a DIFFERENT format type each generation — do not repeat the same format (e.g. no two Greek yogurt bowls in a row, no two toast formats in a row).
+10. Mediterranean omelette variations to rotate: Greek (feta, spinach, tomato), Mediterranean (feta, olives, sun-dried tomato), Spanish (chorizo, peppers, manchego), three-cheese (feta, mozzarella, parmesan), goat cheese and herbs, smoked salmon and dill, halloumi and tomato, mushroom and herbs, roasted pepper and feta.
+11. Signature Mediterranean ingredients to leverage: olive oil (primary fat), lemon, fresh herbs (parsley, oregano, mint, dill, basil), za'atar, sumac, garlic, capers, tahini, honey, figs, dates, pine nuts. Use these to elevate plain dishes.\n` : ''}${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `${ketoMode ? 10 : (mediterraneanMode ? 12 : 7)}. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${varietyContext}
 Format inspiration — use these OR invent your own. This is not a checklist:
 ${breakfastExamples}
 
