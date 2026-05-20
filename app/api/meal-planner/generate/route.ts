@@ -183,23 +183,131 @@ Return a single JSON object only — no markdown:
         ? methodPool[Math.floor(Math.random() * methodPool.length)]
         : null
 
-      // Split slots by meal type for tailored instructions
-      const breakfastLunchSlots = slots.filter(s => s.meal_type !== 'dinner')
-      const dinnerSlots = slots.filter(s => s.meal_type === 'dinner')
-
-      const commonProfile = `USER PROFILE:
-- Diet style: ${dietLabel}
-- Daily targets: ${calories} kcal | Protein ${protein}g | Carbs ${carbs}g | Fat ${fat}g
-- Macro split: breakfast 25% · lunch 35% · dinner 40% of daily targets
-${allergies ? `- Allergies / avoid: ${allergies}` : ''}
-${conditions ? `- Health conditions: ${conditions}` : ''}${labContext}`
-
       const ketoMode        = resolvedDiet === 'keto'      || dietLabel.toLowerCase().includes('keto')
       const veganMode       = resolvedDiet === 'vegan'      || dietLabel.toLowerCase().includes('vegan')
       const vegetarianMode  = veganMode                     || dietLabel.toLowerCase().includes('vegetarian')
       const pescatarianMode = dietLabel.toLowerCase().includes('pescatarian')
       const paleoMode       = resolvedDiet === 'paleo'      || dietLabel.toLowerCase().includes('paleo')
       const lowFodmapMode   = resolvedDiet === 'low_fodmap' || dietLabel.toLowerCase().includes('fodmap')
+
+      // ── Protein options per diet ──────────────────────────────────────────
+      let proteins: string
+      let dinnerOnlyProteins: string
+      if (veganMode) {
+        proteins           = `tofu, tempeh, lentils, chickpeas, black beans, edamame`
+        dinnerOnlyProteins = `, seitan, white beans`
+      } else if (vegetarianMode) {
+        proteins           = `eggs, Greek yogurt, cottage cheese, tofu, tempeh, lentils, chickpeas`
+        dinnerOnlyProteins = `, black beans, halloumi, paneer`
+      } else if (pescatarianMode) {
+        proteins           = `salmon, cod, tilapia, shrimp, tuna, eggs`
+        dinnerOnlyProteins = `, crab, scallops, sardines`
+      } else if (ketoMode) {
+        proteins           = `chicken breast, chicken thighs, ground beef, ground turkey, steak, pork chops, salmon, cod, bacon`
+        dinnerOnlyProteins = `, lamb chops, shrimp, ground bison, duck breast`
+      } else if (paleoMode) {
+        proteins           = `chicken breast, chicken thighs, ground beef, steak, ground turkey, pork chops, salmon`
+        dinnerOnlyProteins = `, lamb, shrimp, venison`
+      } else {
+        proteins           = `chicken breast, chicken thighs, steak, salmon, ground beef, ground turkey, pork chops, shrimp`
+        dinnerOnlyProteins = `, lamb, cod, lentils, chickpeas`
+      }
+
+      // ── Dinner vegetable bases per diet ──────────────────────────────────
+      let dinnerBases: string
+      if (ketoMode)        dinnerBases = `zucchini noodles, spaghetti squash, shirataki noodles, roasted broccoli, roasted asparagus, roasted Brussels sprouts, sautéed green beans, roasted cauliflower, wilted spinach`
+      else if (paleoMode)  dinnerBases = `sweet potato, roasted root vegetables, butternut squash, spaghetti squash, plantain`
+      else if (lowFodmapMode) dinnerBases = `white rice, quinoa, gluten-free pasta, roasted potatoes, polenta`
+      else                 dinnerBases = `rice, pasta, roasted potatoes, noodles, couscous, farro, quinoa`
+
+      // ── Diet restriction rule (what is NOT allowed) ───────────────────────
+      let dietRule = ''
+      if (ketoMode)            dietRule = `KETO: No grains, no bread, no rice, no pasta, no oats, no corn, no beans, no lentils, no potatoes. Every meal must be low-carb. Use meat, fish, eggs, cheese, and non-starchy vegetables.`
+      else if (veganMode)      dietRule = `VEGAN: No meat, poultry, fish, dairy, or eggs. 100% plant-based only.`
+      else if (vegetarianMode) dietRule = `VEGETARIAN: No meat, poultry, or fish. Eggs and dairy are fine.`
+      else if (pescatarianMode) dietRule = `PESCATARIAN: No beef, pork, chicken, turkey, or any land animal. Fish and seafood only as animal protein.`
+      else if (paleoMode)      dietRule = `PALEO: No grains, no legumes, no dairy, no processed foods. Meat, fish, eggs, vegetables, fruit, nuts, seeds only.`
+      else if (lowFodmapMode)  dietRule = `LOW-FODMAP: No garlic, no onion, no wheat, no apples/pears/stone fruits, no lactose. Safe: white rice, potatoes, quinoa, hard cheeses, chicken, beef, fish, eggs, carrots, zucchini, bell peppers, spinach, tomatoes.`
+
+      // ── Breakfast format options per diet ────────────────────────────────
+      let breakfastFormats: string
+      if (ketoMode)            breakfastFormats = `scrambled eggs with cheese, fried eggs with bacon, soft-boiled eggs with sautéed mushrooms, full-fat Greek yogurt with nuts and berries, smoked salmon with cucumber and cream cheese, cottage cheese with walnuts, omelette with vegetables and cheese`
+      else if (veganMode)      breakfastFormats = `oatmeal with fruit, avocado toast, chia pudding, smoothie bowl, tofu scramble, granola with plant milk, peanut butter toast`
+      else if (vegetarianMode) breakfastFormats = `scrambled eggs on toast, yogurt parfait, oatmeal with fruit, avocado toast with fried egg, smoothie, pancakes, frittata`
+      else if (pescatarianMode) breakfastFormats = `scrambled eggs on toast, smoked salmon on toast, yogurt parfait, oatmeal with fruit, avocado toast with egg`
+      else if (paleoMode)      breakfastFormats = `scrambled eggs, fried eggs with bacon, sweet potato hash with egg, fruit bowl with nuts, omelette with vegetables`
+      else if (lowFodmapMode)  breakfastFormats = `scrambled eggs on gluten-free toast, rice cakes with peanut butter, gluten-free oats with banana, fried egg with roasted tomatoes`
+      else                     breakfastFormats = `scrambled eggs on toast, oatmeal with fruit, yogurt parfait, avocado toast with egg, smoothie, pancakes, breakfast burrito`
+
+      // ── Lunch format options per diet ────────────────────────────────────
+      let lunchFormats: string
+      if (ketoMode)            lunchFormats = `chicken Caesar salad (no croutons), tuna lettuce wraps, steak salad with mixed greens, egg salad in bell pepper halves, ground turkey zucchini soup, BLT salad, shrimp and cucumber salad`
+      else if (veganMode)      lunchFormats = `lentil soup, grain bowl with roasted vegetables, black bean wrap, chickpea salad, vegetable stir-fry, stuffed bell peppers`
+      else if (vegetarianMode) lunchFormats = `caprese salad, egg salad sandwich, lentil soup, grilled cheese, veggie wrap, quesadilla`
+      else if (pescatarianMode) lunchFormats = `tuna salad sandwich, salmon wrap, shrimp salad, fish tacos, tuna melt`
+      else if (paleoMode)      lunchFormats = `grilled chicken salad, lettuce-wrap burger, chicken soup, steak salad`
+      else if (lowFodmapMode)  lunchFormats = `grilled chicken salad, rice bowl with vegetables, gluten-free sandwich`
+      else                     lunchFormats = `sandwich, wrap, soup, salad with protein, quesadilla, grilled cheese, tuna melt`
+
+      // ── Slot lists ────────────────────────────────────────────────────────
+      const breakfastSlots = slots.filter(s => s.meal_type === 'breakfast')
+      const lunchSlots     = slots.filter(s => s.meal_type === 'lunch')
+      const dinnerSlots    = slots.filter(s => s.meal_type === 'dinner')
+      const totalSlots     = slots.length
+
+      const complexityNote = complexity === 'simple'
+        ? `Under 30 minutes. One or two pans. No specialist equipment.`
+        : `More ambitious cooking welcome — longer times, marinating, multiple components.`
+
+      const prompt = `You are a gut-health meal planner. Generate meals for the exact slots listed below.
+
+USER PROFILE:
+- Diet: ${dietLabel}
+- Daily targets: ${calories} kcal | Protein ${protein}g | Carbs ${carbs}g | Fat ${fat}g
+- Macro split: breakfast 25% · lunch 35% · dinner 40%
+${allergies ? `- Avoid: ${allergies}` : ''}
+${conditions ? `- Health conditions: ${conditions}` : ''}
+${labContext ? `\nLAB RESULTS (context only — do not restrict variety based on these):\n${labContext}` : ''}
+${dietRule ? `\nDIET RULE: ${dietRule}` : ''}
+
+VARIETY RULES (${totalSlots} meal${totalSlots !== 1 ? 's' : ''} in this response — all rules apply across every meal):
+- Every meal name must be unique. No duplicates, no near-duplicates.
+- Each protein appears AT MOST ONCE across all meals.
+- Each cooking method (baked, grilled, pan-seared, etc.) AT MOST TWICE.
+- ONLY generate meals for the slots listed. No extras.
+
+GUT HEALTH: Whole foods, anti-inflammatory, varied vegetables across meals.
+
+${existingWeekMeals.length > 0 ? `ALREADY THIS WEEK — do not repeat these:\n${existingWeekMeals.join('\n')}\n` : ''}
+${breakfastSlots.length > 0 ? `
+=== BREAKFAST (${breakfastSlots.length} meals) ===
+Fast and simple. 15 minutes max. 2-3 ingredients. No complex builds.
+Use a DIFFERENT FORMAT for each breakfast — pick from: ${breakfastFormats}
+Never repeat a format (e.g. only one scrambled eggs, only one yogurt).
+
+Slots:
+${breakfastSlots.map(s => `- ${s.date} breakfast`).join('\n')}` : ''}
+${lunchSlots.length > 0 ? `
+=== LUNCH (${lunchSlots.length} meals) ===
+Quick, under 20 minutes. Each lunch must be a different dish and format.
+Pick from: ${lunchFormats}
+No two lunches share the same protein or format.
+
+Slots:
+${lunchSlots.map(s => `- ${s.date} lunch`).join('\n')}` : ''}
+${dinnerSlots.length > 0 ? `
+=== DINNER (${dinnerSlots.length} meals) ===
+${complexityNote}
+${randomCuisine ? `Cuisine: ${randomCuisine}, method: ${randomMethod}.` : 'Vary world cuisines — Italian, Mexican, Indian, Middle Eastern, Greek, Korean, Thai, etc.'}
+Proteins (each at most once): ${proteins}${dinnerOnlyProteins}
+Vegetable bases/sides (each at most once): ${dinnerBases}
+Specific names only: "Baked Lemon-Herb Salmon with Roasted Asparagus" not "Salmon with Vegetables".
+
+Slots:
+${dinnerSlots.map(s => `- ${s.date} dinner`).join('\n')}` : ''}
+
+Return a JSON array only — no markdown. Each object:
+{"date":"YYYY-MM-DD","meal_type":"breakfast|lunch|dinner","meal_name":"string","calories":number,"protein_g":number,"fat_g":number,"carbs_g":number}`
 
       // ── Per-diet protein + carb lists ─────────────────────────────────────
       let commonProteins: string
@@ -267,119 +375,6 @@ ${conditions ? `- Health conditions: ${conditions}` : ''}${labContext}`
 
       const dietRules = [ketoRule, veganRule, vegetarianRule, pescatarianRule, paleoRule, lowFodmapRule].filter(Boolean).join('\n\n')
 
-      // ── Diet-aware breakfast/lunch hints ─────────────────────────────────
-      let breakfastHint: string
-      let lunchHint: string
-      if (ketoMode) {
-        breakfastHint = 'Keto breakfast formats — pick a DIFFERENT FORMAT each day, never the same format twice: (1) Scrambled eggs with cheese and sautéed spinach, (2) Bacon and fried eggs, (3) Greek yogurt (full-fat) with mixed nuts and a few berries, (4) Smoked salmon with cucumber slices and cream cheese, (5) Cottage cheese with walnuts and cinnamon, (6) Cheese and turkey roll-ups with sliced bell pepper, (7) Soft-boiled eggs with sautéed mushrooms. NO boiled/hard-boiled eggs + avocado — this is too boring and repetitive.'
-        lunchHint     = 'Keto lunches — VARY the format every day: (1) Tuna or chicken lettuce wraps, (2) Egg salad stuffed into bell pepper halves, (3) Grilled chicken Caesar salad (no croutons), (4) Zucchini noodle soup with ground turkey, (5) Steak salad with mixed greens and olive oil, (6) BLT salad (bacon, tomato, lettuce, avocado), (7) Shrimp and avocado salad. NO cauliflower rice at lunch — use salad greens, lettuce cups, or vegetables as the base instead.'
-      } else if (veganMode) {
-        breakfastHint = 'Vegan breakfasts (simple): oatmeal with banana, avocado toast, chia pudding, smoothie, peanut butter toast, granola with plant milk. Each meal = one or two components MAX.'
-        lunchHint     = 'Vegan lunches: lentil soup, grain bowl with roasted vegetables and chickpeas, vegetable wrap, black bean salad.'
-      } else if (vegetarianMode) {
-        breakfastHint = 'Vegetarian breakfasts (simple): scrambled eggs on toast, fried egg and avocado, oatmeal with fruit, yogurt parfait, smoothie. Each meal = one protein + one or two simple sides MAX.'
-        lunchHint     = 'Vegetarian lunches: caprese salad, egg salad sandwich, lentil soup, grilled cheese, veggie wrap.'
-      } else if (pescatarianMode) {
-        breakfastHint = 'Breakfasts (simple): scrambled eggs on toast, fried egg with avocado, yogurt parfait, oatmeal, smoked salmon on toast (just salmon + toast, nothing else added). Each meal = one or two components MAX.'
-        lunchHint     = 'Pescatarian lunches: tuna salad sandwich, salmon wrap, shrimp salad, fish tacos.'
-      } else if (paleoMode) {
-        breakfastHint = 'Paleo breakfasts (simple): scrambled eggs, fried eggs with bacon, sweet potato hash with egg, fruit bowl with nuts. Each meal = one protein + one or two simple sides MAX.'
-        lunchHint     = 'Paleo lunches: large salad with grilled chicken, lettuce-wrap burger, chicken and vegetable soup.'
-      } else if (lowFodmapMode) {
-        breakfastHint = 'Low-FODMAP breakfasts (simple): scrambled eggs on gluten-free toast, rice cakes with peanut butter, gluten-free oats with banana. Each meal = one or two components MAX.'
-        lunchHint     = 'Low-FODMAP lunches: grilled chicken salad (no croutons), rice bowl, gluten-free sandwich.'
-      } else {
-        breakfastHint = 'Common breakfasts (simple): scrambled eggs on toast, fried egg with avocado, oatmeal with fruit, yogurt parfait, smoothie, pancakes, avocado toast with egg. Each meal = one or two components MAX.'
-        lunchHint     = 'Common lunches: sandwich, wrap, soup, simple salad with protein, quesadilla, grilled cheese, tuna melt.'
-      }
-
-      const plainLanguageRule = `PLAIN ENGLISH ONLY: Write ingredient names that any home cook would recognize. Never use French culinary terms or restaurant jargon. Examples: say "green beans" not "haricots verts", "pan sauce" not "jus", "mashed cauliflower" not "cauliflower purée", "pepper-crusted" not "au poivre". If a technique sounds fancy, simplify it.`
-
-      // Separate breakfast and lunch slots
-      const breakfastSlots = breakfastLunchSlots.filter(s => s.meal_type === 'breakfast')
-      const lunchSlots     = breakfastLunchSlots.filter(s => s.meal_type === 'lunch')
-
-      // Global variety caps — phrased so they only describe the meals being generated NOW
-      const totalSlotsBeingGenerated = slots.length
-      const globalVarietyRules = ketoMode
-        ? `GLOBAL VARIETY RULES — enforced across every meal in this response (${totalSlotsBeingGenerated} meal${totalSlotsBeingGenerated !== 1 ? 's' : ''} total):
-- AVOCADO: use at most twice across all meals you generate. Not every meal needs avocado.
-- CAULIFLOWER RICE: use at most ONCE across all meals (dinner only if possible). All other meals must use a completely different vegetable base.
-- EGG FORMAT at breakfast: each egg preparation must be different — scrambled, fried, soft-boiled, omelette are distinct. Never repeat the same egg style.
-- Any single protein (chicken breast, chicken thighs, steak, ground beef, etc.): at most ONCE across ALL meals you generate.
-- Any cooking method (pan-seared, baked, grilled, boiled, etc.): at most TWICE across all meals.
-- CRITICAL: Every meal_name must be completely unique — no two meals can share the same protein + format combination. If you generate "Tuna Salad Lettuce Wraps" once, you cannot generate any variation of tuna lettuce wraps again.
-- ONLY generate meals for the slots listed below. Do not add extra meals or extra meal types.`
-        : `GLOBAL VARIETY RULES — enforced across every meal in this response (${totalSlotsBeingGenerated} meal${totalSlotsBeingGenerated !== 1 ? 's' : ''} total):
-- Any single protein: at most ONCE across all meals you generate.
-- Avocado, sweet potato, quinoa: at most twice each.
-- Any cooking method: at most TWICE across all meals.
-- CRITICAL: Every meal_name must be completely unique — no two meals can share the same protein + format combination.
-- ONLY generate meals for the slots listed below. Do not add extra meals or extra meal types.`
-
-      const breakfastBlock = breakfastSlots.length > 0 ? `
-=== BREAKFAST MEALS ===
-BREAKFAST RULES:
-- Fast and simple: under 15 minutes, 2-3 components maximum.
-- No restaurant-style multi-component builds.
-- No lunch/dinner carb bases (no cauliflower rice, grain bowls, zucchini noodles).
-- FORMAT ROTATION IS MANDATORY: each breakfast must be a completely different category. Examples of distinct categories: [scrambled eggs], [fried/sunny-side eggs], [soft-boiled eggs], [omelette], [Greek yogurt], [bacon + eggs], [smoked salmon], [cottage cheese], [hard-boiled eggs]. If you use "scrambled eggs" for one slot, you CANNOT use "scrambled eggs" or "eggs scrambled" for any other slot — not even with different toppings.
-- ${breakfastHint}
-
-Slots:
-${breakfastSlots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}` : ''
-
-      const lunchBlock = lunchSlots.length > 0 ? `
-=== LUNCH MEALS ===
-Quick and familiar — something a busy person can make or assemble in under 20 minutes.
-- FORMAT ROTATION IS MANDATORY: each lunch must be a completely different dish. No two lunches can share the same protein. No two lunches can share the same format (e.g. only one salad, only one wrap, only one soup).
-- ${lunchHint}
-- Be specific: "Grilled Chicken Caesar Salad with Romaine and Parmesan" not just "Chicken Salad".
-
-Slots:
-${lunchSlots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}` : ''
-
-      const complexityNote = complexity === 'simple'
-        ? `COMPLEXITY — Quick & Easy: Under 30 minutes, one or two pans, common grocery store ingredients, no specialist equipment, no multi-step sauces.`
-        : `COMPLEXITY — Weekend Cook: More ambitious dishes welcome. Longer cook times, marinating, multiple components, interesting techniques.`
-
-      const dinnerBlock = dinnerSlots.length > 0 ? `
-=== DINNER MEALS ===
-${complexityNote}
-${randomCuisine ? `THIS DINNER MUST BE: ${randomCuisine} cuisine, primary cooking method: ${randomMethod}. Do not deviate.` : 'Draw from varied world cuisine traditions — Italian, Mexican, Indian, Middle Eastern, Greek, Korean, etc. Each dinner should feel like a different country or region.'}
-- Each protein AT MOST ONCE. Rotate from: ${commonProteins}${dinnerExtraProteins}.
-- Carb/vegetable base: rotate through all available options [${commonGrains}${dinnerExtraGrains}] — never use the same base twice in a row.
-- NO generic "bowls". Be specific: "Baked Lemon Herb Chicken Thighs with Roasted Potatoes and Green Beans" not "Chicken Bowl".
-- Appetizing, specific names that include the cooking method and key flavors — in plain English.
-
-Slots:
-${dinnerSlots.map(s => `- ${s.date} ${s.meal_type}`).join('\n')}` : ''
-
-      const prompt = `You are a gut-health nutrition planner. Generate a varied, delicious week of meals tailored to the user's profile.
-
-${commonProfile}
-
-${dietRules}
-
-${globalVarietyRules}
-
-${plainLanguageRule}
-
-GUT-HEALTH REQUIREMENTS (all meals):
-- Anti-inflammatory ingredients throughout the week
-- Diverse fiber from different plant foods — not the same vegetables daily
-- Avoid known gut irritants unless diet allows
-- Whole, minimally processed ingredients
-
-${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do NOT repeat these proteins, grains, or cuisines:
-${existingWeekMeals.join('\n')}
-` : ''}
-${breakfastBlock}
-${lunchBlock}
-${dinnerBlock}
-
-Return a JSON array only — no markdown, no explanation. Each object:
-{"date":"YYYY-MM-DD","meal_type":"breakfast|lunch|dinner","meal_name":"string","calories":number,"protein_g":number,"fat_g":number,"carbs_g":number}`
 
       // Whitelist: only save meals that match a slot we actually requested
       const allowedSlotKeys = new Set(slots.map(s => `${s.date}|${s.meal_type}`))
