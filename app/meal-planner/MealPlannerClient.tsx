@@ -369,6 +369,10 @@ export default function MealPlannerClient() {
   }, [weekStart])
 
   const initializedRef = useRef(false)
+  // Tracks meals rejected (swapped away) for each slot key (date-mealType).
+  // Persists across swaps so the full rejection history is sent to the server,
+  // preventing the AI from oscillating between the same 2-3 defaults.
+  const rejectedMealsRef = useRef<Record<string, string[]>>({})
   useEffect(() => {
     fetchSlots()
     if (!initializedRef.current) {
@@ -527,6 +531,17 @@ export default function MealPlannerClient() {
 
   async function regenerateMeal(date: string, mealType: string) {
     const key = `${date}-${mealType}`
+
+    // Record the current meal as rejected BEFORE overwriting it, so the
+    // full swap history is available to the server on the next request.
+    const currentSlot = slots.find(s => s.plan_date === date && s.meal_type === mealType)
+    if (currentSlot?.meal_name) {
+      if (!rejectedMealsRef.current[key]) rejectedMealsRef.current[key] = []
+      if (!rejectedMealsRef.current[key].includes(currentSlot.meal_name)) {
+        rejectedMealsRef.current[key].push(currentSlot.meal_name)
+      }
+    }
+
     setRegeneratingSlot(key)
     // Clear ingredients immediately so the shopping list doesn't show stale items
     setSlots(prev => prev.map(s =>
@@ -536,7 +551,14 @@ export default function MealPlannerClient() {
       const res = await fetch('/api/meal-planner/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weekStart: toDateStr(weekStart), regenerate: { date, mealType }, dietOverride, phase: 'quick', complexity }),
+        body: JSON.stringify({
+          weekStart: toDateStr(weekStart),
+          regenerate: { date, mealType },
+          dietOverride,
+          phase: 'quick',
+          complexity,
+          rejectedMeals: rejectedMealsRef.current[key] ?? [],
+        }),
       })
       if (res.ok && res.body) {
         await consumeStream(res.body, meal => {

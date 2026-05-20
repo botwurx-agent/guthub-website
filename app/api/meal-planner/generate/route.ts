@@ -18,6 +18,7 @@ export async function POST(request: Request) {
     phase = 'quick',
     existingMeal,
     complexity = 'simple',
+    rejectedMeals = [],   // meals generated for this slot but rejected by swapping again
   } = await request.json()
 
   const thirtyDaysAgo = new Date()
@@ -176,9 +177,17 @@ Return a single JSON object only — no markdown:
         existingWeekMeals = rawWeekMeals
           .filter(m => !targetKeys.has(`${m.plan_date}|${m.meal_type}`))
           .map(m => `${m.plan_date} ${m.meal_type}: ${m.meal_name}`)
-        currentSlotMeals = rawWeekMeals
+        // Merge DB current-slot meals with client-passed rejection history.
+        // When the user swaps the same slot multiple times, each prior attempt
+        // is accumulated in rejectedMeals so the AI sees the full history and
+        // cannot oscillate between the same 2-3 defaults.
+        const dbCurrentSlot = rawWeekMeals
           .filter(m => targetKeys.has(`${m.plan_date}|${m.meal_type}`))
           .map(m => m.meal_name)
+        currentSlotMeals = [
+          ...dbCurrentSlot,
+          ...(rejectedMeals as string[]).filter(r => !dbCurrentSlot.includes(r)),
+        ]
       }
 
       // Cuisine + method rotation for dinner — shuffled server-side so every
@@ -499,19 +508,20 @@ Return a single JSON object only — no markdown:
       const FRUIT_TERMS = ['raspberry','raspberries','blueberry','blueberries','strawberry','strawberries','mango','kiwi','apple','peach','peaches','pear','pineapple','banana','cherry','cherries','plum','grape','grapes','papaya','melon','fig','pomegranate']
       const NUT_TERMS   = ['almond','almonds','walnut','walnuts','pecan','pecans','pistachio','pistachios','cashew','cashews','hazelnut','hazelnuts','macadamia','pine nut','pine nuts']
 
-      const allBfNames = rawWeekMeals
-        .filter(m => m.meal_type === 'breakfast')
-        .map(m => m.meal_name.toLowerCase())
+      // Include rejected meals (prior swap attempts on this slot) alongside
+      // the current DB breakfasts so variety detection spans the full history.
+      const allBfNames = [
+        ...rawWeekMeals.filter(m => m.meal_type === 'breakfast').map(m => m.meal_name.toLowerCase()),
+        ...(rejectedMeals as string[]).map((n: string) => n.toLowerCase()),
+      ]
 
       const weekUsedFruits = FRUIT_TERMS.filter(f => allBfNames.some(n => n.includes(f)))
       const weekUsedNuts   = NUT_TERMS.filter(n  => allBfNames.some(name => name.includes(n)))
 
       // Cross-call variety detection — surfaces what's been overused as
-      // informational feedback (not a hardcoded "pick from this list" prescription).
-      // Splits egg preparations into distinct categories so we can tell the AI
-      // which specific styles are overused and which alternatives remain.
+      // informational feedback across the full swap history for this slot.
       const EGG_PREPS: Record<string, string[]> = {
-        'fried':       ['fried egg'],
+        'fried':       ['fried egg', 'pan-fried egg'],
         'sunny-side':  ['sunny-side', 'sunny side', 'over-easy', 'over easy'],
         'scrambled':   ['scrambled egg'],
         'poached':     ['poached egg', 'eggs benedict'],
@@ -522,32 +532,44 @@ Return a single JSON object only — no markdown:
         'egg cups':    ['egg cup', 'egg muffin'],
         'baked eggs':  ['baked egg'],
       }
-      const PORK_TERMS  = ['bacon','pork sausage','breakfast sausage','pork belly','ham','pancetta','prosciutto','chorizo']
+      // Broad breakfast meat tracking — covers poultry sausages and ground meats
+      // not just pork, because turkey sausage/chicken sausage repeat just as badly
+      const BREAKFAST_MEAT_TERMS = [
+        'turkey sausage','chicken sausage','beef sausage','pork sausage','breakfast sausage',
+        'bacon','pork belly','ham','chorizo','pancetta','prosciutto',
+        'ground turkey','ground chicken','ground beef',
+        'steak','beef patty','turkey patty','chicken patty',
+        'smoked salmon',
+      ]
       const GREEN_TERMS = ['spinach','kale','arugula','collard','swiss chard','baby greens']
 
       const usedEggPreps = Object.entries(EGG_PREPS)
         .map(([prep, terms]) => ({ prep, count: allBfNames.filter(n => terms.some(t => n.includes(t))).length }))
         .filter(x => x.count > 0)
       const unusedEggPreps = Object.keys(EGG_PREPS).filter(p => !usedEggPreps.some(u => u.prep === p))
-      const usedPork   = PORK_TERMS.map(p => ({ term: p, count: allBfNames.filter(n => n.includes(p)).length })).filter(x => x.count > 0)
+      const usedMeats  = BREAKFAST_MEAT_TERMS.map(p => ({ term: p, count: allBfNames.filter(n => n.includes(p)).length })).filter(x => x.count > 0)
       const usedGreens = GREEN_TERMS.map(g => ({ term: g, count: allBfNames.filter(n => n.includes(g)).length })).filter(x => x.count > 0)
 
       const varietyParts: string[] = []
       if (usedEggPreps.length > 0) {
         const used = usedEggPreps.map(p => `${p.prep} (${p.count}x)`).join(', ')
-        const alts = unusedEggPreps.length > 0 ? ` — try a different preparation: ${unusedEggPreps.join(', ')}` : ''
+        const alts = unusedEggPreps.length > 0 ? ` — try: ${unusedEggPreps.join(', ')}` : ''
         varietyParts.push(`Egg preparations used: ${used}${alts}`)
       }
-      if (usedPork.length > 0) {
-        const used = usedPork.map(p => `${p.term} (${p.count}x)`).join(', ')
-        varietyParts.push(`Supporting proteins used: ${used} — try a different protein: ground turkey, ground chicken, turkey sausage, chicken sausage, beef patty, steak strips, smoked salmon, or skip the meat side`)
+      if (usedMeats.length > 0) {
+        const overused = usedMeats.filter(p => p.count >= 2)
+        if (overused.length > 0) {
+          const used = overused.map(p => `${p.term} (${p.count}x)`).join(', ')
+          const allMeatTerms = BREAKFAST_MEAT_TERMS.join(', ')
+          varietyParts.push(`Supporting proteins overused: ${used} — pick a different meat/protein from: ${allMeatTerms}`)
+        }
       }
       if (usedGreens.length > 0) {
         const used = usedGreens.map(g => `${g.term} (${g.count}x)`).join(', ')
         varietyParts.push(`Vegetables used: ${used} — try peppers, mushrooms, tomatoes, asparagus, broccoli, cauliflower, or zucchini`)
       }
       const varietyContext = varietyParts.length > 0
-        ? `\nVARIETY CONTEXT — this week's breakfasts so far have used:\n${varietyParts.map(p => `- ${p}`).join('\n')}\nFor this breakfast, change AT LEAST ONE dimension — pick a different egg preparation, a different supporting protein, or a different vegetable. Do not just rearrange the same components.\n`
+        ? `\nVARIETY CONTEXT — breakfasts generated so far have used:\n${varietyParts.map(p => `- ${p}`).join('\n')}\nFor this breakfast, change AT LEAST ONE dimension — pick a different egg preparation, a different supporting protein, or a different vegetable. Do not rearrange the same components.\n`
         : ''
 
       const complexityNote = complexity === 'simple'
