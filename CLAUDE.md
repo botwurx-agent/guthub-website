@@ -173,9 +173,12 @@ Cream / forest / terracotta palette: `--cream-50/100/200`, `--forest-300/400/500
 - **Meal planner quality monitoring** — prompt rewrite (commit `d33f98a`) just deployed, user should generate a fresh week on a keto profile and verify variety improved. Prompt log lives at Vercel → guthub-website → Functions → `/api/meal-planner/generate` runtime logs (`[meal-planner/generate] PROMPT:`). Leave the `console.log` in place for now until variety is confirmed good across diet styles.
 
 ### ✅ Recently completed (May 2026)
-- **Lab/test results upload** — onboarding step 7 (added; `TOTAL_STEPS` is now 7), settings card under Profile & Health, and existing Insights tab. Multiple files per upload. `app/api/lab-results/upload/route.ts` uploads to `lab-reports` Supabase Storage bucket (private) via service role, sends each file as base64 `data:mime;base64,` to OpenAI Vision (`AI_MODEL_VISION`), saves `analysis_summary` to `lab_reports` table. Coach context (`lib/coach-context.ts`) and meal planner (`app/api/meal-planner/generate/route.ts`) both fetch top recent `lab_reports` with non-null summaries and inject as advisory context. **Important**: lab results are now framed as advisory only — they must NOT narrow food variety in the meal planner.
+- **Lab/test results upload** — onboarding step 7 (added; `TOTAL_STEPS` is now 7), settings card under Profile & Health, and existing Insights tab. Multiple files per upload. `app/api/lab-results/upload/route.ts` uploads to `lab-reports` Supabase Storage bucket (private) via service role, sends each file as base64 `data:mime;base64,` to OpenAI Vision (`AI_MODEL_VISION`), saves `analysis_summary` to `lab_reports` table. Coach context (`lib/coach-context.ts`) and meal planner (`app/api/meal-planner/generate/route.ts`) both fetch top recent `lab_reports` with non-null summaries and inject as advisory context. **Important**: lab results are framed as advisory only — they must NOT narrow food variety in the meal planner.
 - **Forgot password flow** — `/auth/reset-password/page.tsx` + `ResetPasswordClient.tsx`. AuthModal sends reset email via `redirectTo: ${origin}/auth/callback?next=/auth/reset-password` so the PKCE code exchange runs. `app/auth/callback/route.ts` skips the onboarding redirect when `next.startsWith('/auth/')`. Branded email sent via Supabase auth hook → `app/api/auth/send-email/route.ts` → Resend (verified by Standard Webhooks format `v1,whsec_<base64>`, HMAC-SHA256 of `id.timestamp.body`, `webhook-signature` header). Supabase "Confirm email" was disabled to make signup single-step.
 - **Beta signup (`/beta`)** — final approach calls `supabase.rpc('activate_beta_code', ...)` directly from the authenticated browser client after AuthModal flow. RPC has `EXECUTE GRANT TO authenticated`. Beta code `GUTHUB-BETA` is shared.
+- **Meal planner empty state** (commit `886a505`) — removed the "No meals planned yet" full-screen empty state. Day strip + 3 dashed empty meal-slot cards are always visible. The grid is gated on `!loading` not on `hasAnyMeals`. Each empty slot has its own per-meal Generate button.
+- **Meal planner swap/generate full-grid remount fix** (commit `bae715c`) — `fetchSlots()` was setting `loading = true`, which unmounts the entire grid (it's wrapped in `{!loading && ...}`). After every swap or single-slot generate the user saw the whole page flash like a refresh. Added `fetchSlots(silent = false)`; regenerate and generate paths call `fetchSlots(true)` so the grid never unmounts.
+- **Meal planner prompt — complete rewrite** (commits `762d353` → `f3e23d3` → `030243d` → `c3a4919` → `6a62677` → `d33f98a`) — the original `KETO STRICT` rule contained two poisoned-pill instructions ("Use cauliflower rice", "Prioritize avocado") that overrode every subsequent variety rule, causing meals like "Boiled eggs with avocado" four times in a row at breakfast and cauliflower rice in every lunch + dinner. After several patch attempts, the prompt-building section (lines ~186–310 of `app/api/meal-planner/generate/route.ts`) was rewritten from scratch. See the **Meal planner prompt architecture** section below.
 
 ### Known gotchas & important fixes
 - **gpt-5-mini does NOT support `max_tokens`** — do not add it to `app/api/coach/stream/route.ts`
@@ -190,6 +193,37 @@ Cream / forest / terracotta palette: `--cream-50/100/200`, `--forest-300/400/500
 - **Admin email send**: `app/api/admin/send-email/route.ts` — auth checked via `admin_session` cookie vs `ADMIN_PASSWORD` env var. Sends one Resend call per recipient. Uses `buildAdminEmailHtml` from `lib/email-templates.ts`.
 - **AI prompts: read the assembled string before iterating.** Hard lesson from the meal planner — months of layered patches couldn't fix repetitive meals because the underlying `KETO STRICT` rule literally said "Use cauliflower rice" and "Prioritize avocado". When debugging AI generation quality, ALWAYS log/print the final composed prompt string and read it like the AI would. Don't patch — when the prompt is contradictory, rewrite it cleanly.
 - **AI format lists are exhaustive by default.** Phrasing like `"Pick from: X, Y, Z"` makes the AI cycle through only those options. Frame as `"Format examples — vary ingredients freely, use other formats too"` to get real variety. See meal planner `breakfastFormats` / `lunchFormats` / `dinnerBases` for the pattern.
+
+## Meal planner prompt architecture (`app/api/meal-planner/generate/route.ts`)
+
+Two phases via `phase` param: `quick` (meal name + macros) and `recipe` (ingredients + directions). Full-week generation fires 3 parallel requests, one per `mealTypes: ['breakfast' | 'lunch' | 'dinner']`. Single-slot swap sends `regenerate: { date, mealType }`.
+
+**Prompt structure (in order):**
+1. `USER PROFILE` — diet, macro targets, macro split, allergies, conditions, lab results (advisory only)
+2. `DIET RULE` — concise per-diet string saying ONLY what's not allowed. Never tells the AI to "use" or "prioritize" a specific ingredient — those become poisoned pills the AI follows over later variety rules. Keto example: `"No grains, no bread, no rice, no pasta, no oats, no corn, no beans, no lentils, no potatoes. Every meal must be low-carb. Use meat, fish, eggs, cheese, and non-starchy vegetables."`
+3. `VARIETY RULES` — bound to total slot count in this response. Each protein at most once. Each method at most twice. Every name unique. Only generate slots listed.
+4. `GUT HEALTH` — whole foods, anti-inflammatory, varied vegetables.
+5. `ALREADY THIS WEEK` — when swapping a single slot, lists the other meals from the same week (excluding the date being swapped) so the AI avoids duplicating them.
+6. Per-meal-type blocks (only the ones with slots present):
+   - **BREAKFAST** — 15 min max, 2-3 ingredients, **format examples** (vary ingredients freely, use other formats too), never repeat a format
+   - **LUNCH** — under 20 min, **format examples**, no two share same protein or format type
+   - **DINNER** — complexityNote (Quick & Easy ≤30min OR Weekend Cook), random world cuisine + method on single-slot swap, **proteins to rotate** + **side options** as examples not exhaustive
+
+**Per-diet variables (clean, single source of truth):**
+- `proteins` + `dinnerOnlyProteins` — diet-specific protein lists. Keto has its own branch with NO lentils/chickpeas.
+- `dinnerBases` — diet-specific vegetable/carb base options for dinner.
+- `dietRule` — single concise string per diet, just restrictions.
+- `breakfastFormats` — format-category examples per diet.
+- `lunchFormats` — format-category examples per diet.
+
+**Server-side slot whitelist (`saveMeal`):** `allowedSlotKeys = new Set(slots.map(...))`. Any meal returned by the AI whose `date|meal_type` isn't in the whitelist is silently dropped. This is the safety net for when the AI hallucinates extra meal types — for example, generating a breakfast + lunch when only dinner was requested for a swap.
+
+**Prompt logging:** `console.log('[meal-planner/generate] PROMPT:\n' + prompt)` at line ~406. Leave in place until variety is verified good across all diet styles, then remove. Pull logs from Vercel → guthub-website → Functions tab → filter on `/api/meal-planner/generate`.
+
+**Client side (`app/meal-planner/MealPlannerClient.tsx`):**
+- `fetchSlots(silent = false)` — pass `true` from `generateWeek` and `regenerateMeal` callers so the grid doesn't unmount.
+- Empty state: day strip + 3 dashed slot cards always visible (no full-screen "no meals planned" page).
+- Swap button on slot card: `<button onClick={e => { e.stopPropagation(); regenerateMeal(activeDateStr, meal) }}>`.
 
 ## AppShell details (`components/app/AppShell.tsx`)
 - 248px forest-500 sidebar, sticky, full viewport height
