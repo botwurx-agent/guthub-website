@@ -203,7 +203,15 @@ Return a single JSON object only — no markdown:
 
       const isDinnerOnly = slots.every(s => s.meal_type === 'dinner')
       const dinnerSlotsCount = slots.filter(s => s.meal_type === 'dinner').length
-      const shuffledCuisines = shuffle(DINNER_CUISINES)
+      // Filter cuisines already used elsewhere this week so swaps don't pick a repeat
+      const usedDinnerCuisines = new Set(
+        rawWeekMeals
+          .filter(m => !targetKeys.has(`${m.plan_date}|${m.meal_type}`) && m.meal_type === 'dinner' && m.meal_category)
+          .map(m => m.meal_category as string)
+      )
+      const availableCuisines = DINNER_CUISINES.filter(c => !usedDinnerCuisines.has(c))
+      const cuisineSource = availableCuisines.length >= Math.max(dinnerSlotsCount, 1) ? availableCuisines : DINNER_CUISINES
+      const shuffledCuisines = shuffle(cuisineSource)
       const cuisinePool = shuffledCuisines.slice(0, Math.max(dinnerSlotsCount, 1))
       const methodPool = complexity === 'weekend' ? WEEKEND_METHODS : SIMPLE_METHODS
       // For single-slot swap, pre-select one cuisine + method so the AI commits to a specific direction
@@ -458,21 +466,23 @@ Return a single JSON object only — no markdown:
       const breakfastTypeList = breakfastTypes.split(' | ')
       const lunchTypeList     = lunchCategories.split(' | ')
 
-      // Exclude breakfast types already assigned to other slots this week so
-      // the same type never appears twice. Falls back to full list if we've
-      // cycled through all 20 types.
-      const usedBreakfastCategories = new Set(
+      // Exclude category-strings already assigned to other slots this week so
+      // the same type never appears twice. Falls back to the full list when
+      // every available type is already used (e.g. 7-slot week, 6 categories).
+      const buildUsedSet = (mealType: string) => new Set(
         rawWeekMeals
-          .filter(m => !targetKeys.has(`${m.plan_date}|${m.meal_type}`) && m.meal_type === 'breakfast' && m.meal_category)
+          .filter(m => !targetKeys.has(`${m.plan_date}|${m.meal_type}`) && m.meal_type === mealType && m.meal_category)
           .map(m => m.meal_category as string)
       )
-      const availableBreakfastTypes = breakfastTypeList.filter(t => !usedBreakfastCategories.has(t))
-      const bfTypeSource = availableBreakfastTypes.length >= Math.max(breakfastSlots.length, 1)
-        ? availableBreakfastTypes
-        : breakfastTypeList
+      const pickPool = (full: string[], used: Set<string>, need: number) => {
+        const available = full.filter(t => !used.has(t))
+        return shuffle(available.length >= Math.max(need, 1) ? available : full).slice(0, Math.max(need, 1))
+      }
 
-      const breakfastTypePool = shuffle(bfTypeSource).slice(0, Math.max(breakfastSlots.length, 1))
-      const lunchTypePool     = shuffle(lunchTypeList).slice(0, Math.max(lunchSlots.length, 1))
+      const usedBreakfastCategories = buildUsedSet('breakfast')
+      const usedLunchCategories     = buildUsedSet('lunch')
+      const breakfastTypePool       = pickPool(breakfastTypeList, usedBreakfastCategories, breakfastSlots.length)
+      const lunchTypePool           = pickPool(lunchTypeList, usedLunchCategories, lunchSlots.length)
 
       // Remember which type was assigned to each slot so we can persist it
       const slotTypeMap = new Map<string, string>()
