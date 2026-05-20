@@ -403,6 +403,8 @@ Return a JSON array only — no markdown, no explanation. Each object:
         if (!error) send(JSON.stringify({ ...row, plan_date: meal.date }))
       }
 
+      console.log('[meal-planner/generate] PROMPT:\n' + prompt)
+
       try {
         const stream = await openai.chat.completions.create({
           model: AI_MODEL,
