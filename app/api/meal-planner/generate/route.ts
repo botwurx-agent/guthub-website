@@ -565,8 +565,37 @@ Return a single JSON object only — no markdown:
       const weekUsedFruits = FRUIT_TERMS.filter(f => allBfNames.some(n => n.includes(f)))
       const weekUsedNuts   = NUT_TERMS.filter(n  => allBfNames.some(name => name.includes(n)))
 
-      // Cross-call variety detection — surfaces what's been overused as
-      // informational feedback across the full swap history for this slot.
+      // ── Universal breakfast format catalog ───────────────────────────────────
+      // Single source for ALL diets — no more diet-specific parallel structures.
+      // 'egg-cup' hyphenated + 'egg cup' spaced both included (AI uses both forms).
+      const BREAKFAST_FORMAT_TERMS: Record<string, string[]> = {
+        'scrambled eggs':        ['scrambled egg'],
+        'fried/sunny eggs':      ['fried egg', 'pan-fried egg', 'sunny-side', 'sunny side', 'over-easy', 'over easy'],
+        'poached eggs':          ['poached egg', 'eggs benedict'],
+        'soft/hard-boiled eggs': ['boiled egg', 'soft-boiled', 'hard-boiled', 'soft boiled', 'hard boiled'],
+        'omelette':              ['omelette', 'omelet'],
+        'frittata':              ['frittata'],
+        'shakshuka':             ['shakshuka'],
+        'egg cups/muffins':      ['egg cup', 'egg-cup', 'egg muffin'],
+        'baked eggs':            ['baked egg'],
+        'Greek yogurt bowl':     ['greek yogurt'],
+        'cottage cheese bowl':   ['cottage cheese'],
+        'chia pudding':          ['chia pudding'],
+        'oatmeal/porridge':      ['oatmeal', 'overnight oat', 'porridge', 'congee'],
+        'smoothie':              ['smoothie'],
+        'toast-based':           [' toast with', 'on toast', 'avocado toast', 'labneh toast', 'ricotta toast', 'hummus toast'],
+        'pancakes/waffles':      ['pancake', 'waffle', 'french toast', 'chaffle'],
+        'hash/skillet':          ['hash', 'skillet'],
+        'cold/mezze plate':      ['charcuterie', 'mezze', 'cold plate', 'breakfast plate'],
+        'smoked salmon plate':   ['smoked salmon plate', 'smoked salmon with'],
+        'halloumi':              ['halloumi'],
+        'burrito/wrap':          ['burrito', 'breakfast wrap'],
+        'tofu scramble':         ['tofu scramble'],
+        'yogurt parfait':        ['yogurt parfait', 'parfait'],
+        'acai/smoothie bowl':    ['acai bowl', 'smoothie bowl', 'pitaya'],
+      }
+      // Fine-grained egg-prep sub-tracking (fires in addition to format tracking
+      // for egg-heavy diets — prevents "all fried" even within the egg-based bucket).
       const EGG_PREPS: Record<string, string[]> = {
         'fried':       ['fried egg', 'pan-fried egg'],
         'sunny-side':  ['sunny-side', 'sunny side', 'over-easy', 'over easy'],
@@ -576,11 +605,10 @@ Return a single JSON object only — no markdown:
         'omelette':    ['omelette', 'omelet'],
         'frittata':    ['frittata'],
         'shakshuka':   ['shakshuka'],
-        'egg cups':    ['egg cup', 'egg muffin'],
+        'egg cups':    ['egg cup', 'egg-cup', 'egg muffin'],
         'baked eggs':  ['baked egg'],
       }
-      // Broad breakfast meat tracking — covers poultry sausages and ground meats
-      // not just pork, because turkey sausage/chicken sausage repeat just as badly
+      // Breakfast meat tracking (keto / paleo / default — not Mediterranean/vegetarian/vegan)
       const BREAKFAST_MEAT_TERMS = [
         'turkey sausage','chicken sausage','beef sausage','pork sausage','breakfast sausage',
         'bacon','pork belly','ham','chorizo','pancetta','prosciutto',
@@ -588,147 +616,125 @@ Return a single JSON object only — no markdown:
         'steak','beef patty','turkey patty','chicken patty',
         'smoked salmon',
       ]
-      // Breakfast-appropriate vegetables only — diet-aware. Mediterranean swaps
-      // jalapeño/mushroom for olive/arugula (signature Mediterranean veg).
+      // Breakfast-appropriate vegetables — diet-aware.
+      // Mediterranean uses olive/arugula in place of jalapeño/mushroom.
       // Dinner veg (asparagus, broccoli, cauliflower, brussels sprouts, collard
-      // greens, zucchini, kale) intentionally excluded across diets.
+      // greens, zucchini) excluded from both lists.
       const VEG_TERMS = mediterraneanMode
         ? ['tomato','cucumber','spinach','pepper','olive','arugula','avocado','scallion']
         : ['avocado','pepper','jalapeño','tomato','mushroom','spinach','cucumber','scallion']
+      const CHEESE_TERMS = ['cheddar','feta','goat cheese','cream cheese','mozzarella','parmesan',
+        'cotija','swiss','gruyère','gruyere','manchego','ricotta','labneh','halloumi','cheese']
 
-      // Mediterranean breakfast format tracking — parallel to EGG_PREPS for keto.
-      // The AI defaults to "Greek yogurt bowl" repeatedly without this surfaced.
-      const MED_FORMATS: Record<string, string[]> = {
-        'Greek yogurt bowl':  ['greek yogurt'],
-        'cottage cheese bowl': ['cottage cheese'],
-        'scrambled eggs':     ['scrambled egg'],
-        'omelette':           ['omelette', 'omelet'],
-        'frittata':           ['frittata'],
-        'shakshuka':          ['shakshuka'],
-        'fried/sunny eggs':   ['fried egg', 'sunny-side', 'sunny side', 'over-easy', 'over easy'],
-        'poached/boiled eggs': ['poached egg', 'boiled egg', 'soft-boiled', 'hard-boiled', 'soft boiled', 'hard boiled'],
-        'egg cups':           ['egg cup', 'egg muffin'],
-        'labneh toast':       ['labneh'],
-        'ricotta toast':      ['ricotta toast', 'ricotta on'],
-        'hummus toast':       ['hummus toast', 'hummus on'],
-        'avocado toast':      ['avocado toast'],
-        'smoked salmon plate': ['smoked salmon plate', 'smoked salmon with'],
-        'halloumi plate':     ['halloumi'],
-        'mezze plate':        ['mezze', 'breakfast plate', 'cold plate'],
-        'savory oats':        ['savory oats', 'savoury oats'],
-        'chia pudding':       ['chia pudding'],
-        'tuna toast':         ['tuna salad toast', 'tuna on toast', 'tuna toast'],
-      }
-
+      // ── Compute usage counts ──────────────────────────────────────────────
+      const usedFormats = Object.entries(BREAKFAST_FORMAT_TERMS)
+        .map(([fmt, terms]) => ({ fmt, count: allBfNames.filter(n => terms.some(t => n.includes(t))).length }))
+        .filter(x => x.count > 0)
+      const unusedFormats = Object.keys(BREAKFAST_FORMAT_TERMS).filter(f => !usedFormats.some(u => u.fmt === f))
       const usedEggPreps = Object.entries(EGG_PREPS)
         .map(([prep, terms]) => ({ prep, count: allBfNames.filter(n => terms.some(t => n.includes(t))).length }))
         .filter(x => x.count > 0)
       const unusedEggPreps = Object.keys(EGG_PREPS).filter(p => !usedEggPreps.some(u => u.prep === p))
-      const usedMeats  = BREAKFAST_MEAT_TERMS.map(p => ({ term: p, count: allBfNames.filter(n => n.includes(p)).length })).filter(x => x.count > 0)
-      const usedVeg    = VEG_TERMS.map(v => ({ term: v, count: allBfNames.filter(n => n.includes(v)).length })).filter(x => x.count > 0)
+      const usedMeats = BREAKFAST_MEAT_TERMS.map(p => ({ term: p, count: allBfNames.filter(n => n.includes(p)).length })).filter(x => x.count > 0)
+      const usedVeg   = VEG_TERMS.map(v => ({ term: v, count: allBfNames.filter(n => n.includes(v)).length })).filter(x => x.count > 0)
 
       const totalBfCount = allBfNames.length
       const eggBfCount = allBfNames.filter(n => Object.values(EGG_PREPS).some(terms => terms.some(t => n.includes(t)))).length
 
       const varietyParts: string[] = []
+
+      // 1. Universal format-repeat detection (fires for every diet)
+      const overusedFormats = usedFormats.filter(f => f.count >= 2)
+      if (overusedFormats.length > 0) {
+        const used = overusedFormats.map(f => `${f.fmt} (${f.count}x)`).join(', ')
+        const alts = unusedFormats.slice(0, 8).join(', ')
+        varietyParts.push(`Breakfast format overused: ${used} — pick a DIFFERENT format type: ${alts}`)
+      }
+
+      // 2. Fine-grained egg prep tracking (surfaces unused egg styles)
       if (usedEggPreps.length > 0) {
         const used = usedEggPreps.map(p => `${p.prep} (${p.count}x)`).join(', ')
         const alts = unusedEggPreps.length > 0 ? ` — try: ${unusedEggPreps.join(', ')}` : ''
         varietyParts.push(`Egg preparations used: ${used}${alts}`)
       }
-      // Soft nudge toward non-egg formats when the recent pattern is heavily egg-based.
-      // Threshold: 4+ total breakfasts and 80%+ are egg-based.
-      if (totalBfCount >= 4 && eggBfCount / totalBfCount >= 0.8) {
-        varietyParts.push(`Recent breakfasts heavily egg-based (${eggBfCount}/${totalBfCount}) — consider a NON-EGG format this time: Greek yogurt bowl, cottage cheese bowl, smoked salmon plate, cheese and charcuterie plate, cream cheese pancakes or chaffles, chia pudding, ricotta or mascarpone bowl, or avocado boat with tuna or salmon salad`)
+
+      // 3. Non-egg nudge (all non-vegan diets when heavily egg-based)
+      if (!veganMode && totalBfCount >= 4 && eggBfCount / totalBfCount >= 0.8) {
+        const nonEggOptions = mediterraneanMode
+          ? 'Greek yogurt bowl, labneh toast, ricotta toast, hummus toast, smoked salmon plate, halloumi plate, mezze plate, avocado toast, savory oats, chia pudding, cottage cheese bowl'
+          : ketoMode
+          ? 'Greek yogurt bowl, cottage cheese bowl, smoked salmon plate, charcuterie plate, cream cheese pancakes, chia pudding, avocado boat'
+          : 'Greek yogurt bowl, smoothie bowl, oatmeal, toast-based, pancakes, cottage cheese bowl, chia pudding, hash'
+        varietyParts.push(`Recent breakfasts heavily egg-based (${eggBfCount}/${totalBfCount}) — consider a NON-EGG format: ${nonEggOptions}`)
       }
-      if (usedMeats.length > 0) {
-        const overused = usedMeats.filter(p => p.count >= 2)
-        if (overused.length > 0) {
-          const used = overused.map(p => `${p.term} (${p.count}x)`).join(', ')
-          const allMeatTerms = BREAKFAST_MEAT_TERMS.join(', ')
-          varietyParts.push(`Supporting proteins overused: ${used} — pick a different meat/protein from: ${allMeatTerms}`)
-        }
-      }
-      // Surface "never used" common proteins after a few breakfasts so the AI
-      // stops skipping ground beef, steak, beef patty, smoked salmon, etc.
-      if (totalBfCount >= 3) {
-        const underused = ['ground beef','ground turkey','ground chicken','beef patty','steak','smoked salmon']
-          .filter(t => !usedMeats.some(u => u.term === t))
-        if (underused.length > 0) {
-          varietyParts.push(`Proteins not yet used: ${underused.join(', ')} — consider rotating one of these in`)
-        }
-      }
-      // Avocado: keto staple — nudge when absent from recent slots.
-      // Overuse is already handled by VEG_TERMS tracking (fires at count >= 2).
-      if (ketoMode && totalBfCount >= 2) {
-        const avocadoUsed = allBfNames.some(n => n.includes('avocado'))
-        if (!avocadoUsed) {
-          varietyParts.push('Avocado not yet used — consider adding it (sliced alongside eggs, avocado boat, or as a side with feta)')
-        }
-      }
-      // Cheese: should appear frequently in keto breakfasts but is often omitted.
-      // Check meal names — if no cheese term appears, nudge the AI.
-      if (ketoMode && totalBfCount >= 2) {
-        const CHEESE_TERMS = ['cheddar','feta','goat cheese','cream cheese','mozzarella','parmesan','cotija','swiss','gruyère','gruyere','manchego','ricotta','cheese']
-        const cheeseUsed = allBfNames.some(n => CHEESE_TERMS.some(c => n.includes(c)))
-        if (!cheeseUsed) {
-          varietyParts.push('No cheese in recent breakfasts — keto breakfasts benefit from cheese melted INTO the eggs (not as a side plate). Include cheddar, feta, goat cheese, gruyère, manchego, or cream cheese in the meal name')
-        }
-      }
-      // Omelettes are a high-variety format that the AI tends to skip — nudge when absent.
-      if ((ketoMode || mediterraneanMode) && totalBfCount >= 3) {
-        const omeletteUsed = allBfNames.some(n => n.includes('omelette') || n.includes('omelet'))
-        if (!omeletteUsed) {
-          const variations = mediterraneanMode
-            ? 'Greek (feta + spinach + tomato), Mediterranean (feta + olives + sun-dried tomato), Spanish (chorizo + peppers + manchego), three-cheese (feta + mozzarella + parmesan), goat cheese and herbs, smoked salmon and dill, halloumi and tomato, mushroom and herbs'
-            : 'Western, Greek (feta + spinach), goat cheese and mushroom, Spanish (chorizo + manchego), smoked salmon and cream cheese, three-cheese, jalapeño popper, Mediterranean, mushroom and Swiss'
-          varietyParts.push(`No omelette generated yet — consider one. Many variations: ${variations}`)
-        }
-      }
-      // ─── Mediterranean-specific nudges ────────────────────────────────────
-      if (mediterraneanMode) {
-        // Format-repeat detection — Mediterranean breakfasts collapse into
-        // "Greek yogurt bowl" without this. Parallel to keto's EGG_PREPS.
-        const usedMedFormats = Object.entries(MED_FORMATS)
-          .map(([fmt, terms]) => ({ fmt, count: allBfNames.filter(n => terms.some(t => n.includes(t))).length }))
-          .filter(x => x.count > 0)
-        const unusedMedFormats = Object.keys(MED_FORMATS).filter(f => !usedMedFormats.some(u => u.fmt === f))
-        if (usedMedFormats.length > 0) {
-          const overusedFmt = usedMedFormats.filter(f => f.count >= 2)
-          if (overusedFmt.length > 0) {
-            const used = overusedFmt.map(f => `${f.fmt} (${f.count}x)`).join(', ')
-            const alts = unusedMedFormats.length > 0 ? unusedMedFormats.slice(0, 10).join(', ') : ''
-            varietyParts.push(`Mediterranean formats overused: ${used} — try a different format: ${alts}`)
-          } else if (totalBfCount >= 2) {
-            const used = usedMedFormats.map(f => f.fmt).join(', ')
-            const alts = unusedMedFormats.slice(0, 10).join(', ')
-            varietyParts.push(`Formats used so far: ${used}. Unused options to consider: ${alts}`)
+
+      // 4. Meat protein overuse / underuse (keto / paleo / default — not Mediterranean)
+      if (!veganMode && !vegetarianMode && !mediterraneanMode && !pescatarianMode) {
+        if (usedMeats.length > 0) {
+          const overused = usedMeats.filter(p => p.count >= 2)
+          if (overused.length > 0) {
+            const used = overused.map(p => `${p.term} (${p.count}x)`).join(', ')
+            varietyParts.push(`Supporting proteins overused: ${used} — pick a different meat from: ${BREAKFAST_MEAT_TERMS.join(', ')}`)
           }
         }
-        // Mediterranean cheese: feta is the default, halloumi/ricotta/labneh also signature.
-        if (totalBfCount >= 2) {
-          const MED_CHEESES = ['feta','halloumi','ricotta','labneh','manchego','parmesan','mozzarella']
-          const cheeseUsed = allBfNames.some(n => MED_CHEESES.some(c => n.includes(c)))
-          if (!cheeseUsed) {
-            varietyParts.push('No Mediterranean cheese in recent breakfasts — feta is the signature cheese, also halloumi, ricotta, or labneh. Cooked INTO the dish (scrambled with feta, ricotta on toast, labneh spread), not as a side')
-          }
-        }
-        // Cucumber + tomato are signature Mediterranean ingredients.
-        if (totalBfCount >= 2) {
-          const tomatoUsed = allBfNames.some(n => n.includes('tomato'))
-          const cucumberUsed = allBfNames.some(n => n.includes('cucumber'))
-          if (!tomatoUsed && !cucumberUsed) {
-            varietyParts.push('Neither tomato nor cucumber used yet — these are signature Mediterranean breakfast ingredients and should appear in most savory dishes')
-          }
-        }
-        // Olives are another Mediterranean signature.
         if (totalBfCount >= 3) {
-          const olivesUsed = allBfNames.some(n => n.includes('olive'))
-          if (!olivesUsed) {
-            varietyParts.push('Olives not yet used — they belong in Mediterranean breakfasts (in mezze plates, with eggs, on labneh toast, in Greek salad-style preparations)')
+          const underused = ['ground beef','ground turkey','ground chicken','beef patty','steak','smoked salmon']
+            .filter(t => !usedMeats.some(u => u.term === t))
+          if (underused.length > 0) {
+            varietyParts.push(`Proteins not yet used: ${underused.join(', ')} — consider rotating one of these in`)
           }
         }
       }
+
+      // 5. Mediterranean-specific protein underuse (smoked salmon, halloumi, tuna)
+      if (mediterraneanMode && totalBfCount >= 3) {
+        const MED_PROTEINS = ['smoked salmon','halloumi','tuna','labneh','ricotta']
+        const unusedMedProteins = MED_PROTEINS.filter(p => !allBfNames.some(n => n.includes(p)))
+        if (unusedMedProteins.length > 0) {
+          varietyParts.push(`Mediterranean proteins not yet used: ${unusedMedProteins.join(', ')} — consider rotating one in`)
+        }
+      }
+
+      // 6. Avocado nudge (keto + Mediterranean — staple ingredient, often skipped)
+      if ((ketoMode || mediterraneanMode) && totalBfCount >= 2) {
+        if (!allBfNames.some(n => n.includes('avocado'))) {
+          varietyParts.push('Avocado not yet used — it\'s a staple for this diet (avocado toast, sliced alongside eggs, in a bowl, or stuffed)')
+        }
+      }
+
+      // 7. Cheese nudge (all dairy-eating diets — not vegan / paleo)
+      if (!veganMode && !paleoMode && totalBfCount >= 2) {
+        if (!allBfNames.some(n => CHEESE_TERMS.some(c => n.includes(c)))) {
+          const cheeseHint = mediterraneanMode
+            ? 'feta, halloumi, ricotta, or labneh — melted or crumbled INTO the dish'
+            : 'cheddar, feta, goat cheese, gruyère, or ricotta — include it in the meal name'
+          varietyParts.push(`No cheese in recent breakfasts — include ${cheeseHint}`)
+        }
+      }
+
+      // 8. Omelette nudge (all egg-eating diets — high-variety format often skipped)
+      if (!veganMode && totalBfCount >= 3) {
+        if (!allBfNames.some(n => n.includes('omelette') || n.includes('omelet'))) {
+          const variations = mediterraneanMode
+            ? 'Greek (feta + spinach + tomato), Mediterranean (feta + olives + sun-dried tomato), Spanish (chorizo + peppers + manchego), three-cheese, goat cheese and herbs, smoked salmon and dill, halloumi and tomato'
+            : ketoMode
+            ? 'Western (ham + peppers + cheddar), Greek (feta + spinach), goat cheese and mushroom, Spanish (chorizo + manchego), smoked salmon and cream cheese, jalapeño popper, mushroom and Swiss'
+            : 'mushroom and cheese, spinach and feta, ham and cheddar, vegetable medley, herb and goat cheese'
+          varietyParts.push(`No omelette yet — consider one. Many variations: ${variations}`)
+        }
+      }
+
+      // 9. Mediterranean signature ingredients
+      if (mediterraneanMode && totalBfCount >= 2) {
+        if (!allBfNames.some(n => n.includes('tomato')) && !allBfNames.some(n => n.includes('cucumber'))) {
+          varietyParts.push('Neither tomato nor cucumber used yet — signature Mediterranean breakfast ingredients; appear in most savory dishes')
+        }
+        if (totalBfCount >= 3 && !allBfNames.some(n => n.includes('olive'))) {
+          varietyParts.push('Olives not yet used — signature Mediterranean ingredient (mezze plates, labneh toast, shakshuka, with eggs)')
+        }
+      }
+
+      // 10. Vegetable overuse (universal)
       if (usedVeg.length > 0) {
         const overused = usedVeg.filter(v => v.count >= 2)
         if (overused.length > 0) {
@@ -737,12 +743,12 @@ Return a single JSON object only — no markdown:
           const fallback = mediterraneanMode
             ? 'tomatoes, cucumber, spinach, peppers, olives, arugula, avocado, scallion'
             : 'avocado, bell peppers, jalapeño, cherry tomatoes, mushrooms, spinach, cucumber, scallion'
-          const altList = unused.length > 0 ? unused.slice(0, 8).join(', ') : fallback
-          varietyParts.push(`Vegetables overused: ${used} — pick a different vegetable: ${altList}`)
+          varietyParts.push(`Vegetables overused: ${used} — pick a different vegetable: ${unused.length > 0 ? unused.slice(0, 8).join(', ') : fallback}`)
         }
       }
+
       const varietyContext = varietyParts.length > 0
-        ? `\nVARIETY CONTEXT — breakfasts generated so far have used:\n${varietyParts.map(p => `- ${p}`).join('\n')}\nFor this breakfast, change AT LEAST ONE dimension — pick a different egg preparation, a different supporting protein, or a different vegetable. Do not rearrange the same components.\n`
+        ? `\nVARIETY CONTEXT — breakfasts generated so far:\n${varietyParts.map(p => `- ${p}`).join('\n')}\nFor this breakfast: pick a DIFFERENT format type, a different protein, and different vegetables. Do not rearrange the same components.\n`
         : ''
 
       const complexityNote = complexity === 'simple'
