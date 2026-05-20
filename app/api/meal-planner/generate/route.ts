@@ -480,6 +480,24 @@ Return a single JSON object only — no markdown:
       lunchSlots.forEach((s, i) => slotTypeMap.set(`${s.date}|${s.meal_type}`, lunchTypePool[i % lunchTypePool.length]))
       dinnerSlots.forEach((s, i) => slotTypeMap.set(`${s.date}|${s.meal_type}`, cuisinePool[i % cuisinePool.length]))
 
+      // Eager-save meal_category to each existing slot BEFORE the AI streams.
+      // Without this, two rapid-fire swaps on different slots can both fetch
+      // before either has saved its type assignment, then both happen to pick
+      // the same type (e.g. two "Pork belly and fried eggs" in one week).
+      // UPDATE is a no-op for slots that don't exist yet (fresh week generation).
+      await Promise.all(
+        slots.map(s => {
+          const cat = slotTypeMap.get(`${s.date}|${s.meal_type}`)
+          if (!cat) return Promise.resolve()
+          return supabase
+            .from('meal_plan_slots')
+            .update({ meal_category: cat })
+            .eq('user_id', user.id)
+            .eq('plan_date', s.date)
+            .eq('meal_type', s.meal_type)
+        })
+      )
+
       // Scan existing week breakfast names for already-used fruits/nuts so we
       // can ban them in the prompt. Each swap is a separate API call, so the
       // "vary fruit and nuts" hard rule only applies within one response —
