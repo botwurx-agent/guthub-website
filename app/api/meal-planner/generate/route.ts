@@ -541,20 +541,36 @@ Return a single JSON object only — no markdown:
         'steak','beef patty','turkey patty','chicken patty',
         'smoked salmon',
       ]
-      const GREEN_TERMS = ['spinach','kale','arugula','collard','swiss chard','baby greens']
+      // Broad vegetable tracking — single root word catches singular/plural and
+      // variants ("pepper" catches bell pepper, red pepper, roasted red pepper).
+      const VEG_TERMS = [
+        'spinach','kale','arugula','collard','swiss chard',
+        'pepper','mushroom','tomato',
+        'asparagus','broccoli','cauliflower',
+        'zucchini','avocado','cucumber',
+        'green bean','brussels sprout',
+      ]
 
       const usedEggPreps = Object.entries(EGG_PREPS)
         .map(([prep, terms]) => ({ prep, count: allBfNames.filter(n => terms.some(t => n.includes(t))).length }))
         .filter(x => x.count > 0)
       const unusedEggPreps = Object.keys(EGG_PREPS).filter(p => !usedEggPreps.some(u => u.prep === p))
       const usedMeats  = BREAKFAST_MEAT_TERMS.map(p => ({ term: p, count: allBfNames.filter(n => n.includes(p)).length })).filter(x => x.count > 0)
-      const usedGreens = GREEN_TERMS.map(g => ({ term: g, count: allBfNames.filter(n => n.includes(g)).length })).filter(x => x.count > 0)
+      const usedVeg    = VEG_TERMS.map(v => ({ term: v, count: allBfNames.filter(n => n.includes(v)).length })).filter(x => x.count > 0)
+
+      const totalBfCount = allBfNames.length
+      const eggBfCount = allBfNames.filter(n => Object.values(EGG_PREPS).some(terms => terms.some(t => n.includes(t)))).length
 
       const varietyParts: string[] = []
       if (usedEggPreps.length > 0) {
         const used = usedEggPreps.map(p => `${p.prep} (${p.count}x)`).join(', ')
         const alts = unusedEggPreps.length > 0 ? ` — try: ${unusedEggPreps.join(', ')}` : ''
         varietyParts.push(`Egg preparations used: ${used}${alts}`)
+      }
+      // Soft nudge toward non-egg formats when the recent pattern is heavily egg-based.
+      // Threshold: 4+ total breakfasts and 80%+ are egg-based.
+      if (totalBfCount >= 4 && eggBfCount / totalBfCount >= 0.8) {
+        varietyParts.push(`Recent breakfasts heavily egg-based (${eggBfCount}/${totalBfCount}) — consider a NON-EGG format this time: Greek yogurt bowl, cottage cheese bowl, smoked salmon plate, cheese and charcuterie plate, cream cheese pancakes or chaffles, chia pudding, ricotta or mascarpone bowl, or avocado boat with tuna or salmon salad`)
       }
       if (usedMeats.length > 0) {
         const overused = usedMeats.filter(p => p.count >= 2)
@@ -564,9 +580,23 @@ Return a single JSON object only — no markdown:
           varietyParts.push(`Supporting proteins overused: ${used} — pick a different meat/protein from: ${allMeatTerms}`)
         }
       }
-      if (usedGreens.length > 0) {
-        const used = usedGreens.map(g => `${g.term} (${g.count}x)`).join(', ')
-        varietyParts.push(`Vegetables used: ${used} — try peppers, mushrooms, tomatoes, asparagus, broccoli, cauliflower, or zucchini`)
+      // Surface "never used" common proteins after a few breakfasts so the AI
+      // stops skipping ground beef, steak, beef patty, smoked salmon, etc.
+      if (totalBfCount >= 3) {
+        const underused = ['ground beef','ground turkey','ground chicken','beef patty','steak','smoked salmon']
+          .filter(t => !usedMeats.some(u => u.term === t))
+        if (underused.length > 0) {
+          varietyParts.push(`Proteins not yet used: ${underused.join(', ')} — consider rotating one of these in`)
+        }
+      }
+      if (usedVeg.length > 0) {
+        const overused = usedVeg.filter(v => v.count >= 2)
+        if (overused.length > 0) {
+          const used = overused.map(v => `${v.term} (${v.count}x)`).join(', ')
+          const unused = VEG_TERMS.filter(v => !usedVeg.some(u => u.term === v))
+          const altList = unused.length > 0 ? unused.slice(0, 10).join(', ') : 'spinach, kale, asparagus, broccoli, cauliflower, zucchini, tomato, avocado'
+          varietyParts.push(`Vegetables overused: ${used} — pick a different vegetable: ${altList}`)
+        }
       }
       const varietyContext = varietyParts.length > 0
         ? `\nVARIETY CONTEXT — breakfasts generated so far have used:\n${varietyParts.map(p => `- ${p}`).join('\n')}\nFor this breakfast, change AT LEAST ONE dimension — pick a different egg preparation, a different supporting protein, or a different vegetable. Do not rearrange the same components.\n`
