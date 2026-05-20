@@ -157,22 +157,25 @@ Return a single JSON object only — no markdown:
       //   swapped/regenerated — the AI needs to see this so it picks
       //   something meaningfully different (without this, it can generate
       //   the same meal twice in a row when the user swaps the same slot).
+      // Hoist targetKeys so it's available for both the fetch filter and saveMeal
+      const targetKeys = new Set(slots.map(s => `${s.date}|${s.meal_type}`))
       let existingWeekMeals: string[] = []
       let currentSlotMeals: string[] = []
+      let rawWeekMeals: Array<{ meal_name: string; meal_type: string; plan_date: string; meal_category: string | null }> = []
       if (weekStart) {
         const weekEnd = new Date(weekStart)
         weekEnd.setUTCDate(weekEnd.getUTCDate() + 6)
-        const targetKeys = new Set(slots.map(s => `${s.date}|${s.meal_type}`))
         const { data: weekMeals } = await supabase
           .from('meal_plan_slots')
-          .select('meal_name, meal_type, plan_date')
+          .select('meal_name, meal_type, plan_date, meal_category')
           .eq('user_id', user.id)
           .gte('plan_date', weekStart)
           .lte('plan_date', weekEnd.toISOString().split('T')[0])
-        existingWeekMeals = (weekMeals ?? [])
+        rawWeekMeals = weekMeals ?? []
+        existingWeekMeals = rawWeekMeals
           .filter(m => !targetKeys.has(`${m.plan_date}|${m.meal_type}`))
           .map(m => `${m.plan_date} ${m.meal_type}: ${m.meal_name}`)
-        currentSlotMeals = (weekMeals ?? [])
+        currentSlotMeals = rawWeekMeals
           .filter(m => targetKeys.has(`${m.plan_date}|${m.meal_type}`))
           .map(m => m.meal_name)
       }
@@ -265,15 +268,15 @@ Return a single JSON object only — no markdown:
         breakfastTypes = [
           'Eggs + cured meat: eggs any style + bacon/sausage/ham, optional leafy green',
           'Omelette or scramble with cheese and vegetables: eggs + cheese + 1-2 common veg (spinach, peppers, mushrooms, tomatoes)',
-          'Greek yogurt bowl: full-fat plain Greek yogurt + berries + nuts — no vegetables, no savory ingredients',
+          'Greek yogurt bowl: full-fat plain Greek yogurt + fresh seasonal fruit + nuts or granola — no vegetables, no savory ingredients',
           'Cottage cheese bowl: cottage cheese + fruit or berries + nuts or seeds — no vegetables, no savory ingredients',
           'Eggs with avocado: fried or poached eggs alongside sliced avocado, optional bacon or hot sauce — 3 components max',
           'Baked egg muffins or egg cups: eggs + cheese + 1-2 mix-ins (peppers, bacon, spinach), baked in muffin tin',
           'Smoked salmon plate: smoked salmon + cream cheese or eggs + cucumber or capers — 3 components max',
-          'Chia pudding: chia seeds in coconut or almond milk + berries + optional nuts',
+          'Chia pudding: chia seeds in coconut or almond milk + fresh seasonal fruit + optional nuts',
           'Frittata with vegetables and cheese: eggs + cheese + 1-2 veg, baked',
           'Egg salad: chopped eggs + mayo or avocado, served on greens, in avocado halves, or stuffed in a pepper',
-          'Almond-flour pancakes or waffles: almond flour batter + berries or low-carb syrup',
+          'Almond-flour pancakes or waffles: almond flour batter + fresh fruit or low-carb syrup',
           'Cream cheese pancakes: cream cheese and eggs blended into pancake batter',
           'Breakfast skillet: ground sausage + eggs + peppers, one pan',
           'Cheese and cured meat plate: hard cheeses + cured meats + nuts or olives — assembly only, no cooking',
@@ -281,7 +284,7 @@ Return a single JSON object only — no markdown:
           'Keto smoothie: avocado + protein powder + nut butter + almond or coconut milk',
           'Shakshuka: eggs poached in tomato and bell pepper sauce',
           'Chaffles or cloud bread with savory or sweet topping',
-          'Ricotta or mascarpone bowl: with berries and nuts — no vegetables, no savory ingredients',
+          'Ricotta or mascarpone bowl: with fresh seasonal fruit and nuts — no vegetables, no savory ingredients',
           'Breakfast sandwich on lettuce wrap or chaffle: eggs + cheese + meat',
         ].join(' | ')
         breakfastProteins = 'eggs, bacon, breakfast sausage, ham, smoked salmon, Greek yogurt, cottage cheese, ricotta'
@@ -300,7 +303,7 @@ Return a single JSON object only — no markdown:
           'Tofu breakfast burrito or wrap: scrambled tofu + beans + veg in tortilla',
           'Vegan pancakes: banana or flax-based batter + maple syrup or fruit',
           'Quinoa breakfast porridge: cooked quinoa + plant milk + fruit and nuts',
-          'Buckwheat porridge with berries: cooked buckwheat + plant milk + berries',
+          'Buckwheat porridge with fresh fruit: cooked buckwheat + plant milk + fresh seasonal fruit',
           'Polenta breakfast bowl: cooked polenta + maple syrup or savory toppings',
           'Vegan French toast: chickpea-flour batter on bread + maple syrup',
           'Potato hash with tempeh: diced potatoes + crumbled tempeh + veg',
@@ -368,7 +371,7 @@ Return a single JSON object only — no markdown:
           'Egg muffins with vegetables and bacon: eggs + veg + bacon, baked',
           'Smoked salmon plate: smoked salmon + cucumber + greens — no cream cheese',
           'Paleo smoothie: fruit + nut milk + nut butter',
-          'Chia pudding: chia seeds in coconut milk + berries',
+          'Chia pudding: chia seeds in coconut milk + fresh seasonal fruit',
           'Paleo breakfast bowl: eggs + avocado + bacon or sausage',
           'Plantain or banana pancakes: blended batter + fresh fruit',
           'Coconut yogurt parfait: coconut yogurt + fruit + grain-free granola',
@@ -390,10 +393,10 @@ Return a single JSON object only — no markdown:
           'Smoothie: banana + lactose-free milk + peanut butter',
           'Omelette with safe vegetables: eggs + spinach, peppers, or zucchini — no garlic or onion',
           'Lactose-free yogurt parfait: lactose-free yogurt + safe granola + fruit',
-          'Chia pudding: chia in lactose-free milk + berries',
+          'Chia pudding: chia in lactose-free milk + fresh seasonal fruit',
           'Eggs Benedict on gluten-free muffin: poached eggs on GF muffin',
           'Potato and egg breakfast hash: diced potato + egg — no onion or garlic',
-          'Quinoa porridge with berries: cooked quinoa + lactose-free milk + berries',
+          'Quinoa breakfast porridge: cooked quinoa + lactose-free milk + fresh seasonal fruit',
           'Lactose-free cottage cheese bowl: cottage cheese + safe fruit + nuts',
           'Peanut butter and banana toast (GF): GF bread + peanut butter + banana',
           'Egg muffins with safe vegetables: eggs + spinach or peppers, baked',
@@ -402,7 +405,7 @@ Return a single JSON object only — no markdown:
           'Low-FODMAP smoothie bowl: blended safe fruit + lactose-free milk + toppings',
           'Baked eggs with spinach and tomato: eggs baked on spinach + tomato',
           'Rice porridge: cooked rice + lactose-free milk, sweet or savory',
-          'Gluten-free French toast with berries: GF bread + egg dip + berries',
+          'Gluten-free French toast with fresh fruit: GF bread + egg dip + fresh seasonal fruit',
         ].join(' | ')
         breakfastProteins = 'eggs, peanut butter, lactose-free yogurt, lactose-free cottage cheese'
       } else {
@@ -454,8 +457,28 @@ Return a single JSON object only — no markdown:
       // every call. Each generation gets a different randomized assignment.
       const breakfastTypeList = breakfastTypes.split(' | ')
       const lunchTypeList     = lunchCategories.split(' | ')
-      const breakfastTypePool = shuffle(breakfastTypeList).slice(0, Math.max(breakfastSlots.length, 1))
+
+      // Exclude breakfast types already assigned to other slots this week so
+      // the same type never appears twice. Falls back to full list if we've
+      // cycled through all 20 types.
+      const usedBreakfastCategories = new Set(
+        rawWeekMeals
+          .filter(m => !targetKeys.has(`${m.plan_date}|${m.meal_type}`) && m.meal_type === 'breakfast' && m.meal_category)
+          .map(m => m.meal_category as string)
+      )
+      const availableBreakfastTypes = breakfastTypeList.filter(t => !usedBreakfastCategories.has(t))
+      const bfTypeSource = availableBreakfastTypes.length >= Math.max(breakfastSlots.length, 1)
+        ? availableBreakfastTypes
+        : breakfastTypeList
+
+      const breakfastTypePool = shuffle(bfTypeSource).slice(0, Math.max(breakfastSlots.length, 1))
       const lunchTypePool     = shuffle(lunchTypeList).slice(0, Math.max(lunchSlots.length, 1))
+
+      // Remember which type was assigned to each slot so we can persist it
+      const slotTypeMap = new Map<string, string>()
+      breakfastSlots.forEach((s, i) => slotTypeMap.set(`${s.date}|${s.meal_type}`, breakfastTypePool[i % breakfastTypePool.length]))
+      lunchSlots.forEach((s, i) => slotTypeMap.set(`${s.date}|${s.meal_type}`, lunchTypePool[i % lunchTypePool.length]))
+      dinnerSlots.forEach((s, i) => slotTypeMap.set(`${s.date}|${s.meal_type}`, cuisinePool[i % cuisinePool.length]))
 
       const complexityNote = complexity === 'simple'
         ? `Under 30 minutes. One or two pans. No specialist equipment.`
@@ -490,6 +513,7 @@ HARD RULES:
 2. Maximum 3 main components. No exotic techniques — no pickling, no marinating, no multi-step prep.
 3. Name meals plainly: "Scrambled eggs with bacon and cheddar" not "Artisan Herb-Cured Egg Medallions with Crispy Pancetta".
 4. Each slot has a PRE-ASSIGNED breakfast type below. Build the meal within that type — be creative with the specific ingredients but stay in the assigned type. Do NOT substitute a different type.
+5. Vary fruit and nuts: never use the same fruit or nut more than once across all breakfast slots in this response. Range of fruit to draw from: strawberries, peaches, mango, kiwi, apple, banana, pineapple, grapes, cherries, plum, papaya, pear. Range of nuts to draw from: walnuts, pecans, pistachios, cashews, hazelnuts, macadamia, pine nuts.
 
 Slots (use the assigned type for each):
 ${breakfastSlots.map((s, i) => `- ${s.date} breakfast — type: ${breakfastTypePool[i % breakfastTypePool.length]}`).join('\n')}` : ''}
@@ -519,24 +543,22 @@ ${dinnerSlots.map(s => `- ${s.date} dinner`).join('\n')}` : ''}
 Return a JSON array only — no markdown. Each object:
 {"date":"YYYY-MM-DD","meal_type":"breakfast|lunch|dinner","meal_name":"string","calories":number,"protein_g":number,"fat_g":number,"carbs_g":number}`
 
-      // Whitelist: only save meals that match a slot we actually requested
-      const allowedSlotKeys = new Set(slots.map(s => `${s.date}|${s.meal_type}`))
-
       const saveMeal = async (meal: Record<string, unknown>) => {
         const key = `${meal.date}|${meal.meal_type}`
-        if (!allowedSlotKeys.has(key)) return  // reject any extra meals the AI hallucinated
+        if (!targetKeys.has(key)) return  // reject any extra meals the AI hallucinated
         const row = {
-          user_id:     user.id,
-          plan_date:   meal.date as string,
-          meal_type:   meal.meal_type as string,
-          meal_name:   meal.meal_name as string,
-          ingredients: [],
-          directions:  '',
-          calories:    meal.calories as number,
-          protein_g:   meal.protein_g as number,
-          fat_g:       meal.fat_g as number,
-          carbs_g:     meal.carbs_g as number,
-          accepted:    false,
+          user_id:       user.id,
+          plan_date:     meal.date as string,
+          meal_type:     meal.meal_type as string,
+          meal_name:     meal.meal_name as string,
+          meal_category: slotTypeMap.get(key) ?? null,
+          ingredients:   [],
+          directions:    '',
+          calories:      meal.calories as number,
+          protein_g:     meal.protein_g as number,
+          fat_g:         meal.fat_g as number,
+          carbs_g:       meal.carbs_g as number,
+          accepted:      false,
         }
         const { error } = await supabase
           .from('meal_plan_slots')
