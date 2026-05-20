@@ -26,11 +26,23 @@ export async function POST(request: Request) {
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0]
 
   const [{ data: profile }, { data: macroTarget }, { data: labReports }, { data: mealHistory }] = await Promise.all([
-    supabase.from('profiles').select('diet_mode, health_profile').eq('id', user.id).single(),
+    supabase.from('profiles').select('diet_mode, health_profile, rejected_meals').eq('id', user.id).single(),
     supabase.from('macro_targets').select('*').eq('user_id', user.id).order('target_date', { ascending: false }).limit(1).single(),
     supabase.from('lab_reports').select('filename, analysis_summary').eq('user_id', user.id).not('analysis_summary', 'is', null).order('created_at', { ascending: false }).limit(3),
     supabase.from('meal_plan_slots').select('meal_name, meal_type').eq('user_id', user.id).gte('plan_date', thirtyDaysAgoStr).not('meal_name', 'is', null),
   ])
+
+  // Persist any newly-rejected meal names to the user's profile so future
+  // generations across sessions / devices never regenerate them. Capped at
+  // last 200 entries to keep prompt size manageable.
+  const existingRejections: string[] = Array.isArray(profile?.rejected_meals) ? profile.rejected_meals : []
+  const incomingRejections: string[] = Array.isArray(rejectedMeals) ? rejectedMeals : []
+  const mergedRejections = Array.from(new Set([...existingRejections, ...incomingRejections]))
+  if (mergedRejections.length !== existingRejections.length) {
+    const capped = mergedRejections.slice(-200)
+    await supabase.from('profiles').update({ rejected_meals: capped }).eq('id', user.id)
+  }
+  const persistentRejections = mergedRejections.slice(-200)
 
   const calories = macroTarget?.total_calories ?? 2000
   const protein  = macroTarget?.protein_g ?? 150
@@ -549,6 +561,14 @@ Return a single JSON object only — no markdown:
         ? `MEAL HISTORY — last 30 days — NEVER repeat any of these exact meal names:\n${historyLines.join('\n')}\n\n`
         : ''
 
+      // Persistent user-wide rejection list (survives sessions and devices).
+      // These are meals the user has actively swapped away from — the AI must
+      // never regenerate them or close variations (different protein,
+      // different format, different framing).
+      const rejectionContext = persistentRejections.length > 0
+        ? `BANNED MEALS — the user has REJECTED these by swapping them away. Do NOT generate any of these names again, and do NOT generate close variations (e.g. if "Greek yogurt bowl with peaches and pistachios" is banned, also avoid "Greek yogurt with peach and pistachios", "Greek yogurt parfait with peaches and pistachios", etc.). Use a different format AND different main ingredients:\n${persistentRejections.slice(-100).join('\n')}\n\n`
+        : ''
+
       // Scan existing week breakfast names for already-used fruits/nuts.
       // Each swap is a separate API call — this makes the ban span the whole week
       // so the same fruit/nut doesn't appear in multiple sweet breakfasts.
@@ -712,15 +732,18 @@ Return a single JSON object only — no markdown:
         }
       }
 
-      // 8. Omelette nudge (all egg-eating diets — high-variety format often skipped)
+      // 8. Omelette nudge — escalates to "MUST" after 4+ swaps without one
       if (!veganMode && totalBfCount >= 3) {
         if (!allBfNames.some(n => n.includes('omelette') || n.includes('omelet'))) {
           const variations = mediterraneanMode
-            ? 'Greek (feta + spinach + tomato), Mediterranean (feta + olives + sun-dried tomato), Spanish (chorizo + peppers + manchego), three-cheese, goat cheese and herbs, smoked salmon and dill, halloumi and tomato'
+            ? 'Greek (feta + spinach + tomato), Mediterranean (feta + olives + sun-dried tomato), Spanish (chorizo + peppers + manchego), three-cheese (feta + mozzarella + parmesan), goat cheese and herbs, smoked salmon and dill, halloumi and tomato, mushroom and herbs, roasted pepper and feta'
             : ketoMode
             ? 'Western (ham + peppers + cheddar), Greek (feta + spinach), goat cheese and mushroom, Spanish (chorizo + manchego), smoked salmon and cream cheese, jalapeño popper, mushroom and Swiss'
             : 'mushroom and cheese, spinach and feta, ham and cheddar, vegetable medley, herb and goat cheese'
-          varietyParts.push(`No omelette yet — consider one. Many variations: ${variations}`)
+          const directive = totalBfCount >= 4
+            ? `PRIORITIZE an omelette for this generation — zero omelettes in ${totalBfCount} attempts. Pick one of these variations:`
+            : 'No omelette yet — consider one. Variations:'
+          varietyParts.push(`${directive} ${variations}`)
         }
       }
 
@@ -776,7 +799,7 @@ VARIETY RULES — MANDATORY (${totalSlots} meal${totalSlots !== 1 ? 's' : ''} in
 
 GUT HEALTH: Whole foods, anti-inflammatory, varied vegetables. Avoid heavily processed ingredients.
 
-${historyContext}${currentSlotMeals.length > 0 ? `PREVIOUSLY GENERATED FOR THIS SLOT — pick something MEANINGFULLY DIFFERENT (different protein, different style, different main ingredients):\n${currentSlotMeals.join('\n')}\n\n` : ''}${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do NOT repeat these meals or reuse the same main proteins:\n${existingWeekMeals.join('\n')}\n\n` : ''}${breakfastSlots.length > 0 ? `=== BREAKFAST (${breakfastSlots.length} meal${breakfastSlots.length !== 1 ? 's' : ''}) ===
+${rejectionContext}${historyContext}${currentSlotMeals.length > 0 ? `PREVIOUSLY GENERATED FOR THIS SLOT — pick something MEANINGFULLY DIFFERENT (different protein, different style, different main ingredients):\n${currentSlotMeals.join('\n')}\n\n` : ''}${existingWeekMeals.length > 0 ? `ALREADY PLANNED THIS WEEK — do NOT repeat these meals or reuse the same main proteins:\n${existingWeekMeals.join('\n')}\n\n` : ''}${breakfastSlots.length > 0 ? `=== BREAKFAST (${breakfastSlots.length} meal${breakfastSlots.length !== 1 ? 's' : ''}) ===
 Classic, recognizable morning meal — 10-15 minutes, home-cook simple.
 HARD RULES:
 1. Breakfast proteins: ${breakfastProteins}. NEVER use whole roasted or sliced dinner proteins at breakfast (whole roasted chicken, turkey breast slices, smoked trout, lamb chops, shrimp). Ground forms and sausages are fine — ground turkey, ground chicken, turkey sausage, chicken sausage, and beef patties are all valid breakfast proteins.
