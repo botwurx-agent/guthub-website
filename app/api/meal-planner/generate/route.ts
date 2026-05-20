@@ -282,99 +282,32 @@ ${existingWeekMeals.length > 0 ? `ALREADY THIS WEEK — do not repeat these:\n${
 ${breakfastSlots.length > 0 ? `
 === BREAKFAST (${breakfastSlots.length} meals) ===
 Fast and simple. 15 minutes max. 2-3 ingredients. No complex builds.
-Use a DIFFERENT FORMAT for each breakfast — pick from: ${breakfastFormats}
-Never repeat a format (e.g. only one scrambled eggs, only one yogurt).
+Each breakfast must use a DIFFERENT FORMAT. Format categories: ${breakfastFormats}
+These are examples — you can vary the ingredients freely within any format. You can also use other simple keto breakfast formats not listed. Never use the same format category twice (e.g. only one scrambled eggs meal, only one yogurt meal).
 
 Slots:
 ${breakfastSlots.map(s => `- ${s.date} breakfast`).join('\n')}` : ''}
 ${lunchSlots.length > 0 ? `
 === LUNCH (${lunchSlots.length} meals) ===
 Quick, under 20 minutes. Each lunch must be a different dish and format.
-Pick from: ${lunchFormats}
-No two lunches share the same protein or format.
+Format examples: ${lunchFormats}
+These are starting points — vary the proteins and ingredients freely. You can use other quick lunch formats not listed. No two lunches share the same protein or format type.
 
 Slots:
 ${lunchSlots.map(s => `- ${s.date} lunch`).join('\n')}` : ''}
 ${dinnerSlots.length > 0 ? `
 === DINNER (${dinnerSlots.length} meals) ===
 ${complexityNote}
-${randomCuisine ? `Cuisine: ${randomCuisine}, method: ${randomMethod}.` : 'Vary world cuisines — Italian, Mexican, Indian, Middle Eastern, Greek, Korean, Thai, etc.'}
-Proteins (each at most once): ${proteins}${dinnerOnlyProteins}
-Vegetable bases/sides (each at most once): ${dinnerBases}
-Specific names only: "Baked Lemon-Herb Salmon with Roasted Asparagus" not "Salmon with Vegetables".
+${randomCuisine ? `Cuisine: ${randomCuisine}, method: ${randomMethod}.` : 'Vary world cuisines — Italian, Mexican, Indian, Middle Eastern, Greek, Korean, Thai, Japanese, Moroccan, etc. Each dinner a different cuisine.'}
+Proteins to rotate (each at most once, choose freely beyond this list too): ${proteins}${dinnerOnlyProteins}
+Side/base options to rotate (each at most once, feel free to use other keto-friendly vegetables too): ${dinnerBases}
+Specific descriptive names: "Baked Lemon-Herb Salmon with Roasted Asparagus" not "Salmon with Vegetables".
 
 Slots:
 ${dinnerSlots.map(s => `- ${s.date} dinner`).join('\n')}` : ''}
 
 Return a JSON array only — no markdown. Each object:
 {"date":"YYYY-MM-DD","meal_type":"breakfast|lunch|dinner","meal_name":"string","calories":number,"protein_g":number,"fat_g":number,"carbs_g":number}`
-
-      // ── Per-diet protein + carb lists ─────────────────────────────────────
-      let commonProteins: string
-      let dinnerExtraProteins: string
-      if (veganMode) {
-        commonProteins      = `tofu, tempeh, lentils, chickpeas, black beans, edamame`
-        dinnerExtraProteins = `, seitan, white beans`
-      } else if (vegetarianMode) {
-        commonProteins      = `eggs, Greek yogurt, cottage cheese, tofu, tempeh, lentils, chickpeas`
-        dinnerExtraProteins = `, black beans, halloumi, paneer`
-      } else if (pescatarianMode) {
-        commonProteins      = `fish (cod, tilapia, or salmon), shrimp, eggs, tofu`
-        dinnerExtraProteins = `, tuna, crab, scallops`
-      } else if (ketoMode) {
-        commonProteins      = `chicken breast, chicken thighs, steak, ground beef, ground turkey, pork chops, fish (cod, tilapia, or salmon)`
-        dinnerExtraProteins = `, lamb, shrimp, bacon, ground bison`
-      } else if (paleoMode) {
-        commonProteins      = `chicken breast, chicken thighs, steak, ground beef, ground turkey, pork chops, fish (cod, tilapia, or similar)`
-        dinnerExtraProteins = `, lamb, shrimp, venison`
-      } else {
-        commonProteins      = `chicken breast, chicken thighs, steak, fish (cod, tilapia, or similar), ground beef, ground turkey, ground chicken, pork chops`
-        dinnerExtraProteins = `, lamb, shrimp, lentils, chickpeas`
-      }
-
-      let commonGrains: string
-      let dinnerExtraGrains: string
-      if (ketoMode) {
-        commonGrains      = `zucchini noodles, spaghetti squash, roasted broccoli and peppers, roasted asparagus and mushrooms, sautéed spinach and zucchini, shirataki noodles`
-        dinnerExtraGrains = `, cauliflower mash, roasted cabbage`
-      } else if (paleoMode) {
-        commonGrains      = `sweet potato, butternut squash, roasted root vegetables, plantain`
-        dinnerExtraGrains = `, spaghetti squash, roasted beets`
-      } else if (lowFodmapMode) {
-        commonGrains      = `white rice, quinoa, gluten-free oats, potatoes, gluten-free pasta`
-        dinnerExtraGrains = `, polenta, rice noodles`
-      } else {
-        commonGrains      = `rice, pasta, bread/toast, potatoes, oats, corn tortillas, noodles`
-        dinnerExtraGrains = `, couscous, farro, barley, quinoa`
-      }
-
-      // ── Per-diet rule blocks (injected prominently into prompt) ───────────
-      const ketoRule = ketoMode
-        ? `KETO STRICT: All meals must be low-carb/high-fat. NO rice, pasta, bread, oats, corn, beans, lentils, potatoes, tortillas, or any grain. For dinner use zucchini noodles, spaghetti squash, shirataki noodles, or roasted vegetables as the base — NOT cauliflower rice (reserved for special use only). For breakfast serve without a carb base. For lunch use salad greens or lettuce cups. Prioritize: meat, fish, eggs, cheese, non-starchy vegetables (broccoli, spinach, zucchini, green beans, asparagus, mushrooms, peppers), healthy fats (olive oil, butter, coconut oil). Avocado is allowed but should appear in no more than 2 meals total — it is a garnish, not a required component.`
-        : ''
-
-      const veganRule = veganMode
-        ? `VEGAN STRICT: Absolutely NO meat, poultry, fish, seafood, dairy, eggs, honey, or any animal product. Every meal must be 100% plant-based. Proteins: tofu, tempeh, seitan, legumes (lentils, chickpeas, black beans, edamame). No butter, cheese, or yogurt — use olive oil, coconut milk, oat milk, or plant-based alternatives only.`
-        : ''
-
-      const vegetarianRule = (!veganMode && vegetarianMode)
-        ? `VEGETARIAN STRICT: NO meat, poultry, fish, or seafood of any kind. Eggs and dairy are allowed. Proteins: eggs, Greek yogurt, cottage cheese, tofu, tempeh, lentils, chickpeas, black beans, halloumi, paneer.`
-        : ''
-
-      const pescatarianRule = pescatarianMode
-        ? `PESCATARIAN STRICT: NO beef, pork, chicken, turkey, lamb, duck, game, or any land animal meat. Fish and seafood are fully allowed. Proteins: fish (cod, tilapia, salmon, tuna), shrimp, crab, scallops, eggs, tofu. Do NOT generate any meal with chicken, steak, ground beef, ground turkey, pork chops, or similar.`
-        : ''
-
-      const paleoRule = paleoMode
-        ? `PALEO STRICT: NO grains (no rice, pasta, bread, oats, corn, quinoa, tortillas), NO legumes (no beans, lentils, chickpeas, peanuts), NO dairy (no cheese, milk, yogurt, butter — use ghee or coconut oil). No processed foods. Use sweet potato, butternut squash, or roasted vegetables as the carb base. Any unprocessed meat, poultry, fish, eggs, nuts, and seeds are fine.`
-        : ''
-
-      const lowFodmapRule = lowFodmapMode
-        ? `LOW-FODMAP STRICT: Avoid all high-FODMAP ingredients. NO garlic or onion (garlic-infused oil is safe), NO wheat, rye, or barley, NO apples, pears, mangoes, peaches, or stone fruits, NO regular lentils or chickpeas (small portions of canned well-rinsed chickpeas only), NO lactose (use hard cheeses like cheddar/parmesan, or lactose-free dairy). Safe starches: white rice, potatoes, gluten-free oats, quinoa. Safe proteins: chicken, beef, pork, fish, eggs, firm tofu. Safe vegetables: carrots, zucchini, bell peppers, spinach, kale, green beans, bok choy, tomatoes, cucumber.`
-        : ''
-
-      const dietRules = [ketoRule, veganRule, vegetarianRule, pescatarianRule, paleoRule, lowFodmapRule].filter(Boolean).join('\n\n')
-
 
       // Whitelist: only save meals that match a slot we actually requested
       const allowedSlotKeys = new Set(slots.map(s => `${s.date}|${s.meal_type}`))
