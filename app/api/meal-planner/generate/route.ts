@@ -262,26 +262,173 @@ Return a single JSON object only — no markdown:
       let breakfastTypes: string
       let breakfastProteins: string
       if (ketoMode) {
-        breakfastTypes    = `eggs + cured meat: eggs (any style) with bacon or sausage, optional cheese or simple leafy green — no exotic garnishes | omelette or scrambled eggs: eggs + 1-2 common veg (spinach, peppers, mushrooms, tomatoes) + cheese — no radish, no unusual veg | Greek yogurt bowl: plain full-fat Greek yogurt + berries (blueberries, raspberries) + nuts — no vegetables, no savory ingredients | cottage cheese bowl: cottage cheese + berries or fruit + nuts or seeds (walnuts, almonds, chia) — no vegetables, no radish, no savory ingredients | eggs with avocado: fried or poached eggs alongside sliced avocado, optional bacon or hot sauce — simple, 3 components max | egg muffins or baked egg cups: eggs baked in muffin tin with cheese and 1-2 mix-ins (diced peppers, bacon, spinach) | smoked salmon plate: smoked salmon + cream cheese or eggs + cucumber or capers — 3 components max`
-        breakfastProteins = `eggs, bacon, breakfast sausage, ham, smoked salmon, Greek yogurt, cottage cheese`
+        breakfastTypes = [
+          'Eggs + cured meat: eggs any style + bacon/sausage/ham, optional leafy green',
+          'Omelette or scramble with cheese and vegetables: eggs + cheese + 1-2 common veg (spinach, peppers, mushrooms, tomatoes)',
+          'Greek yogurt bowl: full-fat plain Greek yogurt + berries + nuts — no vegetables, no savory ingredients',
+          'Cottage cheese bowl: cottage cheese + fruit or berries + nuts or seeds — no vegetables, no savory ingredients',
+          'Eggs with avocado: fried or poached eggs alongside sliced avocado, optional bacon or hot sauce — 3 components max',
+          'Baked egg muffins or egg cups: eggs + cheese + 1-2 mix-ins (peppers, bacon, spinach), baked in muffin tin',
+          'Smoked salmon plate: smoked salmon + cream cheese or eggs + cucumber or capers — 3 components max',
+          'Chia pudding: chia seeds in coconut or almond milk + berries + optional nuts',
+          'Frittata with vegetables and cheese: eggs + cheese + 1-2 veg, baked',
+          'Egg salad: chopped eggs + mayo or avocado, served on greens, in avocado halves, or stuffed in a pepper',
+          'Almond-flour pancakes or waffles: almond flour batter + berries or low-carb syrup',
+          'Cream cheese pancakes: cream cheese and eggs blended into pancake batter',
+          'Breakfast skillet: ground sausage + eggs + peppers, one pan',
+          'Cheese and cured meat plate: hard cheeses + cured meats + nuts or olives — assembly only, no cooking',
+          'Stuffed avocado boats: halved avocado filled with egg, salmon, or tuna salad',
+          'Keto smoothie: avocado + protein powder + nut butter + almond or coconut milk',
+          'Shakshuka: eggs poached in tomato and bell pepper sauce',
+          'Chaffles or cloud bread with savory or sweet topping',
+          'Ricotta or mascarpone bowl: with berries and nuts — no vegetables, no savory ingredients',
+          'Breakfast sandwich on lettuce wrap or chaffle: eggs + cheese + meat',
+        ].join(' | ')
+        breakfastProteins = 'eggs, bacon, breakfast sausage, ham, smoked salmon, Greek yogurt, cottage cheese, ricotta'
       } else if (veganMode) {
-        breakfastTypes    = `oatmeal or porridge: rolled oats + fruit (banana, berries) + nut butter or nuts — simple toppings | smoothie or smoothie bowl: blended fruit + plant milk + protein (nut butter, seeds) — pour in bowl with toppings | tofu scramble: crumbled tofu + turmeric + 1-2 veg (spinach, peppers) + toast | chia pudding: chia seeds soaked in plant milk + fruit + nuts — prepare night before or quick-set | avocado toast: smashed avocado on toast + optional toppings (tomato, seeds) | granola with plant milk: store-bought or simple granola + plant milk + fresh fruit`
-        breakfastProteins = `tofu, tempeh, nut butter, plant-based yogurt, oats`
+        breakfastTypes = [
+          'Oatmeal with fruit and nuts: rolled oats + fruit + nut butter or nuts',
+          'Smoothie or smoothie bowl: blended fruit + plant milk + protein (nut butter, seeds)',
+          'Tofu scramble with vegetables: crumbled tofu + turmeric + 1-2 veg, optional toast',
+          'Chia pudding: chia seeds in plant milk + fruit + optional nuts',
+          'Avocado toast: smashed avocado on toast + optional toppings (tomato, seeds)',
+          'Granola with plant milk and fruit: simple granola + plant milk + fresh fruit',
+          'Nut butter toast with banana or fruit: peanut or almond butter on toast + fruit',
+          'Overnight oats: rolled oats soaked in plant milk + fruit and nuts',
+          'Açaí or pitaya bowl: blended frozen fruit + toppings (granola, coconut, fruit)',
+          'Coconut or almond yogurt parfait: plant yogurt + granola + fresh fruit',
+          'Tofu breakfast burrito or wrap: scrambled tofu + beans + veg in tortilla',
+          'Vegan pancakes: banana or flax-based batter + maple syrup or fruit',
+          'Quinoa breakfast porridge: cooked quinoa + plant milk + fruit and nuts',
+          'Buckwheat porridge with berries: cooked buckwheat + plant milk + berries',
+          'Polenta breakfast bowl: cooked polenta + maple syrup or savory toppings',
+          'Vegan French toast: chickpea-flour batter on bread + maple syrup',
+          'Potato hash with tempeh: diced potatoes + crumbled tempeh + veg',
+          'Fruit and seed bowl: mixed fresh fruit + seeds + nuts — no dairy',
+          'Tofu and avocado savory bowl: pan-seared tofu + avocado + greens',
+          'Hemp or flax breakfast pudding: hemp or flax seeds in plant milk + fruit',
+        ].join(' | ')
+        breakfastProteins = 'tofu, tempeh, nut butter, plant-based yogurt, oats, hemp/flax seeds, chia seeds'
       } else if (vegetarianMode) {
-        breakfastTypes    = `scrambled or fried eggs on toast: eggs + toast + optional cheese or avocado | yogurt parfait: Greek yogurt layered with granola and fresh fruit — no savory ingredients | oatmeal with fruit and nuts: oats + banana or berries + nut butter or nuts | avocado toast with egg: toast + smashed avocado + fried or poached egg | smoothie: fruit + yogurt or milk + optional protein powder | pancakes or waffles: classic batter, serve with fruit or maple syrup | frittata or egg bake: eggs + cheese + 1-2 veg baked in a pan`
-        breakfastProteins = `eggs, Greek yogurt, cottage cheese, cheese`
+        breakfastTypes = [
+          'Scrambled or fried eggs on toast: eggs + toast + optional cheese or avocado',
+          'Yogurt parfait with granola: Greek yogurt + granola + fresh fruit — no savory ingredients',
+          'Oatmeal with fruit and nuts: oats + fruit + nut butter or nuts',
+          'Avocado toast with egg: toast + smashed avocado + fried or poached egg',
+          'Smoothie with fruit and yogurt: blended fruit + yogurt or milk + optional extras',
+          'Pancakes or waffles: classic batter + fresh fruit or maple syrup',
+          'Frittata or egg bake: eggs + cheese + 1-2 veg, baked',
+          'Omelette with cheese and vegetables: eggs + cheese + common veg',
+          'Cottage cheese bowl with fruit and nuts: cottage cheese + fruit + nuts — no vegetables, no savory',
+          'Chia pudding with fruit: chia seeds in milk + fruit + optional nuts',
+          'French toast with fruit: classic French toast + maple syrup and fruit',
+          'Eggs Benedict: poached eggs on English muffin + hollandaise',
+          'Breakfast burrito with eggs and cheese: scrambled eggs + cheese + veg in tortilla',
+          'Shakshuka: eggs poached in tomato sauce',
+          'Yogurt smoothie bowl: blended yogurt + fruit + toppings',
+          'Ricotta toast with honey and fruit: ricotta on toast + honey + fresh fruit',
+          'Breakfast sandwich (egg + cheese): eggs + cheese on muffin or bread',
+          'Quiche slice with fruit: pre-baked quiche slice + side fruit',
+          'Overnight oats with yogurt: rolled oats + yogurt + fruit and nuts',
+          'Cheesy baked egg muffins: eggs + cheese + veg, baked in muffin tin',
+        ].join(' | ')
+        breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, ricotta'
       } else if (pescatarianMode) {
-        breakfastTypes    = `scrambled or fried eggs on toast: eggs + toast + optional veg or cheese | smoked salmon on toast: smoked salmon + cream cheese or avocado on toasted bread | yogurt parfait: Greek yogurt + granola + fresh fruit | oatmeal with fruit: oats + berries or banana + nuts | avocado toast with egg: toast + avocado + fried egg | smoothie: fruit + yogurt + milk`
-        breakfastProteins = `eggs, smoked salmon, Greek yogurt, cottage cheese`
+        breakfastTypes = [
+          'Scrambled or fried eggs on toast: eggs + toast + optional cheese or veg',
+          'Smoked salmon on toast or bagel: smoked salmon + cream cheese or avocado on bread',
+          'Yogurt parfait with granola: Greek yogurt + granola + fresh fruit',
+          'Oatmeal with fruit and nuts: oats + fruit + nut butter',
+          'Avocado toast with egg: toast + avocado + fried egg',
+          'Smoothie with fruit: blended fruit + yogurt or milk',
+          'Pancakes or waffles: classic batter + fruit or syrup',
+          'Frittata with vegetables and cheese: eggs + cheese + veg, baked',
+          'Omelette with cheese and vegetables: eggs + cheese + common veg',
+          'Cottage cheese bowl with fruit and nuts: cottage cheese + fruit + nuts — no vegetables',
+          'Chia pudding with fruit: chia seeds in milk + fruit + optional nuts',
+          'Eggs Benedict with smoked salmon: poached eggs + smoked salmon on muffin',
+          'Tuna or salmon salad on toast: tuna or salmon with mayo on toast',
+          'Smoked salmon and cream cheese bagel: bagel + cream cheese + smoked salmon',
+          'Baked egg muffins with cheese: eggs + cheese + veg, baked',
+          'Breakfast burrito with eggs: scrambled eggs + cheese + veg in tortilla',
+          'Shakshuka: eggs poached in tomato sauce',
+          'Ricotta toast with honey and fruit: ricotta on toast + honey + fruit',
+          'French toast with fruit: classic French toast + syrup and fruit',
+          'Smoked salmon avocado bowl: smoked salmon + avocado + greens or rice',
+        ].join(' | ')
+        breakfastProteins = 'eggs, smoked salmon, tuna, Greek yogurt, cottage cheese, cheese'
       } else if (paleoMode) {
-        breakfastTypes    = `scrambled or fried eggs with bacon or sausage: eggs cooked any style + bacon or sausage, optional simple veg | sweet potato hash with egg: diced sweet potato + egg fried on top + optional meat | fruit and nut bowl: mixed fresh fruit + nuts + seeds — no dairy | omelette with vegetables: eggs + 1-2 veg (spinach, peppers, mushrooms) — no cheese | paleo pancakes: almond or coconut flour batter + fresh fruit`
-        breakfastProteins = `eggs, bacon, breakfast sausage`
+        breakfastTypes = [
+          'Scrambled or fried eggs with bacon or sausage: eggs + breakfast meat',
+          'Sweet potato hash with egg: diced sweet potato + egg fried on top',
+          'Fruit and nut bowl: mixed fresh fruit + nuts + seeds — no dairy',
+          'Omelette with vegetables: eggs + 1-2 veg — no cheese, no dairy',
+          'Paleo pancakes: almond or coconut flour batter + fresh fruit',
+          'Breakfast skillet: ground sausage + eggs + peppers',
+          'Egg muffins with vegetables and bacon: eggs + veg + bacon, baked',
+          'Smoked salmon plate: smoked salmon + cucumber + greens — no cream cheese',
+          'Paleo smoothie: fruit + nut milk + nut butter',
+          'Chia pudding: chia seeds in coconut milk + berries',
+          'Paleo breakfast bowl: eggs + avocado + bacon or sausage',
+          'Plantain or banana pancakes: blended batter + fresh fruit',
+          'Coconut yogurt parfait: coconut yogurt + fruit + grain-free granola',
+          'Avocado boats with eggs: halved avocado + baked egg in the well',
+          'Baked eggs over greens: eggs baked over sautéed spinach or kale',
+          'Grain-free granola with coconut milk: nuts + seeds + coconut milk + fruit',
+          'Mushroom and spinach scramble: eggs + sautéed mushrooms + spinach',
+          'Paleo waffles: almond or coconut flour batter + fresh fruit',
+          'Sausage and egg patties: breakfast sausage + fried egg, plated',
+          'Salmon and avocado breakfast plate: fresh or smoked salmon + avocado + greens',
+        ].join(' | ')
+        breakfastProteins = 'eggs, bacon, breakfast sausage, salmon'
       } else if (lowFodmapMode) {
-        breakfastTypes    = `scrambled or fried eggs on gluten-free toast: eggs + GF toast + optional safe veg | rice cakes with peanut butter and banana: simple assembly, no cooking | gluten-free oats with safe fruit: GF oats + banana or blueberries + nuts | fried egg with roasted tomatoes: simple eggs + safe veg | smoothie: banana + lactose-free milk + peanut butter`
-        breakfastProteins = `eggs, peanut butter, lactose-free yogurt`
+        breakfastTypes = [
+          'Scrambled or fried eggs on gluten-free toast: eggs + GF toast',
+          'Rice cakes with peanut butter and banana: simple assembly',
+          'Gluten-free oats with safe fruit: GF oats + banana or blueberries + nuts',
+          'Fried egg with roasted tomatoes: simple eggs + safe veg',
+          'Smoothie: banana + lactose-free milk + peanut butter',
+          'Omelette with safe vegetables: eggs + spinach, peppers, or zucchini — no garlic or onion',
+          'Lactose-free yogurt parfait: lactose-free yogurt + safe granola + fruit',
+          'Chia pudding: chia in lactose-free milk + berries',
+          'Eggs Benedict on gluten-free muffin: poached eggs on GF muffin',
+          'Potato and egg breakfast hash: diced potato + egg — no onion or garlic',
+          'Quinoa porridge with berries: cooked quinoa + lactose-free milk + berries',
+          'Lactose-free cottage cheese bowl: cottage cheese + safe fruit + nuts',
+          'Peanut butter and banana toast (GF): GF bread + peanut butter + banana',
+          'Egg muffins with safe vegetables: eggs + spinach or peppers, baked',
+          'Gluten-free pancakes with fruit: GF pancakes + maple syrup + fruit',
+          'Polenta breakfast bowl with maple: cooked polenta + maple syrup + fruit',
+          'Low-FODMAP smoothie bowl: blended safe fruit + lactose-free milk + toppings',
+          'Baked eggs with spinach and tomato: eggs baked on spinach + tomato',
+          'Rice porridge: cooked rice + lactose-free milk, sweet or savory',
+          'Gluten-free French toast with berries: GF bread + egg dip + berries',
+        ].join(' | ')
+        breakfastProteins = 'eggs, peanut butter, lactose-free yogurt, lactose-free cottage cheese'
       } else {
-        breakfastTypes    = `scrambled or fried eggs on toast: eggs + toast + optional cheese or veg | oatmeal with fruit and nuts: oats + banana or berries + nut butter | yogurt parfait: Greek yogurt + granola + fresh fruit — no savory ingredients | avocado toast with egg: toast + avocado + fried or poached egg | smoothie: fruit + yogurt or milk + optional extras | pancakes or waffles: classic, serve with fruit or syrup | breakfast burrito: eggs + cheese + optional meat wrapped in tortilla`
-        breakfastProteins = `eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage`
+        breakfastTypes = [
+          'Scrambled or fried eggs on toast: eggs + toast + optional cheese or veg',
+          'Oatmeal with fruit and nuts: oats + fruit + nut butter',
+          'Yogurt parfait with granola: yogurt + granola + fresh fruit — no savory',
+          'Avocado toast with egg: toast + avocado + fried or poached egg',
+          'Smoothie with fruit: blended fruit + yogurt or milk',
+          'Pancakes or waffles: classic batter + fruit or syrup',
+          'Breakfast burrito: scrambled eggs + cheese + meat in tortilla',
+          'Omelette with cheese and vegetables: eggs + cheese + common veg',
+          'Cottage cheese bowl with fruit and nuts: cottage cheese + fruit + nuts — no vegetables',
+          'Chia pudding with fruit: chia + milk + fruit + optional nuts',
+          'French toast with fruit and syrup: classic French toast',
+          'Eggs Benedict: poached eggs on English muffin + hollandaise',
+          'Breakfast sandwich: eggs + cheese + meat on bread or muffin',
+          'Shakshuka: eggs poached in tomato sauce',
+          'Frittata or quiche: eggs + cheese + veg, baked',
+          'Granola bowl with milk and fruit: granola + milk + fresh fruit',
+          'Egg muffins with cheese and vegetables: eggs + cheese + veg, baked',
+          'Breakfast hash: diced potato + breakfast meat + egg',
+          'Ricotta toast with honey and fruit: ricotta on toast + honey + fruit',
+          'Overnight oats with fruit and nuts: oats + milk + fruit + nuts',
+        ].join(' | ')
+        breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage, ham'
       }
 
       // ── Lunch format CATEGORIES per diet ─────────────────────────────────
