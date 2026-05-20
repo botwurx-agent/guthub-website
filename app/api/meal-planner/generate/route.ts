@@ -80,6 +80,7 @@ Return a single JSON object only — no markdown:
           const stream = await openai.chat.completions.create({
             model: AI_MODEL,
             stream: true,
+            reasoning_effort: 'minimal',
             messages: [{ role: 'user', content: recipePrompt }],
           })
 
@@ -395,6 +396,7 @@ Return a JSON array only — no markdown. Each object:
         const stream = await openai.chat.completions.create({
           model: AI_MODEL,
           stream: true,
+          reasoning_effort: 'minimal',
           messages: [{ role: 'user', content: prompt }],
         })
 
