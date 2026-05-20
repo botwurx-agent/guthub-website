@@ -892,33 +892,9 @@ export default function MealPlannerClient() {
         </div>
       )}
 
-      {/* Empty state */}
-      {!generating && !loading && !hasAnyMeals && (
-        <div style={{
-          background: 'var(--cream-100)', border: '2px dashed var(--cream-200)', borderRadius: 16,
-          padding: '64px 32px', textAlign: 'center',
-        }}>
-          <UtensilsCrossed size={44} color="var(--ink-300)" style={{ marginBottom: 20 }} />
-          <p style={{ fontWeight: 600, fontSize: 17, color: 'var(--ink-600)', margin: '0 0 8px' }}>No meals planned yet</p>
-          <p style={{ fontSize: 14, color: 'var(--ink-400)', margin: '0 0 24px' }}>
-            Select how many days to plan above, then click <strong>Generate</strong> to get AI-crafted meals based on your macros.
-          </p>
-          <button
-            onClick={generateWeek}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'var(--terracotta-500)', color: '#fff',
-              border: 'none', borderRadius: 10, padding: '11px 22px',
-              fontSize: 14, fontWeight: 600, cursor: 'pointer',
-            }}
-          >
-            <Sparkles size={16} /> Generate week
-          </button>
-        </div>
-      )}
 
-      {/* Main content — visible as soon as first meal arrives */}
-      {hasAnyMeals && (
+      {/* Main content — always visible */}
+      {!loading && (
         <div className="plan-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 20, alignItems: 'start' }}>
           {/* LEFT column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
