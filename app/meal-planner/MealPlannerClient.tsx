@@ -353,8 +353,8 @@ export default function MealPlannerClient() {
     return () => clearInterval(id)
   }, [generating])
 
-  const fetchSlots = useCallback(async () => {
-    setLoading(true)
+  const fetchSlots = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     const startStr = toDateStr(weekStart)
     const endStr = toDateStr(addDays(weekStart, 6))
     const { data } = await supabase
@@ -365,7 +365,7 @@ export default function MealPlannerClient() {
       .order('plan_date', { ascending: true })
       .order('meal_type', { ascending: true })
     setSlots(data ?? [])
-    setLoading(false)
+    if (!silent) setLoading(false)
   }, [weekStart])
 
   const initializedRef = useRef(false)
@@ -519,7 +519,7 @@ export default function MealPlannerClient() {
       } catch { /* leave slot empty */ }
     }))
 
-    await fetchSlots()
+    await fetchSlots(true)
     setGenerating(false)
     setGeneratingCount(0)
     setGeneratingTotal(0)
@@ -547,7 +547,7 @@ export default function MealPlannerClient() {
         })
       }
     } catch { /* leave existing slot in place */ }
-    await fetchSlots()
+    await fetchSlots(true)
     setRegeneratingSlot(null)
   }
 
