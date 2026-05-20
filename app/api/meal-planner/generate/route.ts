@@ -303,9 +303,9 @@ Return a single JSON object only — no markdown:
         // Egg preparations split into DISTINCT items so the AI sees them as
         // separate options rather than collapsing into "fried eggs" every time.
         breakfastExamples = [
-          '• Scrambled eggs — soft and fluffy, with any mix-in (cheese, herbs, smoked salmon, cured meat, vegetables)',
-          '• Sunny-side or fried eggs — runny yolks plated alongside bacon, sausage, ground meat patty, steak, or vegetables',
-          '• Omelette — folded on the stovetop with cheese, vegetables, cured meat, or herbs',
+          '• Scrambled eggs — soft and fluffy, cheese melted in (cheddar, feta, goat cheese, cream cheese) plus any mix-in (herbs, smoked salmon, cured meat, vegetables)',
+          '• Sunny-side or fried eggs — runny yolks plated alongside bacon, sausage, ground meat patty, steak, or vegetables, often with crumbled or grated cheese on top',
+          '• Omelette — folded on the stovetop with cheese ALWAYS melted INSIDE, plus any combination of vegetables, cured meat, or herbs. Many variations to rotate: Western/Denver (ham, bell peppers, cheddar), Greek (feta, spinach, tomato), French herb (gruyère and fines herbes), Spanish (chorizo, peppers, manchego), goat cheese and mushroom, three-cheese, smoked salmon and cream cheese, bacon and cheddar, sausage and feta, jalapeño popper (cream cheese, jalapeño, bacon), Mediterranean (feta, olives, tomato), mushroom and Swiss, Mexican (chorizo, jalapeño, cotija)',
           '• Frittata — open-face baked egg pie with cheese and vegetables',
           '• Poached eggs — served over greens, avocado, smoked salmon, or sautéed vegetables',
           '• Soft- or hard-boiled eggs — plated with avocado, cheese, cured meat, or vegetables',
@@ -599,10 +599,17 @@ Return a single JSON object only — no markdown:
       // Cheese: should appear frequently in keto breakfasts but is often omitted.
       // Check meal names — if no cheese term appears, nudge the AI.
       if (ketoMode && totalBfCount >= 2) {
-        const CHEESE_TERMS = ['cheddar','feta','goat cheese','cream cheese','mozzarella','parmesan','cotija','swiss','ricotta','cheese']
+        const CHEESE_TERMS = ['cheddar','feta','goat cheese','cream cheese','mozzarella','parmesan','cotija','swiss','gruyère','gruyere','manchego','ricotta','cheese']
         const cheeseUsed = allBfNames.some(n => CHEESE_TERMS.some(c => n.includes(c)))
         if (!cheeseUsed) {
-          varietyParts.push('No cheese in recent breakfasts — keto breakfasts benefit from cheddar, feta, goat cheese, or cream cheese; include it in the meal name')
+          varietyParts.push('No cheese in recent breakfasts — keto breakfasts benefit from cheese melted INTO the eggs (not as a side plate). Include cheddar, feta, goat cheese, gruyère, manchego, or cream cheese in the meal name')
+        }
+      }
+      // Omelettes are a high-variety format that the AI tends to skip — nudge when absent.
+      if (ketoMode && totalBfCount >= 3) {
+        const omeletteUsed = allBfNames.some(n => n.includes('omelette') || n.includes('omelet'))
+        if (!omeletteUsed) {
+          varietyParts.push('No omelette generated yet — consider one. Many variations: Western, Greek (feta + spinach), goat cheese and mushroom, Spanish (chorizo + manchego), smoked salmon and cream cheese, three-cheese, jalapeño popper, Mediterranean, mushroom and Swiss')
         }
       }
       if (usedVeg.length > 0) {
@@ -653,7 +660,8 @@ HARD RULES:
 5. When fruit IS used (sweet types only), vary across breakfasts — no fruit repeated. Same for nuts. Fruit range: strawberries, peaches, mango, kiwi, apple, banana, pineapple, grapes, cherries, plum, papaya, pear. Nut range: walnuts, pecans, pistachios, cashews, hazelnuts, macadamia.
 6. Write plain ingredient names — no diet qualifiers ("turkey bacon", not "maple-free turkey bacon").
 ${ketoMode ? `7. Keto breakfast vegetables — ONLY these are appropriate at breakfast: avocado, bell peppers, jalapeño, cherry tomatoes, mushrooms, spinach, scallion, cucumber. NEVER use at breakfast: asparagus, broccolini, broccoli, cauliflower, brussels sprouts, collard greens, zucchini, kale, arugula, swiss chard, green beans — those belong at lunch or dinner.
-8. Cheese belongs in keto breakfasts. Almost every savory egg dish, omelette, scramble, frittata, skillet, and meat plate should include a cheese: cheddar, feta, goat cheese, cream cheese, or ricotta. Name the cheese in the meal name (e.g. "Scrambled eggs with chorizo and cheddar", "Omelette with bell peppers and feta").\n` : ''}${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `${ketoMode ? 9 : 7}. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${varietyContext}
+8. Cheese belongs INSIDE keto breakfast dishes — melted into scrambles, omelettes, frittatas, egg cups, shakshuka, and skillets. Not as a side cheese plate. Use cheddar, feta, goat cheese, cream cheese, gruyère, manchego, cotija, swiss, or ricotta. Name the cheese in the meal name (e.g. "Scrambled eggs with chorizo and cheddar", "Greek omelette with feta and spinach"). A cheese plate or charcuterie board is a separate format — fine occasionally, but the default is cheese cooked INTO the eggs.
+9. Omelettes are a high-variety format and should appear regularly. Rotate the style each time: Western (ham, peppers, cheddar), Greek (feta, spinach, tomato), goat cheese and mushroom, Spanish (chorizo, peppers, manchego), smoked salmon and cream cheese, bacon and cheddar, three-cheese, jalapeño popper, Mediterranean (feta, olives), mushroom and Swiss, sausage and feta. Pick a different combination each time.\n` : ''}${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `${ketoMode ? 10 : 7}. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${varietyContext}
 Format inspiration — use these OR invent your own. This is not a checklist:
 ${breakfastExamples}
 
