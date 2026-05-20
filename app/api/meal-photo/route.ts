@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
 
   const completion = await openai.chat.completions.create({
     model: AI_MODEL_VISION,
+    reasoning_effort: 'minimal',
     messages: [
       {
         role: 'user',

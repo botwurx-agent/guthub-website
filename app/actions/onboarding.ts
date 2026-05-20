@@ -298,6 +298,7 @@ Respond ONLY with JSON:
   try {
     const response = await openai.chat.completions.create({
       model: AI_MODEL,
+      reasoning_effort: 'minimal',
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
     })
@@ -345,6 +346,7 @@ Respond ONLY with JSON: { "goal_weight": <integer in lbs> }`
   try {
     const response = await openai.chat.completions.create({
       model: AI_MODEL,
+      reasoning_effort: 'minimal',
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
     })
