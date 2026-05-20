@@ -213,6 +213,9 @@ ${conditions ? `- Health conditions: ${conditions}` : ''}${labContext}`
       } else if (pescatarianMode) {
         commonProteins      = `fish (cod, tilapia, or salmon), shrimp, eggs, tofu`
         dinnerExtraProteins = `, tuna, crab, scallops`
+      } else if (ketoMode) {
+        commonProteins      = `chicken breast, chicken thighs, steak, ground beef, ground turkey, pork chops, fish (cod, tilapia, or salmon)`
+        dinnerExtraProteins = `, lamb, shrimp, bacon, ground bison`
       } else if (paleoMode) {
         commonProteins      = `chicken breast, chicken thighs, steak, ground beef, ground turkey, pork chops, fish (cod, tilapia, or similar)`
         dinnerExtraProteins = `, lamb, shrimp, venison`
@@ -239,7 +242,7 @@ ${conditions ? `- Health conditions: ${conditions}` : ''}${labContext}`
 
       // ── Per-diet rule blocks (injected prominently into prompt) ───────────
       const ketoRule = ketoMode
-        ? `KETO STRICT: All meals must be low-carb/high-fat. NO rice, pasta, bread, oats, corn, beans, lentils, potatoes, tortillas, or any grain. Use cauliflower rice, zucchini noodles, lettuce wraps, or serve without a carb base. Prioritize: meat, fish, eggs, cheese, non-starchy vegetables (broccoli, spinach, zucchini, green beans, asparagus, mushrooms, peppers), healthy fats (olive oil, butter, avocado).`
+        ? `KETO STRICT: All meals must be low-carb/high-fat. NO rice, pasta, bread, oats, corn, beans, lentils, potatoes, tortillas, or any grain. For dinner use zucchini noodles, spaghetti squash, shirataki noodles, or roasted vegetables as the base — NOT cauliflower rice (reserved for special use only). For breakfast serve without a carb base. For lunch use salad greens or lettuce cups. Prioritize: meat, fish, eggs, cheese, non-starchy vegetables (broccoli, spinach, zucchini, green beans, asparagus, mushrooms, peppers), healthy fats (olive oil, butter, coconut oil). Avocado is allowed but should appear in no more than 2 meals total — it is a garnish, not a required component.`
         : ''
 
       const veganRule = veganMode
