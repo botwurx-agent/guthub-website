@@ -290,7 +290,7 @@ Return a single JSON object only — no markdown:
       else if (vegetarianMode)  dietRule = `VEGETARIAN: No meat, poultry, or fish. Eggs and dairy are fine.`
       else if (pescatarianMode) dietRule = `PESCATARIAN: No beef, pork, chicken, turkey, or any land animal. Fish and seafood only as animal protein.`
       else if (paleoMode)       dietRule = `PALEO: No grains, no legumes, no dairy, no processed foods. Meat, fish, eggs, vegetables, fruit, nuts, seeds only.`
-      else if (lowFodmapMode)     dietRule = `LOW-FODMAP: No garlic, no onion, no wheat, no apples/pears/stone fruits, no lactose. Safe: white rice, potatoes, quinoa, hard cheeses, chicken, beef, fish, eggs, carrots, zucchini, bell peppers, spinach, tomatoes.`
+      else if (lowFodmapMode)     dietRule = `LOW-FODMAP: No garlic, no onion, no leeks, no shallots, no wheat/rye/barley, no apples/pears/watermelon/stone fruits (peaches, plums, cherries, mangoes), no lactose (use hard cheeses or lactose-free dairy), no mushrooms, no cauliflower, no asparagus, no legumes (lentils, chickpeas, kidney beans, baked beans). Safe proteins: eggs, chicken, beef, pork, fish, shrimp, hard cheeses (cheddar, swiss, parmesan), lactose-free dairy, firm tofu, peanut butter. Safe grains: white rice, GF oats, quinoa, gluten-free pasta/bread, potatoes, polenta. Safe vegetables: bell peppers, carrots, cucumber, tomatoes, spinach, zucchini, green beans, eggplant. Safe fruits: banana, blueberries, strawberries, grapes, kiwi, pineapple, mandarin oranges.`
       else if (mediterraneanMode) dietRule = `MEDITERRANEAN: Olive oil is the primary fat. Heavy emphasis on vegetables, legumes, whole grains, fish, seafood, eggs, nuts, fresh herbs, and Mediterranean cheeses (feta, halloumi, ricotta, parmesan, manchego). Red meat occasionally only. No deep-frying, no heavy cream sauces, no processed foods. Signature ingredients: tomatoes, cucumber, olives, olive oil, lemon, garlic, fresh herbs (parsley, oregano, mint, dill, basil), feta, yogurt, tahini, hummus.`
 
       // ── Slot lists ────────────────────────────────────────────────────────
@@ -311,7 +311,7 @@ Return a single JSON object only — no markdown:
       else if (vegetarianMode)  breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, ricotta'
       else if (pescatarianMode) breakfastProteins = 'eggs, smoked salmon, tuna, Greek yogurt, cottage cheese, cheese'
       else if (paleoMode)       breakfastProteins = 'eggs, bacon, breakfast sausage, salmon'
-      else if (lowFodmapMode)     breakfastProteins = 'eggs, peanut butter, lactose-free yogurt, lactose-free cottage cheese'
+      else if (lowFodmapMode)     breakfastProteins = 'eggs, peanut butter, lactose-free yogurt, lactose-free cottage cheese, hard cheese (cheddar, swiss, parmesan), smoked salmon, chicken, ham, firm tofu'
       else if (mediterraneanMode) breakfastProteins = 'eggs, Greek yogurt, feta, halloumi, ricotta, labneh, cottage cheese, smoked salmon, tuna, hummus'
       else                        breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage, ham'
 
@@ -419,17 +419,26 @@ Return a single JSON object only — no markdown:
           '• Spanakopita-inspired eggs — eggs scrambled with spinach, feta, and dill',
         ].join('\n')
       } else if (lowFodmapMode) {
+        // IMPORTANT: sweet and savory are MUTUALLY EXCLUSIVE for low FODMAP breakfasts.
+        // Sweet formats NEVER contain eggs or meat. Savory formats NEVER contain fruit.
         breakfastExamples = [
-          '• Egg plates — scrambled, fried, or poached on gluten-free toast',
-          '• Rice cakes with peanut butter and banana',
-          '• Gluten-free oats with safe fruit (banana, blueberries)',
-          '• Omelette with safe vegetables (spinach, peppers, zucchini — no garlic or onion)',
-          '• Lactose-free yogurt parfait with safe granola and fruit',
-          '• Chia pudding in lactose-free milk with safe seasonal fruit',
-          '• Potato and egg hash (no garlic or onion)',
-          '• Gluten-free pancakes or French toast (sweet, with safe fruit)',
-          '• Smoothie — banana + lactose-free milk + peanut butter',
-          '• Quinoa porridge with lactose-free milk and safe fruit',
+          '── SAVORY (eggs or protein — no fruit, no sweetener) ──',
+          '• Scrambled eggs — soft scrambled on GF toast with spinach, tomato, or bell pepper (no garlic, no onion)',
+          '• Omelette — with bell peppers, zucchini, spinach, tomato, and hard cheese (no garlic, no onion, no mushrooms)',
+          '• Fried or poached eggs — on GF toast with sliced cucumber or wilted spinach',
+          '• Potato and egg hash — diced potatoes + eggs + bell peppers + fresh herbs (no garlic or onion)',
+          '• Smoked salmon plate — smoked salmon + soft-boiled eggs + cucumber + capers (no garlic, no onion)',
+          '• Frittata — eggs baked with safe vegetables (bell peppers, zucchini, tomato, spinach)',
+          '• Tofu scramble — firm tofu + turmeric + spinach + tomato on GF toast (no garlic, no onion)',
+          '── SWEET (fruit/nut-based — NO egg ever, NO meat, NO cheese) ──',
+          '• GF oatmeal — GF oats + safe fruit (banana, blueberries, strawberries) + peanut butter or safe nuts. NO egg.',
+          '• LF yogurt bowl — lactose-free yogurt + safe granola + safe fruit (banana, blueberries, kiwi). NO egg.',
+          '• Chia pudding — chia in LF milk + safe fruit + peanut butter or nuts. NO egg.',
+          '• Smoothie — banana + LF milk + peanut butter + safe fruit (blueberries, strawberries). NO egg.',
+          '• GF pancakes or French toast (sweet) — safe fruit topping. NO egg in the finished dish.',
+          '• Quinoa porridge — cooked in LF milk + banana + peanut butter or cinnamon. NO egg.',
+          '• Rice cake plate (sweet) — rice cakes + peanut butter + banana slices. NO egg.',
+          '• Rice cake plate (savory) — rice cakes + hard cheese + cucumber slices + smoked salmon.',
         ].join('\n')
       } else {
         breakfastExamples = [
@@ -757,7 +766,20 @@ Return a single JSON object only — no markdown:
         }
       }
 
-      // 10. Vegetable overuse (universal)
+      // 10. Low FODMAP sweet/savory balance nudge
+      if (lowFodmapMode && totalBfCount >= 2) {
+        const FODMAP_SWEET_TERMS = ['oatmeal', 'overnight oat', 'chia pudding', 'smoothie', 'yogurt', 'parfait', 'pancake', 'waffle', 'french toast', 'quinoa porridge', 'rice cake', 'granola']
+        const FODMAP_SAVORY_TERMS = ['scrambled egg', 'fried egg', 'poached egg', 'omelette', 'frittata', 'hash', 'skillet', 'smoked salmon', 'egg muffin', 'egg cup', 'tofu scramble']
+        const hasSweetFodmap = allBfNames.some(n => FODMAP_SWEET_TERMS.some(t => n.includes(t)))
+        const hasSavoryFodmap = allBfNames.some(n => FODMAP_SAVORY_TERMS.some(t => n.includes(t)))
+        if (hasSweetFodmap && !hasSavoryFodmap) {
+          varietyParts.push('Only sweet FODMAP breakfasts so far — add a SAVORY format: scrambled eggs on GF toast, omelette with bell peppers and spinach, potato hash, smoked salmon plate')
+        } else if (!hasSweetFodmap && hasSavoryFodmap) {
+          varietyParts.push('Only savory FODMAP breakfasts so far — add a SWEET format: GF oatmeal with blueberries, LF yogurt bowl with fruit, chia pudding, smoothie (NO egg added to any of these)')
+        }
+      }
+
+      // 12. Vegetable overuse (universal)
       if (usedVeg.length > 0) {
         const overused = usedVeg.filter(v => v.count >= 2)
         if (overused.length > 0) {
@@ -805,7 +827,7 @@ HARD RULES:
 1. Breakfast proteins: ${breakfastProteins}. NEVER use whole roasted or sliced dinner proteins at breakfast (whole roasted chicken, turkey breast slices, smoked trout, lamb chops, shrimp). Ground forms and sausages are fine — ground turkey, ground chicken, turkey sausage, chicken sausage, and beef patties are all valid breakfast proteins.
 2. Maximum 3 main components. No exotic prep (no pickling, no marinating, no multi-step curing).
 3. Plain, natural names: "Scrambled eggs with bacon and cheddar", not "Artisan Herb-Cured Egg Medallions."
-4. Fruit and nuts belong ONLY in sweet breakfasts (yogurt bowls, cottage cheese bowls, oatmeal, chia pudding, pancakes, waffles, French toast, smoothies, granola, overnight oats). NEVER in savory breakfasts (egg + meat combos, omelettes, scrambles, shakshuka, skillets, frittatas, egg muffins, smoked salmon plates, cheese and charcuterie plates). Savory breakfasts get vegetables, herbs, or cheese — never fruit.
+4. Sweet and savory breakfast formats are MUTUALLY EXCLUSIVE — never combine them. Fruit and nuts belong ONLY in sweet breakfasts (yogurt bowls, cottage cheese bowls, oatmeal, chia pudding, pancakes, waffles, French toast, smoothies, granola, overnight oats). NEVER in savory breakfasts (egg + meat combos, omelettes, scrambles, shakshuka, skillets, frittatas, egg muffins, smoked salmon plates, cheese and charcuterie plates). Savory breakfasts get vegetables, herbs, or cheese — never fruit. EQUALLY: eggs are a SAVORY protein — NEVER add a fried egg, poached egg, scrambled egg, or any other egg preparation to a sweet breakfast dish (oatmeal, overnight oats, yogurt bowls, chia pudding, smoothies, granola bowls, smoothie bowls, acai bowls, pancakes, quinoa porridge). Dishes like "oatmeal with a fried egg" are incoherent and FORBIDDEN.
 5. When fruit IS used (sweet types only), vary across breakfasts — no fruit repeated. Same for nuts. Fruit range: strawberries, peaches, mango, kiwi, apple, banana, pineapple, grapes, cherries, plum, papaya, pear. Nut range: almonds, walnuts, pecans, pistachios, cashews, hazelnuts, macadamia.
 6. Write plain ingredient names — no diet qualifiers ("turkey bacon", not "maple-free turkey bacon").
 ${ketoMode ? `7. Keto breakfast vegetables — ONLY these are appropriate at breakfast: avocado, bell peppers, jalapeño, cherry tomatoes, mushrooms, spinach, scallion, cucumber. NEVER use at breakfast: asparagus, broccolini, broccoli, cauliflower, brussels sprouts, collard greens, zucchini, kale, arugula, swiss chard, green beans — those belong at lunch or dinner.
@@ -814,7 +836,19 @@ ${ketoMode ? `7. Keto breakfast vegetables — ONLY these are appropriate at bre
 8. Mediterranean cheese belongs INSIDE the dish — feta crumbled into scrambled eggs, ricotta spread on toast, labneh under poached eggs, halloumi pan-seared on the plate, parmesan or mozzarella melted into a frittata. Use feta, halloumi, ricotta, labneh, parmesan, manchego, or mozzarella. Feta is the default Mediterranean cheese. Name the cheese in the meal name (e.g. "Scrambled eggs with feta and tomato", "Labneh toast with cucumber and za'atar"). Cheese is integrated into the meal, not served as a side plate.
 9. Format rotation — many distinct Mediterranean breakfast formats are available: scrambled eggs with feta, Mediterranean omelette, shakshuka, frittata, sunny-side eggs over greens, poached eggs with labneh, Greek yogurt bowl, labneh toast, ricotta toast, hummus toast, avocado toast, smoked salmon plate, halloumi plate, cottage cheese bowl, mezze breakfast plate, savory oats, chia pudding, tuna salad toast, spanakopita-style eggs. Pick a DIFFERENT format type each generation — do not repeat the same format (e.g. no two Greek yogurt bowls in a row, no two toast formats in a row).
 10. Mediterranean omelette variations to rotate: Greek (feta, spinach, tomato), Mediterranean (feta, olives, sun-dried tomato), Spanish (chorizo, peppers, manchego), three-cheese (feta, mozzarella, parmesan), goat cheese and herbs, smoked salmon and dill, halloumi and tomato, mushroom and herbs, roasted pepper and feta.
-11. Signature Mediterranean ingredients to leverage: olive oil (primary fat), lemon, fresh herbs (parsley, oregano, mint, dill, basil), za'atar, sumac, garlic, capers, tahini, honey, figs, dates, pine nuts. Use these to elevate plain dishes.\n` : ''}${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `${ketoMode ? 10 : (mediterraneanMode ? 12 : 7)}. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${varietyContext}
+11. Signature Mediterranean ingredients to leverage: olive oil (primary fat), lemon, fresh herbs (parsley, oregano, mint, dill, basil), za'atar, sumac, garlic, capers, tahini, honey, figs, dates, pine nuts. Use these to elevate plain dishes.\n` : ''}${lowFodmapMode ? `7. Low-FODMAP safe vegetables ONLY at breakfast: bell peppers, carrots, cucumber, tomatoes, spinach, zucchini, green beans. NEVER at breakfast: mushrooms, garlic, onion, leeks, shallots, cauliflower, broccoli, asparagus, cabbage, brussels sprouts.
+8. STRICT sweet/savory separation — these are completely separate categories, NEVER combined:
+  SAVORY formats (scrambled eggs, omelette, fried/poached eggs, hash, smoked salmon plate, frittata, tofu scramble): contain vegetables, herbs, and protein ONLY — no fruit, no sweeteners, no peanut butter mixed in.
+  SWEET formats (GF oatmeal, overnight oats, LF yogurt bowl, chia pudding, smoothie, GF pancakes, quinoa porridge, rice cakes with nut butter): contain safe fruit and nuts ONLY — NO egg, NO meat, NO savory cheese. A fried egg on top of oatmeal is FORBIDDEN.
+9. Protein rotation: alternate between eggs, smoked salmon, lactose-free yogurt, peanut butter, hard cheese, firm tofu — do not default to eggs for every breakfast.\n` : ''}${paleoMode ? `7. Paleo breakfast vegetables allowed at breakfast: mushrooms, spinach, peppers, onion, garlic, tomatoes, avocado, scallion. No grains, no legumes, no dairy — coconut milk, almond milk, almond flour, coconut flour, or coconut yogurt are the only dairy substitutes.
+8. Strict sweet/savory separation: paleo sweet formats (coconut yogurt bowls, fruit and nut bowls, almond-flour pancakes, banana pancakes, smoothies, acai bowls) contain fruit only — NO egg mixed into the sweet dish. Savory formats (egg skillets, hashes, egg plates with meat) contain meat and vegetables only — no fruit.
+9. Protein rotation: eggs and bacon alone is not enough variety — rotate through: ground beef or turkey hash, steak strips with eggs, breakfast sausage patties, smoked salmon with avocado and cucumber, egg muffins with vegetables, sweet potato hash with protein, coconut yogurt with fruit and nuts.\n` : ''}${veganMode ? `7. Vegan sweet/savory separation: sweet formats (smoothies, acai bowls, smoothie bowls, oatmeal, overnight oats, chia pudding, plant yogurt parfait, vegan pancakes) are fruit-and-grain-based — no tofu, no tempeh, no savory protein mixed in. Savory formats (tofu scramble, tempeh hash, potato and vegetable hash, vegan breakfast burrito) are protein-and-vegetable-based — no fruit.
+8. Protein rotation: do not default to tofu scramble every time — alternate with: tempeh hash, nut butter bowls, avocado toast with hemp seeds, savory grain bowl, vegan burrito, smoothie bowl, oatmeal, chia pudding.
+9. Hot cereal variety: if generating oatmeal or porridge, vary the fruit and toppings significantly each time — mango with coconut, banana with peanut butter, mixed berry with almonds, tropical with toasted coconut, apple cinnamon (if apple is safe) with walnuts are all distinct variations.\n` : ''}${vegetarianMode && !veganMode ? `7. Vegetarian sweet/savory separation: sweet formats (yogurt parfaits, oatmeal, overnight oats, smoothie bowls, chia pudding, cottage cheese bowls with fruit, pancakes, waffles) are fruit-and-dairy-based — NO egg scrambled in or added on top. Savory formats (omelettes, scrambled eggs, shakshuka, frittatas, egg on toast, egg muffins) are egg-and-vegetable-based — no fruit.
+8. Egg preparation rotation: do NOT default to fried eggs every time. Alternate: scrambled, poached, soft-boiled, baked, omelette, frittata, shakshuka, egg muffins — each is a distinct format.
+9. Cheese rotation in savory dishes: vary the cheese every time — cheddar, feta, goat cheese, ricotta, cottage cheese, mozzarella, halloumi, gruyère, parmesan. Name the specific cheese in the meal name.\n` : ''}${pescatarianMode ? `7. Pescatarian sweet/savory separation: sweet formats (yogurt parfaits, oatmeal, overnight oats, smoothie bowls, chia pudding, pancakes) are fruit-and-dairy-based — no seafood mixed in. Savory formats (eggs, smoked salmon plates, tuna dishes, shrimp scrambles) are protein-and-vegetable-based — no fruit.
+8. Seafood variety: do not default to smoked salmon every time — alternate with: tuna in avocado halves, sardines on toast with lemon, shrimp scramble with vegetables, canned salmon on rice cakes, smoked trout plate with cucumber.
+9. Protein rotation: vary between eggs, smoked salmon, tuna, and other seafood — do not repeat the same seafood protein in adjacent breakfasts.\n` : ''}${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `${ketoMode ? 10 : (mediterraneanMode ? 12 : (lowFodmapMode || paleoMode || veganMode || (vegetarianMode && !veganMode) || pescatarianMode) ? 10 : 7)}. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${varietyContext}
 Format inspiration — use these OR invent your own. This is not a checklist:
 ${breakfastExamples}
 
