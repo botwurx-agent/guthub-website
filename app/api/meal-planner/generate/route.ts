@@ -534,14 +534,17 @@ Return a single JSON object only — no markdown:
       let lunchExamples: string
       if (ketoMode) {
         lunchExamples = [
-          '• Protein-and-greens salad — protein over leafy greens, olive oil dressing, no croutons or grains',
-          '• Lettuce wraps — spiced protein + crunchy veg wrapped in iceberg or butter lettuce',
-          '• Low-carb bowl — protein + cauliflower rice or zoodles + sauce',
-          '• Stuffed vegetable — bell pepper, mushroom cap, or zucchini boat filled with meat and cheese',
-          '• Keto soup — creamy or broth-based, no grains or starchy vegetables',
-          '• Cold plate — sliced cured meats + hard cheeses + pickles + raw veg',
-          '• Egg or tuna salad in avocado halves or over greens',
-          '• Bunless burger or meatball bowl over greens or cauliflower rice',
+          '• Protein-and-greens salad — grilled or pan-seared protein over leafy greens (romaine, arugula, spinach, mixed), olive oil and lemon dressing, no croutons or grains',
+          '• Lettuce wraps — seasoned ground beef, ground turkey, or shredded chicken + crunchy veg wrapped in iceberg or butter lettuce',
+          '• Stuffed bell pepper or mushroom cap — ground beef or turkey mixed with cheese and vegetables, baked',
+          '• Keto soup — creamy broth-based with protein and non-starchy vegetables (no potatoes, no noodles, no grains)',
+          '• Cold plate — sliced cured meats (salami, prosciutto, chorizo) + hard cheeses + olives + raw vegetables + pickles',
+          '• Egg or tuna salad — mixed with mayo and celery, served in avocado halves or over mixed greens',
+          '• Bunless burger or meatball plate — served over greens or alongside roasted vegetables',
+          '• Protein bowl — grilled or sautéed protein over a base of roasted vegetables (broccoli, cauliflower, bell peppers, zucchini)',
+          '• Chicken or steak Caesar — grilled protein over romaine, parmesan, Caesar dressing (no croutons)',
+          '• Bacon and egg salad — chopped bacon, hard-boiled egg, avocado, over greens with ranch or vinaigrette',
+          '• Zucchini boat or stuffed avocado — filled with seasoned ground meat and cheese (occasionally)',
         ].join('\n')
       } else if (veganMode) {
         lunchExamples = [
