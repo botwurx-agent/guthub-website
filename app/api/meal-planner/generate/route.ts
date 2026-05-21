@@ -249,6 +249,7 @@ Return a single JSON object only — no markdown:
       const lowFodmapMode     = resolvedDiet === 'low_fodmap'    || dietLabel.toLowerCase().includes('fodmap')
       const mediterraneanMode = resolvedDiet === 'mediterranean' || dietLabel.toLowerCase().includes('mediterranean')
       const carnivoreMode     = resolvedDiet === 'carnivore'      || dietLabel.toLowerCase().includes('carnivore')
+      const highProteinMode   = resolvedDiet === 'high_protein'   || dietLabel.toLowerCase().includes('high protein') || dietLabel.toLowerCase().includes('high-protein')
 
       // ── Protein options per diet ──────────────────────────────────────────
       let proteins: string
@@ -274,6 +275,9 @@ Return a single JSON object only — no markdown:
       } else if (carnivoreMode) {
         proteins           = `ribeye steak, NY strip steak, ground beef, chicken thighs, pork chops, salmon, bacon, lamb chops`
         dinnerOnlyProteins = `, lamb shanks, pork ribs, chuck roast, brisket, shrimp, scallops, lobster, liver, heart, oxtail`
+      } else if (highProteinMode) {
+        proteins           = `chicken breast, chicken thighs, ground turkey (lean), ground beef (lean), salmon, shrimp, tuna, eggs, pork tenderloin, turkey breast`
+        dinnerOnlyProteins = `, steak (sirloin, flank), cod, tilapia, bison burger, lamb chops`
       } else {
         proteins           = `chicken breast, chicken thighs, ground beef, ground turkey, steak (sirloin, flank, skirt), salmon, pork chops, shrimp, bacon, ham`
         dinnerOnlyProteins = `, lamb chops, cod, tilapia, halibut, pork tenderloin, duck breast, bison burger`
@@ -288,6 +292,7 @@ Return a single JSON object only — no markdown:
       else if (lowFodmapMode)     dinnerBases = `white rice, quinoa, gluten-free pasta, roasted potatoes, polenta`
       else if (mediterraneanMode) dinnerBases = `farro, bulgur, freekeh, brown rice, whole-wheat pasta, couscous, quinoa, roasted potatoes, lentils, chickpeas`
       else if (carnivoreMode)     dinnerBases = `butter sauce, bone marrow, pan drippings, rendered tallow — NO vegetable or grain sides; the protein IS the meal`
+      else if (highProteinMode)   dinnerBases = `brown rice, quinoa, sweet potato, lentils, chickpeas, farro, roasted potatoes, whole-wheat pasta — carbs are supporting cast, not the star`
       else                        dinnerBases = `white rice, brown rice, quinoa, farro, roasted potatoes, sweet potato, pasta (any shape), noodles, couscous, roasted root vegetables, lentils`
 
       // ── Diet restriction rule (what is NOT allowed) ───────────────────────
@@ -300,6 +305,7 @@ Return a single JSON object only — no markdown:
       else if (lowFodmapMode)     dietRule = `LOW-FODMAP: No garlic, no onion, no leeks, no shallots, no wheat/rye/barley, no apples/pears/watermelon/stone fruits (peaches, plums, cherries, mangoes), no lactose (use hard cheeses or lactose-free dairy), no mushrooms, no cauliflower, no asparagus, no legumes (lentils, chickpeas, kidney beans, baked beans). Safe proteins: eggs, chicken, beef, pork, fish, shrimp, hard cheeses (cheddar, swiss, parmesan), lactose-free dairy, firm tofu, peanut butter. Safe grains: white rice, GF oats, quinoa, gluten-free pasta/bread, potatoes, polenta. Safe vegetables: bell peppers, carrots, cucumber, tomatoes, spinach, zucchini, green beans, eggplant. Safe fruits: banana, blueberries, strawberries, grapes, kiwi, pineapple, mandarin oranges.`
       else if (mediterraneanMode) dietRule = `MEDITERRANEAN: Olive oil is the primary fat. Heavy emphasis on vegetables, legumes, whole grains, fish, seafood, eggs, nuts, fresh herbs, and Mediterranean cheeses (feta, halloumi, ricotta, parmesan, manchego). Red meat occasionally only. No deep-frying, no heavy cream sauces, no processed foods. Signature ingredients: tomatoes, cucumber, olives, olive oil, lemon, garlic, fresh herbs (parsley, oregano, mint, dill, basil), feta, yogurt, tahini, hummus.`
       else if (carnivoreMode)     dietRule = `CARNIVORE: ONLY animal products. Absolutely NO vegetables, NO fruits, NO grains, NO legumes, NO nuts, NO seeds, NO plant-based ingredients of any kind — not even as garnish or seasoning (no herb leaves, no lemon wedge). Cooking fat: butter, ghee, or tallow ONLY. Allowed seasonings: salt, pepper, cumin, paprika, chili paste, garlic powder. Dairy is allowed in LIMITED amounts: cheese, heavy cream. Eggs are allowed in limited amounts — pair with meat. Organ meats (liver, heart, kidney, oxtail, tongue) are staple carnivore foods and should rotate in regularly. Every meal is pure protein and fat — no starch, no fiber.`
+      else if (highProteinMode)   dietRule = `HIGH PROTEIN (athlete-focused): Every meal is built around a large, named protein serving. Target: 35–45g protein at breakfast, 45–55g at lunch, 55–65g at dinner. Prioritize lean proteins: chicken breast, ground turkey, eggs (3–4 per serving), salmon, shrimp, tuna, lean ground beef, cottage cheese, Greek yogurt. Clean carbs (brown rice, quinoa, sweet potato) are welcome as sides — they support performance, not the centerpiece. Protein-rich dairy (Greek yogurt, cottage cheese, low-fat cheese) counts toward the protein target. No empty carbs without a protein anchor.`
 
       // ── Slot lists ────────────────────────────────────────────────────────
       const breakfastSlots = slots.filter(s => s.meal_type === 'breakfast')
@@ -322,6 +328,7 @@ Return a single JSON object only — no markdown:
       else if (lowFodmapMode)     breakfastProteins = 'eggs, peanut butter, lactose-free yogurt, lactose-free cottage cheese, hard cheese (cheddar, swiss, parmesan), smoked salmon, chicken, ham, firm tofu'
       else if (mediterraneanMode) breakfastProteins = 'eggs, Greek yogurt, feta, halloumi, ricotta, labneh, cottage cheese, smoked salmon, tuna, hummus'
       else if (carnivoreMode)     breakfastProteins = 'eggs, bacon, steak (ribeye, NY strip, skirt), ground beef patty, breakfast sausage, pork belly, smoked salmon, liver, chorizo, prosciutto, lamb patty'
+      else if (highProteinMode)   breakfastProteins = 'eggs (3-4 per serving), egg whites, chicken breast, ground turkey, turkey sausage, chicken sausage, smoked salmon, Greek yogurt (high-protein), cottage cheese, steak strips, ham, bacon'
       else                        breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage, ham, smoked salmon, turkey sausage, chicken sausage, peanut butter, almond butter'
 
       // ── Breakfast format inspiration per diet ─────────────────────────────
@@ -426,6 +433,30 @@ Return a single JSON object only — no markdown:
           '• Tuna salad toast — Mediterranean tuna with olives, capers, lemon, parsley on whole-grain toast',
           '• Chia pudding — chia in Greek yogurt or almond milk with seasonal fruit and honey',
           '• Spanakopita-inspired eggs — eggs scrambled with spinach, feta, and dill',
+        ].join('\n')
+      } else if (highProteinMode) {
+        // High protein — eggs and meat are priority. Sweet formats allowed but always
+        // protein-boosted (Greek yogurt, cottage cheese, peanut butter, hemp seeds added).
+        breakfastExamples = [
+          '── SAVORY / EGG & MEAT (priority — maximize protein) ──',
+          '• 3-egg scramble — 3 eggs soft-scrambled with a meat protein (turkey sausage crumbles, chicken sausage, bacon bits, ground turkey, or diced ham) + shredded cheddar or feta + vegetables',
+          '• Steak and eggs — thin-cut sirloin or skirt steak strips seared alongside 3 fried or scrambled eggs',
+          '• Ground turkey and egg skillet — seasoned ground turkey cooked with peppers and onion, topped with 2-3 fried eggs',
+          '• Chicken and egg hash — diced cooked chicken breast + diced potato + peppers + 2 fried eggs on top',
+          '• High-protein omelette (3-4 eggs) — filled with turkey sausage or chicken, low-fat cheese, spinach, peppers. 3-4 eggs minimum.',
+          '• Egg white omelette with chicken — 4-5 egg whites filled with sliced chicken breast, spinach, and low-fat cheese',
+          '• Turkey sausage and eggs — turkey sausage links or patties alongside 3 scrambled or fried eggs',
+          '• Smoked salmon and eggs — smoked salmon plated with 3 scrambled or poached eggs and avocado',
+          '• Breakfast protein bowl — 3 scrambled eggs + ground turkey or chicken sausage + roasted sweet potato or brown rice + shredded cheese',
+          '• High-protein breakfast sandwich — 2-egg patty + turkey sausage or ham + low-fat cheese on whole-grain English muffin or toast',
+          '• Egg muffins (batch) — 4-6 muffin-tin baked eggs with turkey, chicken, or ham + cheese + vegetables',
+          '── SWEET (allowed — but always protein-boosted, no plain versions) ──',
+          '• Protein oatmeal — rolled oats cooked in milk + 1/2 cup Greek yogurt stirred in + peanut butter + hemp seeds + fruit. Protein-forward, not plain oatmeal.',
+          '• High-protein Greek yogurt parfait — 200g high-protein Greek yogurt (Skyr or 2% Greek) + granola + fresh fruit + peanut butter drizzle + hemp or chia seeds',
+          '• Cottage cheese bowl — 1 cup full-fat or 2% cottage cheese + fresh fruit + honey + handful of almonds or walnuts. High protein, easy prep.',
+          '• Protein smoothie — Greek yogurt base + peanut butter or almond butter + banana + milk + hemp seeds or chia seeds. Thick, protein-rich.',
+          '• Cottage cheese pancakes — pancakes made from blended cottage cheese + eggs + oats (naturally high protein), topped with fresh fruit',
+          '• Protein overnight oats — oats + Greek yogurt + chia seeds + milk + peanut butter + banana, prepped the night before',
         ].join('\n')
       } else if (carnivoreMode) {
         // All carnivore breakfasts are savory — no plant-based sweet options exist.
@@ -569,6 +600,31 @@ Return a single JSON object only — no markdown:
           '• Whole-grain pasta with seafood or beans, olive oil, herbs (no cream sauces)',
           '• Niçoise-style salad — tuna, olives, eggs, green beans, potatoes',
           '• Shawarma or souvlaki bowl with grain, salad, hummus, tzatziki',
+        ].join('\n')
+      } else if (highProteinMode) {
+        lunchExamples = [
+          '── HIGH-PROTEIN SALADS ──',
+          '• Grilled chicken protein salad — large grilled chicken breast over mixed greens, chickpeas, cucumber, cherry tomato, avocado, lemon-olive oil dressing',
+          '• Tuna power salad — 2 cans tuna over romaine or mixed greens with hard-boiled eggs, white beans, olives, lemon vinaigrette',
+          '• Steak and arugula salad — sliced sirloin or flank steak over arugula, parmesan, cherry tomato, balsamic — protein-loaded',
+          '• Shrimp salad bowl — grilled or sautéed shrimp over mixed greens with avocado, cucumber, mango, lime dressing',
+          '• Cobb salad (loaded) — grilled chicken, bacon, hard-boiled egg, avocado, blue cheese, tomato, romaine — high-protein classic',
+          '── HIGH-PROTEIN BOWLS ──',
+          '• Chicken and brown rice bowl — large grilled or baked chicken breast over brown rice with roasted broccoli and teriyaki or garlic sauce',
+          '• Ground turkey taco bowl — seasoned ground turkey over brown rice or quinoa, black beans, pico, avocado, shredded cheese — double the turkey',
+          '• Salmon and quinoa bowl — baked or pan-seared salmon fillet over quinoa with roasted vegetables and lemon-dill sauce',
+          '• Shrimp and rice bowl — garlic butter shrimp over brown rice with sautéed peppers and a squeeze of lime',
+          '• Lean beef and rice bowl — seasoned lean ground beef or sliced flank steak over rice with cucumber, edamame, sesame-soy glaze',
+          '• Cottage cheese power bowl — 1 cup cottage cheese + quinoa + cucumber + cherry tomato + hemp seeds + olive oil (savory, no cooking)',
+          '── HIGH-PROTEIN WRAPS & SANDWICHES ──',
+          '• Double chicken wrap — grilled chicken breast, black beans, shredded cheese, salsa, avocado in a whole-wheat tortilla',
+          '• Turkey and cottage cheese wrap — sliced turkey breast, cottage cheese, spinach, cucumber, avocado in a wrap',
+          '• High-protein chicken sandwich — seasoned chicken breast, avocado, lettuce, tomato on whole-grain bread',
+          '• Tuna melt — tuna salad with melted cheddar on whole-grain toast, side of cottage cheese',
+          '── QUICK PLATES ──',
+          '• Chicken breast and sweet potato — baked chicken breast + roasted sweet potato + steamed broccoli. Simple, high protein.',
+          '• Ground turkey stir-fry — seasoned ground turkey + broccoli + peppers over brown rice or quinoa',
+          '• Egg and chicken fried rice — brown rice stir-fried with 3 eggs + diced chicken breast + vegetables + soy sauce',
         ].join('\n')
       } else if (carnivoreMode) {
         lunchExamples = [
@@ -776,6 +832,8 @@ Return a single JSON object only — no markdown:
       if (!veganMode && totalBfCount >= 4 && eggBfCount / totalBfCount >= 0.8) {
         const nonEggOptions = carnivoreMode
           ? 'steak plate, ground beef patties, pork belly, smoked salmon, liver plate, lamb patty, prosciutto plate, bacon-only plate'
+          : highProteinMode
+          ? 'protein oatmeal (Greek yogurt stirred in), cottage cheese bowl, high-protein smoothie, cottage cheese pancakes, protein overnight oats, Greek yogurt parfait with hemp seeds'
           : mediterraneanMode
           ? 'Greek yogurt bowl, labneh toast, ricotta toast, hummus toast, smoked salmon plate, halloumi plate, mezze plate, avocado toast, savory oats, chia pudding, cottage cheese bowl'
           : ketoMode
@@ -866,7 +924,28 @@ Return a single JSON object only — no markdown:
         }
       }
 
-      // 11. Low FODMAP sweet/savory balance nudge
+      // 11. High protein variety nudges
+      if (highProteinMode && totalBfCount >= 2) {
+        const HP_MEAT_TERMS = ['ground turkey','chicken','steak','ham','bacon','turkey sausage','chicken sausage','smoked salmon','sausage']
+        const hasMeatBreakfast = allBfNames.some(n => HP_MEAT_TERMS.some(t => n.includes(t)))
+        if (!hasMeatBreakfast) {
+          varietyParts.push('No meat protein at breakfast yet — add a meat-forward format: steak and eggs, ground turkey skillet, turkey sausage and eggs, chicken hash, breakfast protein bowl')
+        }
+        const HP_SWEET_TERMS = ['oatmeal','overnight oat','yogurt','cottage cheese bowl','smoothie','pancake','chia pudding']
+        const HP_SAVORY_TERMS = ['scramble','omelette','omelet','fried egg','poached egg','skillet','hash','egg white','steak and egg','sandwich','muffin']
+        const hasSweetHp = allBfNames.some(n => HP_SWEET_TERMS.some(t => n.includes(t)))
+        const hasSavoryHp = allBfNames.some(n => HP_SAVORY_TERMS.some(t => n.includes(t)))
+        if (hasSweetHp && !hasSavoryHp) {
+          varietyParts.push('Only sweet breakfasts so far — add a SAVORY high-protein format: 3-egg scramble with turkey, steak and eggs, ground turkey skillet, high-protein omelette')
+        } else if (!hasSweetHp && hasSavoryHp && totalBfCount >= 3) {
+          varietyParts.push('All savory so far — consider a protein-boosted SWEET format: protein oatmeal with Greek yogurt stirred in, cottage cheese bowl, high-protein smoothie, protein overnight oats')
+        }
+        if (totalBfCount >= 3 && !allBfNames.some(n => n.includes('cottage cheese') || n.includes('greek yogurt') || n.includes('skyr'))) {
+          varietyParts.push('No high-protein dairy at breakfast yet — cottage cheese bowl or Greek yogurt parfait are fast, high-protein formats worth rotating in')
+        }
+      }
+
+      // 12. Low FODMAP sweet/savory balance nudge
       if (lowFodmapMode && totalBfCount >= 2) {
         const FODMAP_SWEET_TERMS = ['oatmeal', 'overnight oat', 'chia pudding', 'smoothie', 'yogurt', 'parfait', 'pancake', 'waffle', 'french toast', 'quinoa porridge', 'rice cake', 'granola']
         const FODMAP_SAVORY_TERMS = ['scrambled egg', 'fried egg', 'poached egg', 'omelette', 'frittata', 'hash', 'skillet', 'smoked salmon', 'egg muffin', 'egg cup', 'tofu scramble']
@@ -879,7 +958,7 @@ Return a single JSON object only — no markdown:
         }
       }
 
-      // 13. Vegetable overuse (universal)
+      // 14. Vegetable overuse (universal)
       if (usedVeg.length > 0) {
         const overused = usedVeg.filter(v => v.count >= 2)
         if (overused.length > 0) {
@@ -948,11 +1027,18 @@ ${ketoMode ? `7. Keto breakfast vegetables — ONLY these are appropriate at bre
 8. Egg preparation rotation: do NOT default to fried eggs every time. Alternate: scrambled, poached, soft-boiled, baked, omelette, frittata, shakshuka, egg muffins — each is a distinct format.
 9. Cheese rotation in savory dishes: vary the cheese every time — cheddar, feta, goat cheese, ricotta, cottage cheese, mozzarella, halloumi, gruyère, parmesan. Name the specific cheese in the meal name.\n` : ''}${pescatarianMode ? `7. Pescatarian sweet/savory separation: sweet formats (yogurt parfaits, oatmeal, overnight oats, smoothie bowls, chia pudding, pancakes) are fruit-and-dairy-based — no seafood mixed in. Savory formats (eggs, smoked salmon plates, tuna dishes, shrimp scrambles) are protein-and-vegetable-based — no fruit.
 8. Seafood variety: do not default to smoked salmon every time — alternate with: tuna in avocado halves, sardines on toast with lemon, shrimp scramble with vegetables, canned salmon on rice cakes, smoked trout plate with cucumber.
-9. Protein rotation: vary between eggs, smoked salmon, tuna, and other seafood — do not repeat the same seafood protein in adjacent breakfasts.\n` : ''}${carnivoreMode ? `7. NO plant-based ingredients of ANY kind — no vegetables, no fruit, no grains, no nuts, no seeds, no herb leaves as garnish. Even a lemon wedge, parsley sprig, or tomato slice is FORBIDDEN. Every component must be animal-based.
+9. Protein rotation: vary between eggs, smoked salmon, tuna, and other seafood — do not repeat the same seafood protein in adjacent breakfasts.\n` : ''}${highProteinMode ? `7. Egg quantity — egg-based breakfasts use 3–4 eggs minimum, not 2. Name the count in the meal name (e.g. "3-Egg Scramble with Turkey Sausage and Cheddar"). This is the athlete portion.
+8. Sweet breakfasts are allowed but MUST be protein-boosted — no plain versions:
+  Oatmeal → stir in Greek yogurt + peanut butter + hemp seeds (not just oats with fruit)
+  Yogurt parfait → use high-protein Greek yogurt (Skyr or 2% Greek) + hemp/chia seeds
+  Smoothie → Greek yogurt base + nut butter + hemp seeds (not just fruit + milk)
+  Pancakes → cottage cheese or egg-based batter, not regular flour pancakes
+  Never generate a sweet breakfast without an explicit protein booster named in the meal.
+9. Protein priority — savory egg-and-meat formats (scrambles, omelettes, hashes, steak and eggs) are the preferred breakfast. Sweet formats are the minority — aim for 2 savory per 1 sweet across the week.\n` : ''}${carnivoreMode ? `7. NO plant-based ingredients of ANY kind — no vegetables, no fruit, no grains, no nuts, no seeds, no herb leaves as garnish. Even a lemon wedge, parsley sprig, or tomato slice is FORBIDDEN. Every component must be animal-based.
 8. Cooking fat is butter, ghee, or tallow ONLY. Flavor comes from the cut and the cook — seasoning with salt, pepper, cumin, paprika, chili paste, or garlic powder is fine. No sauces with plant-based ingredients.
 9. Name the cut specifically and the cooking method (e.g. "Pan-seared Ribeye in Tallow", "Bacon-wrapped Chicken Thigh", "Butter-basted NY Strip and Eggs"). Generic names like "Meat and Eggs" are not allowed.
 10. Organ meat rotation — liver, heart, kidney, oxtail, or tongue should appear at least once across the full week. These are nutritionally dense carnivore staples and are not optional extras.
-11. Egg pairing rule — when eggs appear, pair them with a meat protein (bacon, steak, sausage, liver, smoked salmon). Eggs alone without meat are not a complete carnivore meal.\n` : ''}${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `${ketoMode ? 10 : (mediterraneanMode ? 12 : (carnivoreMode) ? 12 : (lowFodmapMode || paleoMode || veganMode || (vegetarianMode && !veganMode) || pescatarianMode) ? 10 : 7)}. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${varietyContext}
+11. Egg pairing rule — when eggs appear, pair them with a meat protein (bacon, steak, sausage, liver, smoked salmon). Eggs alone without meat are not a complete carnivore meal.\n` : ''}${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `${ketoMode ? 10 : (mediterraneanMode ? 12 : (carnivoreMode || highProteinMode) ? 12 : (lowFodmapMode || paleoMode || veganMode || (vegetarianMode && !veganMode) || pescatarianMode) ? 10 : 7)}. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${varietyContext}
 Format inspiration — use these OR invent your own. This is not a checklist:
 ${breakfastExamples}
 
