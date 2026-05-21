@@ -1224,13 +1224,66 @@ export default function MealPlannerClient() {
                           <div key={i} style={{ height: 14, borderRadius: 6, background: 'var(--cream-200)', width: `${w}%`, animation: 'pulse 1.4s ease-in-out infinite', animationDelay: `${i * 0.12}s` }} />
                         ))}
                       </div>
-                    ) : activeSlot.directions ? (
-                      <ol style={{ paddingLeft: 18, lineHeight: 1.8, color: 'var(--ink-800)', fontSize: 14, margin: 0 }}>
-                        {activeSlot.directions.split(/\n+/).filter(Boolean).map((step, i) => (
-                          <li key={i}>{step.replace(/^\d+[\.\)]\s*/, '')}</li>
-                        ))}
-                      </ol>
-                    ) : (
+                    ) : activeSlot.directions ? (() => {
+                      // Parse "Step N. Title: body" or "1. body" or newline-separated steps
+                      const raw = activeSlot.directions.trim()
+                      let steps: { num: string; title: string; body: string }[] = []
+
+                      // Split on "Step N." or "N." at the start of a segment
+                      const byStep = raw.split(/(?=\bStep\s+\d+[\.\:])/i).filter(Boolean)
+                      const byNumber = raw.split(/(?=\b\d+[\.\)]\s)/).filter(s => /^\d+[\.\)]/.test(s.trim()))
+                      const segments = byStep.length > 1 ? byStep : byNumber.length > 1 ? byNumber : raw.split(/\n+/).filter(Boolean)
+
+                      steps = segments.map((seg, i) => {
+                        const stepMatch = seg.match(/^(?:Step\s+)?(\d+)[\.\:\)]\s*/i)
+                        const rest = stepMatch ? seg.slice(stepMatch[0].length).trim() : seg.trim()
+                        const num = stepMatch ? stepMatch[1] : String(i + 1)
+                        // Detect optional title: text before first ":" that is short (< 40 chars)
+                        const colonIdx = rest.indexOf(':')
+                        const titleCandidate = colonIdx > 0 && colonIdx < 50 ? rest.slice(0, colonIdx).trim() : ''
+                        const body = titleCandidate ? rest.slice(colonIdx + 1).trim() : rest
+                        return { num, title: titleCandidate, body }
+                      })
+
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                          {steps.map((step, i) => (
+                            <div key={i} style={{
+                              display: 'flex', gap: 14,
+                              paddingTop: i === 0 ? 0 : 14,
+                              paddingBottom: 14,
+                              borderBottom: i < steps.length - 1 ? '1px solid var(--cream-200)' : 'none',
+                            }}>
+                              {/* Step number bubble */}
+                              <div style={{
+                                flexShrink: 0,
+                                width: 26, height: 26,
+                                borderRadius: '50%',
+                                background: 'var(--terracotta-400)',
+                                color: '#fff',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                marginTop: 1,
+                              }}>
+                                {step.num}
+                              </div>
+                              {/* Step content */}
+                              <div style={{ flex: 1 }}>
+                                {step.title && (
+                                  <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink-800)', marginBottom: 3 }}>
+                                    {step.title}
+                                  </div>
+                                )}
+                                <div style={{ fontSize: 14, color: 'var(--ink-600)', lineHeight: 1.75 }}>
+                                  {step.body}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })() : (
                       <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-400)' }}>No directions listed.</p>
                     )}
                   </div>
