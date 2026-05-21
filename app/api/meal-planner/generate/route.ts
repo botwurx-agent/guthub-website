@@ -248,6 +248,7 @@ Return a single JSON object only — no markdown:
       const paleoMode         = resolvedDiet === 'paleo'         || dietLabel.toLowerCase().includes('paleo')
       const lowFodmapMode     = resolvedDiet === 'low_fodmap'    || dietLabel.toLowerCase().includes('fodmap')
       const mediterraneanMode = resolvedDiet === 'mediterranean' || dietLabel.toLowerCase().includes('mediterranean')
+      const carnivoreMode     = resolvedDiet === 'carnivore'      || dietLabel.toLowerCase().includes('carnivore')
 
       // ── Protein options per diet ──────────────────────────────────────────
       let proteins: string
@@ -270,6 +271,9 @@ Return a single JSON object only — no markdown:
       } else if (mediterraneanMode) {
         proteins           = `salmon, sea bass, cod, shrimp, chicken breast, chicken thighs, eggs, lentils, chickpeas`
         dinnerOnlyProteins = `, lamb, mussels, octopus, sardines, white beans, halloumi`
+      } else if (carnivoreMode) {
+        proteins           = `ribeye steak, NY strip steak, ground beef, chicken thighs, pork chops, salmon, bacon, lamb chops`
+        dinnerOnlyProteins = `, lamb shanks, pork ribs, chuck roast, brisket, shrimp, scallops, lobster, liver, heart, oxtail`
       } else {
         proteins           = `chicken breast, chicken thighs, steak, salmon, ground beef, ground turkey, pork chops, shrimp`
         dinnerOnlyProteins = `, lamb, cod, lentils, chickpeas`
@@ -281,6 +285,7 @@ Return a single JSON object only — no markdown:
       else if (paleoMode)         dinnerBases = `sweet potato, roasted root vegetables, butternut squash, spaghetti squash, plantain`
       else if (lowFodmapMode)     dinnerBases = `white rice, quinoa, gluten-free pasta, roasted potatoes, polenta`
       else if (mediterraneanMode) dinnerBases = `farro, bulgur, freekeh, brown rice, whole-wheat pasta, couscous, quinoa, roasted potatoes, lentils, chickpeas`
+      else if (carnivoreMode)     dinnerBases = `butter sauce, bone marrow, pan drippings, rendered tallow — NO vegetable or grain sides; the protein IS the meal`
       else                        dinnerBases = `rice, pasta, roasted potatoes, noodles, couscous, farro, quinoa`
 
       // ── Diet restriction rule (what is NOT allowed) ───────────────────────
@@ -292,6 +297,7 @@ Return a single JSON object only — no markdown:
       else if (paleoMode)       dietRule = `PALEO: No grains, no legumes, no dairy, no processed foods. Meat, fish, eggs, vegetables, fruit, nuts, seeds only.`
       else if (lowFodmapMode)     dietRule = `LOW-FODMAP: No garlic, no onion, no leeks, no shallots, no wheat/rye/barley, no apples/pears/watermelon/stone fruits (peaches, plums, cherries, mangoes), no lactose (use hard cheeses or lactose-free dairy), no mushrooms, no cauliflower, no asparagus, no legumes (lentils, chickpeas, kidney beans, baked beans). Safe proteins: eggs, chicken, beef, pork, fish, shrimp, hard cheeses (cheddar, swiss, parmesan), lactose-free dairy, firm tofu, peanut butter. Safe grains: white rice, GF oats, quinoa, gluten-free pasta/bread, potatoes, polenta. Safe vegetables: bell peppers, carrots, cucumber, tomatoes, spinach, zucchini, green beans, eggplant. Safe fruits: banana, blueberries, strawberries, grapes, kiwi, pineapple, mandarin oranges.`
       else if (mediterraneanMode) dietRule = `MEDITERRANEAN: Olive oil is the primary fat. Heavy emphasis on vegetables, legumes, whole grains, fish, seafood, eggs, nuts, fresh herbs, and Mediterranean cheeses (feta, halloumi, ricotta, parmesan, manchego). Red meat occasionally only. No deep-frying, no heavy cream sauces, no processed foods. Signature ingredients: tomatoes, cucumber, olives, olive oil, lemon, garlic, fresh herbs (parsley, oregano, mint, dill, basil), feta, yogurt, tahini, hummus.`
+      else if (carnivoreMode)     dietRule = `CARNIVORE: ONLY animal products. Absolutely NO vegetables, NO fruits, NO grains, NO legumes, NO nuts, NO seeds, NO plant-based ingredients of any kind — not even as garnish or seasoning (no herb leaves, no lemon wedge). Cooking fat: butter, ghee, or tallow ONLY. Allowed seasonings: salt, pepper, cumin, paprika, chili paste, garlic powder. Dairy is allowed in LIMITED amounts: cheese, heavy cream. Eggs are allowed in limited amounts — pair with meat. Organ meats (liver, heart, kidney, oxtail, tongue) are staple carnivore foods and should rotate in regularly. Every meal is pure protein and fat — no starch, no fiber.`
 
       // ── Slot lists ────────────────────────────────────────────────────────
       const breakfastSlots = slots.filter(s => s.meal_type === 'breakfast')
@@ -313,6 +319,7 @@ Return a single JSON object only — no markdown:
       else if (paleoMode)       breakfastProteins = 'eggs, bacon, breakfast sausage, salmon'
       else if (lowFodmapMode)     breakfastProteins = 'eggs, peanut butter, lactose-free yogurt, lactose-free cottage cheese, hard cheese (cheddar, swiss, parmesan), smoked salmon, chicken, ham, firm tofu'
       else if (mediterraneanMode) breakfastProteins = 'eggs, Greek yogurt, feta, halloumi, ricotta, labneh, cottage cheese, smoked salmon, tuna, hummus'
+      else if (carnivoreMode)     breakfastProteins = 'eggs, bacon, steak (ribeye, NY strip, skirt), ground beef patty, breakfast sausage, pork belly, smoked salmon, liver, chorizo, prosciutto, lamb patty'
       else                        breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage, ham'
 
       // ── Breakfast format inspiration per diet ─────────────────────────────
@@ -417,6 +424,25 @@ Return a single JSON object only — no markdown:
           '• Tuna salad toast — Mediterranean tuna with olives, capers, lemon, parsley on whole-grain toast',
           '• Chia pudding — chia in Greek yogurt or almond milk with seasonal fruit and honey',
           '• Spanakopita-inspired eggs — eggs scrambled with spinach, feta, and dill',
+        ].join('\n')
+      } else if (carnivoreMode) {
+        // All carnivore breakfasts are savory — no plant-based sweet options exist.
+        // Organ meats should appear 1-2 times across the week.
+        breakfastExamples = [
+          '• Steak and eggs — any cut (ribeye, NY strip, skirt, T-bone, chuck) pan-seared in butter or tallow, with any egg prep alongside',
+          '• Bacon and eggs — bacon strips cooked crispy, with fried, scrambled, poached, or soft-boiled eggs',
+          '• Ground beef patty with eggs — seasoned beef patty seared in tallow, paired with eggs any style',
+          '• Pork belly with eggs — pan-crisped pork belly slices alongside butter-basted eggs',
+          '• Breakfast sausage and eggs — pork or beef breakfast sausage patties or links with eggs',
+          '• Scrambled eggs with cheese — eggs beaten with heavy cream, slow-scrambled in butter, topped with melted cheddar or gruyère',
+          '• Omelette — eggs folded with cheese (cheddar, gruyère, goat cheese) and bacon or meat inside',
+          '• Smoked salmon and eggs — smoked salmon served alongside soft-boiled or poached eggs, butter-finished',
+          '• Liver and eggs — pan-seared chicken or beef liver with fried or scrambled eggs (organ rotation — high nutrient density)',
+          '• Chorizo and eggs — ground chorizo cooked in its own fat, scrambled with eggs',
+          '• Prosciutto and eggs — prosciutto briefly crisped in butter, alongside any egg prep',
+          '• Lamb patty with eggs — ground lamb seasoned with salt, cumin, and paprika, fried in tallow, served with eggs',
+          '• Heavy cream scrambled eggs — eggs beaten with heavy cream, slow-cooked in butter for richness, optional cheddar melted in',
+          '• Bone broth and steak strips — thin steak strips in a rich reduced bone broth, alongside soft-boiled eggs',
         ].join('\n')
       } else if (lowFodmapMode) {
         // IMPORTANT: sweet and savory are MUTUALLY EXCLUSIVE for low FODMAP breakfasts.
@@ -525,6 +551,20 @@ Return a single JSON object only — no markdown:
           '• Whole-grain pasta with seafood or beans, olive oil, herbs (no cream sauces)',
           '• Niçoise-style salad — tuna, olives, eggs, green beans, potatoes',
           '• Shawarma or souvlaki bowl with grain, salad, hummus, tzatziki',
+        ].join('\n')
+      } else if (carnivoreMode) {
+        lunchExamples = [
+          '• Burger patties — seasoned ground beef patties seared in tallow, no bun, no sides — pure protein',
+          '• Sliced steak plate — thin-cut or leftover steak served simply with salt and butter',
+          '• Ground beef bowl — seasoned ground beef cooked with tallow, salt, and pepper — no grain base',
+          '• Pork chop plate — pan-seared or grilled pork chop, finished with butter',
+          '• Chicken thighs — crispy skin-on thighs cooked in tallow or butter, nothing else',
+          '• Salmon plate — pan-seared or baked salmon fillet with butter and lemon-free seasoning',
+          '• Lamb mince — ground lamb seasoned with salt, cumin, paprika, cooked in tallow',
+          '• Organ meat plate — pan-seared liver, heart, or kidney with butter sauce (nutrient-dense rotation)',
+          '• Ground beef and bacon mix — two proteins cooked together, pure carnivore plate',
+          '• Shrimp or scallop plate — pan-seared in butter with salt and pepper only',
+          '• Canned tuna or salmon — packed in water or olive oil, eaten straight or mixed with butter',
         ].join('\n')
       } else if (lowFodmapMode) {
         lunchExamples = [
@@ -649,7 +689,9 @@ Return a single JSON object only — no markdown:
       // Mediterranean uses olive/arugula in place of jalapeño/mushroom.
       // Dinner veg (asparagus, broccoli, cauliflower, brussels sprouts, collard
       // greens, zucchini) excluded from both lists.
-      const VEG_TERMS = mediterraneanMode
+      const VEG_TERMS = carnivoreMode
+        ? []  // carnivore has no vegetables — skip vegetable variety tracking entirely
+        : mediterraneanMode
         ? ['tomato','cucumber','spinach','pepper','olive','arugula','avocado','scallion']
         : ['avocado','pepper','jalapeño','tomato','mushroom','spinach','cucumber','scallion']
       const CHEESE_TERMS = ['cheddar','feta','goat cheese','cream cheese','mozzarella','parmesan',
@@ -689,7 +731,9 @@ Return a single JSON object only — no markdown:
 
       // 3. Non-egg nudge (all non-vegan diets when heavily egg-based)
       if (!veganMode && totalBfCount >= 4 && eggBfCount / totalBfCount >= 0.8) {
-        const nonEggOptions = mediterraneanMode
+        const nonEggOptions = carnivoreMode
+          ? 'steak plate, ground beef patties, pork belly, smoked salmon, liver plate, lamb patty, prosciutto plate, bacon-only plate'
+          : mediterraneanMode
           ? 'Greek yogurt bowl, labneh toast, ricotta toast, hummus toast, smoked salmon plate, halloumi plate, mezze plate, avocado toast, savory oats, chia pudding, cottage cheese bowl'
           : ketoMode
           ? 'Greek yogurt bowl, cottage cheese bowl, smoked salmon plate, charcuterie plate, cream cheese pancakes, chia pudding, avocado boat'
@@ -724,15 +768,16 @@ Return a single JSON object only — no markdown:
         }
       }
 
-      // 6. Avocado nudge (keto + Mediterranean — staple ingredient, often skipped)
-      if ((ketoMode || mediterraneanMode) && totalBfCount >= 2) {
+      // 6. Avocado nudge (keto + Mediterranean — staple ingredient, often skipped; not carnivore)
+      if ((ketoMode || mediterraneanMode) && !carnivoreMode && totalBfCount >= 2) {
         if (!allBfNames.some(n => n.includes('avocado'))) {
           varietyParts.push('Avocado not yet used — it\'s a staple for this diet (avocado toast, sliced alongside eggs, in a bowl, or stuffed)')
         }
       }
 
-      // 7. Cheese nudge (all dairy-eating diets — not vegan / paleo)
-      if (!veganMode && !paleoMode && totalBfCount >= 2) {
+      // 7. Cheese nudge (all dairy-eating diets — not vegan / paleo / carnivore)
+      // Carnivore already handles dairy rotation in its hard rules
+      if (!veganMode && !paleoMode && !carnivoreMode && totalBfCount >= 2) {
         if (!allBfNames.some(n => CHEESE_TERMS.some(c => n.includes(c)))) {
           const cheeseHint = mediterraneanMode
             ? 'feta, halloumi, ricotta, or labneh — melted or crumbled INTO the dish'
@@ -766,7 +811,19 @@ Return a single JSON object only — no markdown:
         }
       }
 
-      // 10. Low FODMAP sweet/savory balance nudge
+      // 10. Carnivore variety nudges — organ meat rotation + cut diversity
+      if (carnivoreMode && totalBfCount >= 2) {
+        const ORGAN_TERMS = ['liver','heart','kidney','oxtail','tongue','cheek']
+        if (!allBfNames.some(n => ORGAN_TERMS.some(t => n.includes(t)))) {
+          varietyParts.push('No organ meats yet — liver and eggs or heart is a carnivore staple; consider rotating one in for nutrient density')
+        }
+        const CUT_TERMS = ['ribeye','ny strip','skirt','t-bone','chuck','brisket','sirloin','flank']
+        if (totalBfCount >= 3 && !allBfNames.some(n => CUT_TERMS.some(t => n.includes(t)))) {
+          varietyParts.push('No named steak cuts yet — rotate in a specific cut: ribeye, NY strip, skirt steak, T-bone, or chuck')
+        }
+      }
+
+      // 11. Low FODMAP sweet/savory balance nudge
       if (lowFodmapMode && totalBfCount >= 2) {
         const FODMAP_SWEET_TERMS = ['oatmeal', 'overnight oat', 'chia pudding', 'smoothie', 'yogurt', 'parfait', 'pancake', 'waffle', 'french toast', 'quinoa porridge', 'rice cake', 'granola']
         const FODMAP_SAVORY_TERMS = ['scrambled egg', 'fried egg', 'poached egg', 'omelette', 'frittata', 'hash', 'skillet', 'smoked salmon', 'egg muffin', 'egg cup', 'tofu scramble']
@@ -779,7 +836,7 @@ Return a single JSON object only — no markdown:
         }
       }
 
-      // 12. Vegetable overuse (universal)
+      // 13. Vegetable overuse (universal)
       if (usedVeg.length > 0) {
         const overused = usedVeg.filter(v => v.count >= 2)
         if (overused.length > 0) {
@@ -848,7 +905,11 @@ ${ketoMode ? `7. Keto breakfast vegetables — ONLY these are appropriate at bre
 8. Egg preparation rotation: do NOT default to fried eggs every time. Alternate: scrambled, poached, soft-boiled, baked, omelette, frittata, shakshuka, egg muffins — each is a distinct format.
 9. Cheese rotation in savory dishes: vary the cheese every time — cheddar, feta, goat cheese, ricotta, cottage cheese, mozzarella, halloumi, gruyère, parmesan. Name the specific cheese in the meal name.\n` : ''}${pescatarianMode ? `7. Pescatarian sweet/savory separation: sweet formats (yogurt parfaits, oatmeal, overnight oats, smoothie bowls, chia pudding, pancakes) are fruit-and-dairy-based — no seafood mixed in. Savory formats (eggs, smoked salmon plates, tuna dishes, shrimp scrambles) are protein-and-vegetable-based — no fruit.
 8. Seafood variety: do not default to smoked salmon every time — alternate with: tuna in avocado halves, sardines on toast with lemon, shrimp scramble with vegetables, canned salmon on rice cakes, smoked trout plate with cucumber.
-9. Protein rotation: vary between eggs, smoked salmon, tuna, and other seafood — do not repeat the same seafood protein in adjacent breakfasts.\n` : ''}${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `${ketoMode ? 10 : (mediterraneanMode ? 12 : (lowFodmapMode || paleoMode || veganMode || (vegetarianMode && !veganMode) || pescatarianMode) ? 10 : 7)}. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${varietyContext}
+9. Protein rotation: vary between eggs, smoked salmon, tuna, and other seafood — do not repeat the same seafood protein in adjacent breakfasts.\n` : ''}${carnivoreMode ? `7. NO plant-based ingredients of ANY kind — no vegetables, no fruit, no grains, no nuts, no seeds, no herb leaves as garnish. Even a lemon wedge, parsley sprig, or tomato slice is FORBIDDEN. Every component must be animal-based.
+8. Cooking fat is butter, ghee, or tallow ONLY. Flavor comes from the cut and the cook — seasoning with salt, pepper, cumin, paprika, chili paste, or garlic powder is fine. No sauces with plant-based ingredients.
+9. Name the cut specifically and the cooking method (e.g. "Pan-seared Ribeye in Tallow", "Bacon-wrapped Chicken Thigh", "Butter-basted NY Strip and Eggs"). Generic names like "Meat and Eggs" are not allowed.
+10. Organ meat rotation — liver, heart, kidney, oxtail, or tongue should appear at least once across the full week. These are nutritionally dense carnivore staples and are not optional extras.
+11. Egg pairing rule — when eggs appear, pair them with a meat protein (bacon, steak, sausage, liver, smoked salmon). Eggs alone without meat are not a complete carnivore meal.\n` : ''}${weekUsedFruits.length > 0 || weekUsedNuts.length > 0 ? `${ketoMode ? 10 : (mediterraneanMode ? 12 : (carnivoreMode) ? 12 : (lowFodmapMode || paleoMode || veganMode || (vegetarianMode && !veganMode) || pescatarianMode) ? 10 : 7)}. Already used this week — do NOT repeat:${weekUsedFruits.length > 0 ? ` Fruits: ${weekUsedFruits.join(', ')}.` : ''}${weekUsedNuts.length > 0 ? ` Nuts: ${weekUsedNuts.join(', ')}.` : ''}\n` : ''}${varietyContext}
 Format inspiration — use these OR invent your own. This is not a checklist:
 ${breakfastExamples}
 
