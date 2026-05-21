@@ -20,7 +20,7 @@ const COMMON = [
   'Methylated B-complex',
 ]
 
-export default function LogSupplement({ onSuccess }: { onSuccess: () => void }) {
+export default function LogSupplement({ onSuccess, logDate }: { onSuccess: () => void; logDate?: string }) {
   const [name, setName] = useState('')
   const [dose, setDose] = useState('')
   const [withFood, setWithFood] = useState(false)
@@ -31,7 +31,7 @@ export default function LogSupplement({ onSuccess }: { onSuccess: () => void }) 
   function handle(formData: FormData) {
     const trimmed = name.trim()
     if (!trimmed) return setError('Please enter a supplement name.')
-    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
+    formData.set('log_date', logDate ?? new Date().toLocaleDateString('en-CA'))
     formData.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
     formData.set('name', trimmed)
     formData.set('dose', dose.trim())

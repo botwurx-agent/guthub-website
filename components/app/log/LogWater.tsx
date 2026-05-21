@@ -11,8 +11,8 @@ const PRESETS = [
   { label: '1 litre', ml: 1000 },
 ]
 
-export default function LogWater({ userId, currentGlasses, onSuccess }: {
-  userId: string; currentGlasses: number; onSuccess: () => void
+export default function LogWater({ userId, currentGlasses, onSuccess, logDate }: {
+  userId: string; currentGlasses: number; onSuccess: () => void; logDate?: string
 }) {
   const [selected, setSelected] = useState<number>(240)
   const [error, setError] = useState<string | null>(null)
@@ -21,8 +21,7 @@ export default function LogWater({ userId, currentGlasses, onSuccess }: {
 
   function handle() {
     setError(null)
-    // Compute fresh at click time so we don't depend on stale render-time `today` prop
-    const date = new Date().toLocaleDateString('en-CA')
+    const date = logDate ?? new Date().toLocaleDateString('en-CA')
     startTransition(async () => {
       const res = await logWater({ userId, date, amountMl: selected })
       if (res?.error) setError(res.error)
@@ -42,7 +41,9 @@ export default function LogWater({ userId, currentGlasses, onSuccess }: {
         <div style={{ fontSize: 48, fontWeight: 700, color: 'var(--ink-900)', lineHeight: 1 }}>
           {currentGlasses}
         </div>
-        <div style={{ fontSize: 14, color: 'var(--ink-500)', marginTop: 4 }}>glasses today</div>
+        <div style={{ fontSize: 14, color: 'var(--ink-500)', marginTop: 4 }}>
+          {logDate && logDate !== new Date().toLocaleDateString('en-CA') ? 'glasses logged today (adding to past date)' : 'glasses today'}
+        </div>
       </div>
 
       {/* Presets */}

@@ -27,7 +27,7 @@ const METHOD_OPTIONS = [
   { value: 'breath', label: 'Breath meter' },
 ]
 
-export default function LogKetone({ onSuccess }: { onSuccess: () => void }) {
+export default function LogKetone({ onSuccess, logDate }: { onSuccess: () => void; logDate?: string }) {
   const [ketoneVal, setKetoneVal] = useState('')
   const [method, setMethod] = useState('blood')
   const [error, setError] = useState<string | null>(null)
@@ -38,7 +38,7 @@ export default function LogKetone({ onSuccess }: { onSuccess: () => void }) {
   const zone = getZone(parsed)
 
   function handle(formData: FormData) {
-    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
+    formData.set('log_date', logDate ?? new Date().toLocaleDateString('en-CA'))
     formData.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
     formData.set('method', method)
     setError(null)

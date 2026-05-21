@@ -36,7 +36,7 @@ function formatMealTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 }
 
-export default function LogSymptom({ onSuccess }: { onSuccess: () => void }) {
+export default function LogSymptom({ onSuccess, logDate }: { onSuccess: () => void; logDate?: string }) {
   const [selected, setSelected]           = useState<string | null>(null)
   const [severity, setSeverity]           = useState<number | null>(null)
   const [triggerKind, setTriggerKind]     = useState<TriggerKind | null>(null)
@@ -49,14 +49,14 @@ export default function LogSymptom({ onSuccess }: { onSuccess: () => void }) {
 
   useEffect(() => {
     const supabase = createClient()
-    const today = new Date().toLocaleDateString('en-CA')
+    const targetDate = logDate ?? new Date().toLocaleDateString('en-CA')
     supabase
       .from('meal_logs')
       .select('id, meal_name, meal_type, logged_at')
-      .eq('log_date', today)
+      .eq('log_date', targetDate)
       .order('logged_at', { ascending: true })
       .then(({ data }) => setTodayMeals(data ?? []))
-  }, [])
+  }, [logDate])
 
   function selectTriggerKind(kind: TriggerKind) {
     setTriggerKind(prev => {
@@ -69,7 +69,7 @@ export default function LogSymptom({ onSuccess }: { onSuccess: () => void }) {
   function handle(formData: FormData) {
     if (!selected) return setError('Please select a symptom.')
     if (!severity) return setError('Please select a severity.')
-    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
+    formData.set('log_date', logDate ?? new Date().toLocaleDateString('en-CA'))
     formData.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
     formData.set('symptom_type', selected.toLowerCase().replace(/[\s/]+/g, '_'))
     formData.set('severity', String(severity))
@@ -161,7 +161,7 @@ export default function LogSymptom({ onSuccess }: { onSuccess: () => void }) {
             background: 'var(--cream-50)', border: '1px solid var(--cream-200)',
             color: 'var(--ink-500)',
           }}>
-            No meals logged today yet —{' '}
+            No meals logged {logDate && logDate !== new Date().toLocaleDateString('en-CA') ? 'on that day' : 'today'} yet —{' '}
             <a href="/log" style={{ color: 'var(--terracotta-500)', textDecoration: 'none', fontWeight: 600 }}>
               log a meal first
             </a>{' '}

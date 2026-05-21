@@ -121,7 +121,7 @@ function PortionGuide({ onClose }: { onClose: () => void }) {
   )
 }
 
-export default function LogMeal({ onSuccess }: { onSuccess: () => void }) {
+export default function LogMeal({ onSuccess, logDate }: { onSuccess: () => void; logDate?: string }) {
   const [mealType, setMealType]   = useState('breakfast')
   const [mealName, setMealName]   = useState('')
   const [ingredients, setIngredients] = useState('')
@@ -164,7 +164,7 @@ export default function LogMeal({ onSuccess }: { onSuccess: () => void }) {
   }
 
   function handle(formData: FormData) {
-    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
+    formData.set('log_date', logDate ?? new Date().toLocaleDateString('en-CA'))
     formData.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
     formData.set('meal_type', mealType)
     // Inject controlled macro values so server action sees them

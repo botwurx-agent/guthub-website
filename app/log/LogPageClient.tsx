@@ -4,7 +4,7 @@ import { useState, useTransition, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Utensils, Frown, Circle, Droplets, Scale, StickyNote,
-  Camera, Sparkles, TrendingDown, TrendingUp, Trash2, RotateCcw, Check, Pill, Heart, FlaskConical,
+  Camera, Sparkles, TrendingDown, TrendingUp, Trash2, RotateCcw, Check, Pill, Heart, FlaskConical, Calendar,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { deleteMeal, reLogMeal } from '@/app/actions/log'
@@ -367,7 +367,9 @@ export default function LogPageClient({
 }) {
   const router = useRouter()
   const quickAddRef = useRef<HTMLDivElement>(null)
+  const dateInputRef = useRef<HTMLInputElement>(null)
   const [likedMeals, setLikedMeals] = useState<LikedMeal[]>([])
+  const [logDate, setLogDate] = useState(() => new Date().toLocaleDateString('en-CA'))
   const supabase = createClient()
 
   useEffect(() => {
@@ -379,6 +381,15 @@ export default function LogPageClient({
   const clientToday = new Date().toLocaleDateString('en-CA')
   const _yd = new Date(); _yd.setDate(_yd.getDate() - 1)
   const clientYesterday = _yd.toLocaleDateString('en-CA')
+
+  const isLogToday = logDate === clientToday
+  const isLogYesterday = logDate === clientYesterday
+
+  function formatLogDate(dateStr: string) {
+    if (dateStr === clientToday) return 'Today'
+    if (dateStr === clientYesterday) return 'Yesterday'
+    return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  }
 
   function dayLabel(dateStr: string) {
     if (dateStr === clientToday)     return 'Today'
@@ -465,15 +476,15 @@ export default function LogPageClient({
 
   const activeFormContent = activeForm && (
     <div>
-      {activeForm === 'meal'        && <LogMeal onSuccess={handleSuccess} />}
-      {activeForm === 'photo-meal'  && <LogMealPhoto onSuccess={handleSuccess} />}
-      {activeForm === 'symptom'     && <LogSymptom onSuccess={handleSuccess} />}
-      {activeForm === 'bm'          && <LogBM onSuccess={handleSuccess} />}
-      {activeForm === 'water'       && <LogWater userId={userId} currentGlasses={waterGlasses} onSuccess={handleSuccess} />}
-      {activeForm === 'weight'      && <LogWeight currentLbs={currentLbs} goalLbs={goalLbs} onSuccess={handleSuccess} />}
-      {activeForm === 'note'        && <LogNote onSuccess={handleSuccess} />}
-      {activeForm === 'supplement'  && <LogSupplement onSuccess={handleSuccess} />}
-      {activeForm === 'ketone'      && <LogKetone onSuccess={handleSuccess} />}
+      {activeForm === 'meal'        && <LogMeal logDate={logDate} onSuccess={handleSuccess} />}
+      {activeForm === 'photo-meal'  && <LogMealPhoto logDate={logDate} onSuccess={handleSuccess} />}
+      {activeForm === 'symptom'     && <LogSymptom logDate={logDate} onSuccess={handleSuccess} />}
+      {activeForm === 'bm'          && <LogBM logDate={logDate} onSuccess={handleSuccess} />}
+      {activeForm === 'water'       && <LogWater logDate={logDate} userId={userId} currentGlasses={waterGlasses} onSuccess={handleSuccess} />}
+      {activeForm === 'weight'      && <LogWeight logDate={logDate} currentLbs={currentLbs} goalLbs={goalLbs} onSuccess={handleSuccess} />}
+      {activeForm === 'note'        && <LogNote logDate={logDate} onSuccess={handleSuccess} />}
+      {activeForm === 'supplement'  && <LogSupplement logDate={logDate} onSuccess={handleSuccess} />}
+      {activeForm === 'ketone'      && <LogKetone logDate={logDate} onSuccess={handleSuccess} />}
       {activeForm === 'favourites'  && (
         likedMeals.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--ink-400)' }}>
@@ -684,6 +695,68 @@ export default function LogPageClient({
             {/* Desktop inline form (hidden on mobile — overlay used instead) */}
             <div className="log-form-desktop">
               {activeForm && activeFormContent}
+            </div>
+
+            {/* Date selector */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {[
+                  { label: 'Today', date: clientToday },
+                  { label: 'Yesterday', date: clientYesterday },
+                ].map(opt => (
+                  <button key={opt.date} onClick={() => setLogDate(opt.date)} style={{
+                    padding: '5px 12px', borderRadius: 20, fontSize: 12.5, cursor: 'pointer',
+                    fontFamily: 'var(--font-body)', transition: 'all 140ms',
+                    fontWeight: logDate === opt.date ? 600 : 400,
+                    border: `1.5px solid ${logDate === opt.date ? 'var(--forest-400)' : 'var(--cream-200)'}`,
+                    background: logDate === opt.date ? 'rgba(63,106,74,0.08)' : '#fff',
+                    color: logDate === opt.date ? 'var(--forest-500)' : 'var(--ink-500)',
+                  }}>{opt.label}</button>
+                ))}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => { dateInputRef.current?.showPicker?.(); dateInputRef.current?.click() }}
+                    style={{
+                      padding: '5px 12px', borderRadius: 20, fontSize: 12.5, cursor: 'pointer',
+                      fontFamily: 'var(--font-body)', transition: 'all 140ms',
+                      fontWeight: (!isLogToday && !isLogYesterday) ? 600 : 400,
+                      border: `1.5px solid ${(!isLogToday && !isLogYesterday) ? 'var(--forest-400)' : 'var(--cream-200)'}`,
+                      background: (!isLogToday && !isLogYesterday) ? 'rgba(63,106,74,0.08)' : '#fff',
+                      color: (!isLogToday && !isLogYesterday) ? 'var(--forest-500)' : 'var(--ink-500)',
+                    }}
+                  >
+                    {(!isLogToday && !isLogYesterday) ? formatLogDate(logDate) : 'Earlier…'}
+                  </button>
+                  <input
+                    ref={dateInputRef}
+                    type="date"
+                    value={logDate}
+                    max={clientToday}
+                    onChange={e => { if (e.target.value) setLogDate(e.target.value) }}
+                    style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 1, height: 1, top: 0, left: 0 }}
+                  />
+                </div>
+              </div>
+              {!isLogToday && (
+                <div style={{
+                  marginTop: 8, display: 'flex', alignItems: 'center', gap: 7,
+                  padding: '7px 11px', borderRadius: 8,
+                  background: 'rgba(201,138,30,0.09)', border: '1px solid rgba(201,138,30,0.22)',
+                  fontSize: 12.5, color: '#7A4E0A',
+                }}>
+                  <Calendar size={13} style={{ flexShrink: 0 }} />
+                  <span>Logging to <strong>{formatLogDate(logDate)}</strong></span>
+                  <button
+                    onClick={() => setLogDate(clientToday)}
+                    style={{
+                      marginLeft: 'auto', padding: '2px 8px', borderRadius: 6,
+                      border: '1px solid rgba(201,138,30,0.3)', background: 'rgba(201,138,30,0.12)',
+                      fontSize: 11.5, fontWeight: 600, color: '#7A4E0A',
+                      cursor: 'pointer', fontFamily: 'var(--font-body)',
+                    }}
+                  >Back to today</button>
+                </div>
+              )}
             </div>
 
             {/* Tiles — always visible on mobile; hidden on desktop when a form is open */}

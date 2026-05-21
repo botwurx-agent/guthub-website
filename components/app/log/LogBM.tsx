@@ -87,7 +87,7 @@ function BristolIcon({ type, color }: { type: number; color: string }) {
   )
 }
 
-export default function LogBM({ onSuccess }: { onSuccess: () => void }) {
+export default function LogBM({ onSuccess, logDate }: { onSuccess: () => void; logDate?: string }) {
   const [bristol, setBristol] = useState<number | null>(null)
   const [flags, setFlags]     = useState<Set<string>>(new Set())
   const [error, setError]     = useState<string | null>(null)
@@ -104,7 +104,7 @@ export default function LogBM({ onSuccess }: { onSuccess: () => void }) {
 
   function handle(formData: FormData) {
     if (!bristol) return setError('Please select a Bristol type.')
-    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
+    formData.set('log_date', logDate ?? new Date().toLocaleDateString('en-CA'))
     formData.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
     formData.set('bristol_type', String(bristol))
     formData.set('flags', JSON.stringify([...flags]))

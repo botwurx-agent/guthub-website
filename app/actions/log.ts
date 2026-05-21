@@ -307,14 +307,13 @@ async function upsertGutScore(supabase: Awaited<ReturnType<typeof createClient>>
 
 function getToday() { return new Date().toISOString().split('T')[0] }
 function localDate(formData: FormData) {
-  // Prefer client timezone — server computes the date so a stale/missing
-  // log_date field can't slip a UTC date in (logs ending up on tomorrow's row).
-  const tz = formData.get('client_tz') as string | null
-  if (tz) {
-    try { return new Date().toLocaleDateString('en-CA', { timeZone: tz }) } catch {}
-  }
   const d = formData.get('log_date') as string | null
-  return (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) ? d : getToday()
+  const tz = formData.get('client_tz') as string | null
+  let today = getToday()
+  if (tz) { try { today = new Date().toLocaleDateString('en-CA', { timeZone: tz }) } catch {} }
+  // Trust an explicit date that is today or in the past (supports retroactive logging); reject future dates
+  if (d && /^\d{4}-\d{2}-\d{2}$/.test(d) && d <= today) return d
+  return today
 }
 function parseFloatOrNull(v: string | null): number | null {
   if (!v) return null

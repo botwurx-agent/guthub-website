@@ -4,13 +4,13 @@ import { useState, useTransition } from 'react'
 import { logNote } from '@/app/actions/log'
 import { SuccessBanner, ErrorBanner, Field, Textarea, SubmitBtn } from './shared'
 
-export default function LogNote({ onSuccess }: { onSuccess: () => void }) {
+export default function LogNote({ onSuccess, logDate }: { onSuccess: () => void; logDate?: string }) {
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   function handle(formData: FormData) {
-    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
+    formData.set('log_date', logDate ?? new Date().toLocaleDateString('en-CA'))
     formData.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
     setError(null)
     startTransition(async () => {

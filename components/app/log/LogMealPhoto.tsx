@@ -18,7 +18,7 @@ function isHeic(file: File) {
   )
 }
 
-export default function LogMealPhoto({ onSuccess }: { onSuccess: () => void }) {
+export default function LogMealPhoto({ onSuccess, logDate }: { onSuccess: () => void; logDate?: string }) {
   const [mealType, setMealType]       = useState('breakfast')
   const [image, setImage]             = useState<ImageData | null>(null)
   const [macros, setMacros]           = useState<Macros>({ meal_name: '', calories: '', protein: '', carbs: '', fat: '' })
@@ -101,7 +101,7 @@ export default function LogMealPhoto({ onSuccess }: { onSuccess: () => void }) {
 
   function handle(formData: FormData) {
     if (!image) return setError('Please upload a photo first.')
-    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
+    formData.set('log_date', logDate ?? new Date().toLocaleDateString('en-CA'))
     formData.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
     formData.set('meal_type', mealType)
     formData.set('meal_name', macros.meal_name || 'Photo meal')

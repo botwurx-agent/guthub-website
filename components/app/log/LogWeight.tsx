@@ -4,15 +4,15 @@ import { useState, useTransition } from 'react'
 import { logWeight } from '@/app/actions/log'
 import { SuccessBanner, ErrorBanner, Field, Input, SubmitBtn } from './shared'
 
-export default function LogWeight({ currentLbs, goalLbs, onSuccess }: {
-  currentLbs: number | null; goalLbs: number | null; onSuccess: () => void
+export default function LogWeight({ currentLbs, goalLbs, onSuccess, logDate }: {
+  currentLbs: number | null; goalLbs: number | null; onSuccess: () => void; logDate?: string
 }) {
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   function handle(formData: FormData) {
-    formData.set('log_date', new Date().toLocaleDateString('en-CA'))
+    formData.set('log_date', logDate ?? new Date().toLocaleDateString('en-CA'))
     formData.set('client_tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
     setError(null)
     startTransition(async () => {
