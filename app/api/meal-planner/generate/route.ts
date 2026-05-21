@@ -275,8 +275,8 @@ Return a single JSON object only — no markdown:
         proteins           = `ribeye steak, NY strip steak, ground beef, chicken thighs, pork chops, salmon, bacon, lamb chops`
         dinnerOnlyProteins = `, lamb shanks, pork ribs, chuck roast, brisket, shrimp, scallops, lobster, liver, heart, oxtail`
       } else {
-        proteins           = `chicken breast, chicken thighs, steak, salmon, ground beef, ground turkey, pork chops, shrimp`
-        dinnerOnlyProteins = `, lamb, cod, lentils, chickpeas`
+        proteins           = `chicken breast, chicken thighs, ground beef, ground turkey, steak (sirloin, flank, skirt), salmon, pork chops, shrimp, bacon, ham`
+        dinnerOnlyProteins = `, lamb chops, cod, tilapia, halibut, pork tenderloin, duck breast, bison burger`
       }
       // Strip the leading ", " — used in the lunch ban rule so the AI sees a clean list
       const dinnerOnlyList = dinnerOnlyProteins.replace(/^,\s*/, '')
@@ -288,7 +288,7 @@ Return a single JSON object only — no markdown:
       else if (lowFodmapMode)     dinnerBases = `white rice, quinoa, gluten-free pasta, roasted potatoes, polenta`
       else if (mediterraneanMode) dinnerBases = `farro, bulgur, freekeh, brown rice, whole-wheat pasta, couscous, quinoa, roasted potatoes, lentils, chickpeas`
       else if (carnivoreMode)     dinnerBases = `butter sauce, bone marrow, pan drippings, rendered tallow — NO vegetable or grain sides; the protein IS the meal`
-      else                        dinnerBases = `rice, pasta, roasted potatoes, noodles, couscous, farro, quinoa`
+      else                        dinnerBases = `white rice, brown rice, quinoa, farro, roasted potatoes, sweet potato, pasta (any shape), noodles, couscous, roasted root vegetables, lentils`
 
       // ── Diet restriction rule (what is NOT allowed) ───────────────────────
       let dietRule = ''
@@ -322,7 +322,7 @@ Return a single JSON object only — no markdown:
       else if (lowFodmapMode)     breakfastProteins = 'eggs, peanut butter, lactose-free yogurt, lactose-free cottage cheese, hard cheese (cheddar, swiss, parmesan), smoked salmon, chicken, ham, firm tofu'
       else if (mediterraneanMode) breakfastProteins = 'eggs, Greek yogurt, feta, halloumi, ricotta, labneh, cottage cheese, smoked salmon, tuna, hummus'
       else if (carnivoreMode)     breakfastProteins = 'eggs, bacon, steak (ribeye, NY strip, skirt), ground beef patty, breakfast sausage, pork belly, smoked salmon, liver, chorizo, prosciutto, lamb patty'
-      else                        breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage, ham'
+      else                        breakfastProteins = 'eggs, Greek yogurt, cottage cheese, cheese, bacon, breakfast sausage, ham, smoked salmon, turkey sausage, chicken sausage, peanut butter, almond butter'
 
       // ── Breakfast format inspiration per diet ─────────────────────────────
       // Framed as examples, not assignments. AI can use these or invent its own.
@@ -469,17 +469,33 @@ Return a single JSON object only — no markdown:
           '• Rice cake plate (savory) — rice cakes + hard cheese + cucumber slices + smoked salmon.',
         ].join('\n')
       } else {
+        // Balanced / default — classic American breakfast variety.
+        // Sweet and savory are mutually exclusive (rule 4 enforces this globally).
         breakfastExamples = [
-          '• Egg plates — scrambled, fried, poached, or baked — with any topping or side',
-          '• Toast-based — avocado toast, smoked salmon toast, ricotta toast with honey, egg on toast',
-          '• Sweet bowls — yogurt parfait, cottage cheese bowl, smoothie bowl, granola bowl',
-          '• Hot cereals — oatmeal, overnight oats, porridge with fruit and nuts',
-          '• Pancakes, waffles, or French toast (sweet)',
-          '• Breakfast burritos, wraps, or sandwiches with eggs and protein',
-          '• Hashes or skillets — potato or sweet potato + meat + egg, one pan',
-          '• Shakshuka or baked eggs in a sauce',
-          '• Omelettes or frittatas with any fillings',
-          '• Chia or seed pudding with fruit',
+          '── SAVORY (eggs or protein-forward — no fruit mixed in) ──',
+          '• Scrambled eggs — soft and fluffy with any mix-in: cheese (cheddar, feta, goat cheese), herbs, vegetables (spinach, peppers, tomato, mushrooms, scallion), bacon bits, or smoked salmon',
+          '• Fried eggs — sunny-side or over-easy, plated alongside bacon or sausage with toast, or over avocado',
+          '• Omelette — folded with cheese melted inside, plus one of: ham and cheddar, spinach and feta, mushroom and Swiss, Western (ham, peppers, onion, cheddar), bacon and goat cheese, veggie-loaded',
+          '• Poached eggs — over avocado toast with everything-bagel seasoning, over sautéed spinach, or with smoked salmon on toast',
+          '• Shakshuka — eggs poached in spiced tomato and pepper sauce, topped with feta and herbs',
+          '• Frittata or baked eggs — oven-baked with vegetables and cheese',
+          '• Egg muffins or egg cups — baked in muffin tins with cheese, vegetables, or meat',
+          '• Breakfast burrito or wrap — scrambled eggs + protein (bacon, sausage, or chicken) + cheese in a flour tortilla',
+          '• Breakfast sandwich — egg + cheese + protein on English muffin, brioche, or toasted bagel',
+          '• Breakfast skillet or hash — diced potatoes + eggs + protein (bacon, sausage, or ground beef) + peppers and onions, one pan',
+          '• Smoked salmon plate — smoked salmon + cream cheese + cucumber + capers on toast or bagel',
+          '• Avocado toast with egg — mashed avocado on whole-grain toast topped with a poached or fried egg',
+          '── SWEET (fruit or syrup-based — no savory protein mixed in) ──',
+          '• Greek yogurt parfait — full-fat Greek yogurt layered with granola, fresh fruit (berries, banana, peach), and a drizzle of honey',
+          '• Oatmeal — rolled oats with any fruit, nut butter, nuts, honey, or cinnamon (vary toppings each time)',
+          '• Overnight oats — oats soaked in milk or yogurt with chia seeds, fruit, and nut butter',
+          '• Cottage cheese bowl — full-fat cottage cheese with fresh fruit and honey, or with granola',
+          '• Chia pudding — chia seeds in milk or coconut milk with fruit and nuts',
+          '• Smoothie bowl — thick blended smoothie topped with granola, fruit, coconut flakes, and seeds',
+          '• Pancakes — classic buttermilk or whole-grain, stacked with fresh fruit or maple syrup',
+          '• Waffles — crispy Belgian-style with fresh berries and yogurt or maple syrup',
+          '• French toast — thick-cut brioche or sourdough dipped in egg and cinnamon, with fruit or maple syrup',
+          '• Açaí bowl — blended açaí base topped with granola, banana, berries, and honey',
         ].join('\n')
       }
 
@@ -580,16 +596,41 @@ Return a single JSON object only — no markdown:
           '• GF pasta with safe sauce and protein',
         ].join('\n')
       } else {
+        // Balanced — wide variety, practical, 20 min max, lots of salad + bowl + sandwich options
         lunchExamples = [
-          '• Sandwiches, wraps, or rolls — any protein, any bread style',
-          '• Grain or rice bowls — protein + grain + veg + sauce',
-          '• Hearty salads with protein — Caesar, Cobb, grain salad, etc.',
-          '• Soups or stews — noodle, bean, creamy, or broth-based',
-          '• Stir-fries over rice or noodles',
-          '• Flatbreads, quesadillas, or tacos',
-          '• Hot protein plates — grilled or baked protein + veg side + starch',
-          '• Pasta dishes with any sauce',
-          '• Noodle bowls — ramen, soba, pho-style',
+          '── SALADS (protein required) ──',
+          '• Classic Cobb salad — grilled chicken, bacon, hard-boiled egg, avocado, tomato, blue cheese, romaine',
+          '• Caesar salad — grilled or crispy chicken, romaine, parmesan, croutons, Caesar dressing',
+          '• Southwest chicken salad — grilled chicken, black beans, corn, avocado, pico, shredded cheese, chipotle dressing',
+          '• Greek salad with protein — chicken or shrimp over cucumber, tomato, olives, red onion, feta, olive oil',
+          '• Asian sesame salad — grilled chicken or steak over shredded cabbage, edamame, cucumber, carrot, sesame ginger dressing',
+          '• Steak salad — sliced flank or sirloin over arugula or mixed greens, cherry tomato, blue cheese or parmesan, balsamic',
+          '• BLT salad — crumbled bacon, cherry tomatoes, romaine, avocado, creamy dressing',
+          '• Salmon salad — seared or canned salmon over mixed greens with cucumber, capers, lemon vinaigrette',
+          '• Tuna salad bowl — tuna mixed with celery, mayo, dijon, over greens or in an avocado half',
+          '── SANDWICHES & WRAPS ──',
+          '• Turkey and avocado wrap — sliced turkey, avocado, lettuce, tomato, in a whole-wheat tortilla',
+          '• Chicken Caesar wrap — grilled chicken, romaine, parmesan, Caesar dressing in a flour tortilla',
+          '• BLT sandwich — bacon, lettuce, tomato, mayo on toasted sourdough or brioche',
+          '• Grilled chicken sandwich — seasoned chicken breast, lettuce, tomato, avocado on a bun',
+          '• Club sandwich — turkey, ham, bacon, lettuce, tomato, Swiss on toasted white or wheat',
+          '• Steak and cheese wrap — thin-sliced steak, peppers, onion, provolone in a flour tortilla',
+          '• Tuna melt — tuna salad with melted cheddar on toasted sourdough',
+          '── BOWLS & HOT PLATES ──',
+          '• Burrito bowl — ground beef or chicken, cilantro-lime rice, black beans, pico, guacamole, shredded cheese',
+          '• Korean BBQ bowl — ground beef or chicken with soy-sesame glaze over white rice, cucumber, shredded carrot',
+          '• Chicken rice bowl — baked or pan-seared chicken thighs over rice with roasted vegetables and a sauce',
+          '• Steak rice bowl — sliced sirloin or flank over rice with sautéed peppers, onion, and a chimichurri or teriyaki glaze',
+          '• Ground turkey taco bowl — seasoned ground turkey, black beans, corn, pico, avocado over rice or greens',
+          '• Shrimp bowl — sautéed shrimp over rice or cauliflower rice with mango salsa or garlic butter sauce',
+          '• Grain bowl — farro or quinoa + roasted vegetables + a protein + tahini or vinaigrette',
+          '• Pasta salad — rotini or penne with chicken or salami, olives, cherry tomato, artichoke hearts, Italian dressing',
+          '• Bacon and egg fried rice — day-old rice stir-fried with eggs, bacon, scallion, soy sauce',
+          '── SOUPS ──',
+          '• Chicken noodle or chicken and rice soup',
+          '• Turkey or beef chili — topped with shredded cheese and sour cream',
+          '• Tomato soup with a grilled cheese sandwich',
+          '• Black bean soup with sour cream and tortilla chips',
         ].join('\n')
       }
 
