@@ -269,6 +269,29 @@ export async function reLogMeal(mealId: string, todayDate: string) {
   return { success: true }
 }
 
+// ─── Ketone ───────────────────────────────────────────────────────────────
+export async function logKetone(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const ketoneStr = formData.get('ketone_mmol') as string
+  const ketone = parseFloat(ketoneStr)
+  if (!ketoneStr || isNaN(ketone) || ketone < 0 || ketone > 20) return { error: 'Please enter a valid ketone level (0–20 mmol/L).' }
+
+  const method = (formData.get('method') as string) || 'blood'
+  const notes = (formData.get('notes') as string)?.trim() || null
+
+  const { error } = await supabase.from('ketone_logs').insert({
+    user_id: user.id, log_date: localDate(formData),
+    ketone_mmol: ketone, method, notes,
+  })
+
+  if (error) return { error: error.message }
+  revalidatePath('/log')
+  return { success: true }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────
 async function upsertGutScore(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, date: string) {
   const [{ data: syms }, { data: bms }] = await Promise.all([

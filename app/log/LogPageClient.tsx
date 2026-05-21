@@ -4,7 +4,7 @@ import { useState, useTransition, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Utensils, Frown, Circle, Droplets, Scale, StickyNote,
-  Camera, Sparkles, TrendingDown, TrendingUp, Trash2, RotateCcw, Check, Pill, Heart,
+  Camera, Sparkles, TrendingDown, TrendingUp, Trash2, RotateCcw, Check, Pill, Heart, FlaskConical,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { deleteMeal, reLogMeal } from '@/app/actions/log'
@@ -16,10 +16,11 @@ import LogWater from '@/components/app/log/LogWater'
 import LogWeight from '@/components/app/log/LogWeight'
 import LogNote from '@/components/app/log/LogNote'
 import LogSupplement from '@/components/app/log/LogSupplement'
+import LogKetone from '@/components/app/log/LogKetone'
 import type { TimelineDay, WeekStats, TodayMacros, MacroTargets } from './page'
 
-type FilterId = 'all' | 'meal' | 'symptom' | 'weight' | 'note' | 'supplement'
-type FormId = 'meal' | 'photo-meal' | 'symptom' | 'bm' | 'water' | 'weight' | 'note' | 'supplement' | 'favourites'
+type FilterId = 'all' | 'meal' | 'symptom' | 'weight' | 'note' | 'supplement' | 'ketone'
+type FormId = 'meal' | 'photo-meal' | 'symptom' | 'bm' | 'water' | 'weight' | 'note' | 'supplement' | 'ketone' | 'favourites'
 
 type LikedMeal = {
   id: string
@@ -47,6 +48,7 @@ const KIND_STYLE: Record<string, { color: string; bg: string }> = {
   water:      { color: '#6FB8A8', bg: 'rgba(111,184,168,0.12)' },
   note:       { color: '#7A7468', bg: 'rgba(122,116,104,0.12)' },
   supplement: { color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)' },
+  ketone:     { color: '#3F6A4A', bg: 'rgba(63,106,74,0.12)' },
 }
 
 const KIND_ICON: Record<string, React.ElementType> = {
@@ -57,6 +59,7 @@ const KIND_ICON: Record<string, React.ElementType> = {
   water: Droplets,
   note: StickyNote,
   supplement: Pill,
+  ketone: FlaskConical,
 }
 
 function formatTime(iso: string) {
@@ -441,7 +444,7 @@ export default function LogPageClient({
   const FORM_LABELS: Record<FormId, string> = {
     meal: 'Log a meal', 'photo-meal': 'Photo meal', symptom: 'Log a symptom',
     bm: 'Log bowel movement', water: 'Log water', weight: 'Log weight',
-    note: 'Add a note', supplement: 'Log supplement', favourites: 'Favourites',
+    note: 'Add a note', supplement: 'Log supplement', ketone: 'Track ketones', favourites: 'Favourites',
   }
 
   async function logFavourite(meal: LikedMeal) {
@@ -470,6 +473,7 @@ export default function LogPageClient({
       {activeForm === 'weight'      && <LogWeight currentLbs={currentLbs} goalLbs={goalLbs} onSuccess={handleSuccess} />}
       {activeForm === 'note'        && <LogNote onSuccess={handleSuccess} />}
       {activeForm === 'supplement'  && <LogSupplement onSuccess={handleSuccess} />}
+      {activeForm === 'ketone'      && <LogKetone onSuccess={handleSuccess} />}
       {activeForm === 'favourites'  && (
         likedMeals.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--ink-400)' }}>
@@ -692,6 +696,7 @@ export default function LogPageClient({
               <QuickAddTile icon={Droplets} label="Water" onClick={() => setActiveForm('water')} color="#6FB8A8" />
               <QuickAddTile icon={StickyNote} label="Note" onClick={() => setActiveForm('note')} color="#7A7468" />
               <QuickAddTile icon={Pill} label="Supplement" onClick={() => setActiveForm('supplement')} color="#8B5CF6" />
+              <QuickAddTile icon={FlaskConical} label="Ketones" onClick={() => setActiveForm('ketone')} color="#3F6A4A" />
               <QuickAddTile icon={Heart} label={`Favourites${likedMeals.length > 0 ? ` (${likedMeals.length})` : ''}`} onClick={() => setActiveForm('favourites')} color="var(--terracotta-400)" />
             </div>
           </div>

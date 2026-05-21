@@ -4,7 +4,7 @@ import LogPageClient from './LogPageClient'
 
 export type TimelineItem = {
   id: string
-  kind: 'meal' | 'symptom' | 'weight' | 'bm' | 'water' | 'note' | 'supplement'
+  kind: 'meal' | 'symptom' | 'weight' | 'bm' | 'water' | 'note' | 'supplement' | 'ketone'
   title: string
   meta: string
   loggedAt: string
@@ -49,6 +49,14 @@ const MEAL_TYPE: Record<string, string> = {
   breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snack: 'Snack',
 }
 
+function ketoneZoneLabel(mmol: number): string {
+  if (mmol < 0.5) return 'Not in ketosis'
+  if (mmol < 1.0) return 'Light ketosis'
+  if (mmol < 3.0) return 'Optimal ketosis'
+  if (mmol < 5.0) return 'Therapeutic'
+  return 'Very high'
+}
+
 const BRISTOL: Record<number, string> = {
   1: 'Type 1 (hard lumps)', 2: 'Type 2 (lumpy)', 3: 'Type 3 (cracked)',
   4: 'Type 4 (smooth)', 5: 'Type 5 (soft)', 6: 'Type 6 (fluffy)', 7: 'Type 7 (watery)',
@@ -72,6 +80,7 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
     { data: waters },
     { data: notes },
     { data: supplements },
+    { data: ketones },
     { data: dailyRecord },
     { data: waterLogs },
     { data: macroTarget },
@@ -83,6 +92,7 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
     supabase.from('water_logs').select('id, amount_ml, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
     supabase.from('note_logs').select('id, content, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
     supabase.from('supplement_logs').select('id, name, dose, with_food, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
+    supabase.from('ketone_logs').select('id, ketone_mmol, method, log_date, logged_at').eq('user_id', user.id).gte('log_date', sevenDaysAgo).order('logged_at', { ascending: false }),
     supabase.from('daily_records').select('current_weight_kg, goal_weight_kg').eq('user_id', user.id).eq('record_date', today).single(),
     supabase.from('water_logs').select('amount_ml').eq('user_id', user.id).eq('log_date', today),
     supabase.from('macro_targets').select('total_calories, protein_g, carbs_g, fat_g').eq('user_id', user.id).order('target_date', { ascending: false }).limit(1).single(),
@@ -130,6 +140,11 @@ export default async function LogPage({ searchParams }: { searchParams: Promise<
       id: s.id, kind: 'supplement' as const, loggedAt: s.logged_at, logDate: s.log_date,
       title: s.name,
       meta: [s.dose, s.with_food ? 'with food' : null].filter(Boolean).join(' · ') || 'Supplement',
+    })),
+    ...(ketones ?? []).map(k => ({
+      id: k.id, kind: 'ketone' as const, loggedAt: k.logged_at, logDate: k.log_date,
+      title: `${Number(k.ketone_mmol).toFixed(1)} mmol/L`,
+      meta: `${ketoneZoneLabel(Number(k.ketone_mmol))} · ${k.method ?? 'blood'}`,
     })),
   ]
 
