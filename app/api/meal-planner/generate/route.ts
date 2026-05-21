@@ -278,6 +278,8 @@ Return a single JSON object only — no markdown:
         proteins           = `chicken breast, chicken thighs, steak, salmon, ground beef, ground turkey, pork chops, shrimp`
         dinnerOnlyProteins = `, lamb, cod, lentils, chickpeas`
       }
+      // Strip the leading ", " — used in the lunch ban rule so the AI sees a clean list
+      const dinnerOnlyList = dinnerOnlyProteins.replace(/^,\s*/, '')
 
       // ── Dinner vegetable bases per diet ──────────────────────────────────
       let dinnerBases: string
@@ -917,12 +919,13 @@ Slots:
 ${breakfastSlots.map(s => `- ${s.date} breakfast`).join('\n')}
 
 ` : ''}${lunchSlots.length > 0 ? `=== LUNCH (${lunchSlots.length} meal${lunchSlots.length !== 1 ? 's' : ''}) ===
-Quick, filling, practical — 20 minutes or under.
+Quick, practical, home-cook realistic — 20 minutes or under, one pan or assembly only. No roasting, no slow-cooking, no specialty techniques.
 HARD RULES:
-1. Include a clear protein. Maximum 4 main components.
-2. Each lunch must have a DIFFERENT protein AND a DIFFERENT format from every other lunch in this response.
-3. Do not reuse any protein already assigned at breakfast in this response.
-4. Plain, natural names — no flowery descriptions.
+1. Protein MUST come from the everyday lunch list: ${proteins}. Maximum 4 main components.
+2. DINNER-ONLY proteins are STRICTLY BANNED at lunch — they require too much cooking time: ${dinnerOnlyList}. If you use any of these at lunch the meal fails.
+3. Each lunch must have a DIFFERENT protein AND a DIFFERENT format from every other lunch in this response.
+4. Do not reuse any protein already assigned at breakfast in this response.
+5. Plain, natural names — no flowery descriptions.
 
 Format inspiration — use these OR invent your own:
 ${lunchExamples}
@@ -937,7 +940,24 @@ ${randomCuisine
   : `Cuisines to use — one per dinner, each cuisine at most once: ${cuisinePool.join(', ')}.`}
 Protein options to rotate (each at most once across all dinners): ${proteins}${dinnerOnlyProteins}
 Side / base options: ${dinnerBases}
-Use specific, descriptive names: "Baked Lemon-Herb Salmon with Roasted Asparagus" not "Salmon with Vegetables".
+${ketoMode ? `KETO DINNER RULES — the assigned cuisine does NOT change these:
+- ZERO rice, noodles, pasta, grains, bread, potatoes, corn, edamame, beans, or lentils. Not even in Japanese, Korean, Thai, or any Asian cuisine.
+- Japanese/Asian keto adaptation: zucchini noodles, cauliflower rice, or shirataki noodles replace all grains. Soy sauce, sesame oil, ginger, miso (as a flavoring, not a soup base), and fish sauce are fine.
+- Thai keto: coconut milk curries over cauliflower rice. No jasmine rice, no rice noodles.
+- Sides MUST come exclusively from the base list above. No exceptions.\n` : ''}${carnivoreMode ? `CARNIVORE DINNER RULES — the assigned cuisine does NOT change these:
+- ZERO vegetables, grains, or starches — not even a garnish. The protein IS the meal.
+- Cooking fat is butter, tallow, or ghee. Name the cut and the method specifically.\n` : ''}${lowFodmapMode ? `LOW-FODMAP DINNER RULES — the assigned cuisine does NOT change these:
+- NO garlic, NO onion, NO leeks, NO mushrooms, NO legumes (chickpeas, lentils, beans) in any dinner.
+- Indian/Moroccan: safe spices (cumin, coriander, turmeric, paprika, ginger) but no garlic/onion base, no chickpeas.
+- Thai: use lemongrass, ginger, fish sauce, green onion tips only — no garlic paste, no onion.
+- Sides MUST come from the base list above.\n` : ''}${paleoMode ? `PALEO DINNER RULES — the assigned cuisine does NOT change these:
+- NO grains (no rice, pasta, noodles, bread, couscous), NO legumes, NO dairy.
+- Asian cuisine: cauliflower rice replaces rice; coconut aminos replaces soy sauce.
+- Sides MUST come from the base list above.\n` : ''}${veganMode ? `VEGAN DINNER RULES — the assigned cuisine does NOT change these:
+- ZERO meat, fish, dairy, or eggs. 100% plant-based every dinner.
+- Italian: pasta with marinara, arrabbiata, puttanesca, or vegetable ragù.
+- Japanese: tofu, tempeh, or edamame bowl with vegetables and rice.
+- Indian: lentil dal, chana masala, or vegetable curry.\n` : ''}Use specific, descriptive names: "Baked Lemon-Herb Salmon with Roasted Asparagus" not "Salmon with Vegetables".
 
 Slots:
 ${dinnerSlots.map(s => `- ${s.date} dinner`).join('\n')}
