@@ -1084,7 +1084,23 @@ ${ketoMode ? `KETO DINNER RULES — the assigned cuisine does NOT change these:
 - ZERO meat, fish, dairy, or eggs. 100% plant-based every dinner.
 - Italian: pasta with marinara, arrabbiata, puttanesca, or vegetable ragù.
 - Japanese: tofu, tempeh, or edamame bowl with vegetables and rice.
-- Indian: lentil dal, chana masala, or vegetable curry.\n` : ''}Use specific, descriptive names: "Baked Lemon-Herb Salmon with Roasted Asparagus" not "Salmon with Vegetables".
+- Indian: lentil dal, chana masala, or vegetable curry.\n` : ''}${highProteinMode ? `HIGH PROTEIN DINNER RULES:
+- Protein is the centerpiece — a large, named portion (6–8 oz minimum) leads every dinner. Name it first in the meal name.
+- Lean proteins preferred: chicken breast, ground turkey, salmon, shrimp, tuna, cod, pork tenderloin, lean ground beef, turkey breast. Steak and lamb on rotation.
+- One clean carb side (brown rice, quinoa, sweet potato, lentils, farro) — moderate portion, supporting role only.
+- Always include a vegetable component: roasted, steamed, or sautéed alongside the protein.
+- Dinner format examples to draw from (use these OR invent your own):
+  · Grilled or baked chicken breast + brown rice or quinoa + roasted vegetables
+  · Salmon fillet (baked, pan-seared, or cedar-plank) + sweet potato + green vegetable
+  · Lean ground turkey or beef bowl — seasoned meat over rice or quinoa with vegetables and a sauce
+  · Shrimp stir-fry over brown rice or cauliflower rice with broccoli, peppers, snap peas
+  · Pork tenderloin + roasted sweet potato + green beans or asparagus
+  · Turkey meatballs + whole-wheat pasta + marinara + side salad
+  · Baked cod or tilapia + roasted potatoes + steamed broccoli or zucchini
+  · Steak (sirloin or flank) + farro or quinoa + roasted root vegetables
+  · Bison burger bowl (no bun) + roasted potatoes + mixed greens
+  · Tuna steak + brown rice + edamame + sesame-soy glaze
+- When an ethnic cuisine is assigned, adapt it to high-protein: Indian → chicken tikka masala (double the chicken, light on cream); Japanese → teriyaki salmon or chicken over brown rice; Mexican → grilled chicken or beef burrito bowl; Italian → turkey bolognese or grilled chicken over whole-wheat pasta.\n` : ''}Use specific, descriptive names: "Baked Lemon-Herb Salmon with Roasted Asparagus" not "Salmon with Vegetables".
 
 Slots:
 ${dinnerSlots.map(s => `- ${s.date} dinner`).join('\n')}
