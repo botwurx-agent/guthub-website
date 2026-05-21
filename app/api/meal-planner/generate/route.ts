@@ -287,7 +287,7 @@ Return a single JSON object only — no markdown:
 
       // ── Dinner vegetable bases per diet ──────────────────────────────────
       let dinnerBases: string
-      if (ketoMode)           dinnerBases = `zucchini noodles, spaghetti squash, shirataki noodles, roasted broccoli, roasted asparagus, roasted Brussels sprouts, sautéed green beans, roasted cauliflower, wilted spinach`
+      if (ketoMode)           dinnerBases = `roasted broccoli, roasted asparagus, roasted Brussels sprouts, sautéed green beans, roasted cauliflower florets, cauliflower mash, wilted spinach, sautéed kale, sautéed mushrooms, roasted bell peppers, sliced roasted zucchini, roasted cabbage wedge, avocado — use zucchini noodles or spaghetti squash occasionally for variety, not as the default`
       else if (paleoMode)         dinnerBases = `sweet potato, roasted root vegetables, butternut squash, spaghetti squash, plantain`
       else if (lowFodmapMode)     dinnerBases = `white rice, quinoa, gluten-free pasta, roasted potatoes, polenta`
       else if (mediterraneanMode) dinnerBases = `farro, bulgur, freekeh, brown rice, whole-wheat pasta, couscous, quinoa, roasted potatoes, lentils, chickpeas`
@@ -1069,9 +1069,10 @@ Protein options to rotate (each at most once across all dinners): ${proteins}${d
 Side / base options: ${dinnerBases}
 ${ketoMode ? `KETO DINNER RULES — the assigned cuisine does NOT change these:
 - ZERO rice, noodles, pasta, grains, bread, potatoes, corn, edamame, beans, or lentils. Not even in Japanese, Korean, Thai, or any Asian cuisine.
-- Japanese/Asian keto adaptation: zucchini noodles, cauliflower rice, or shirataki noodles replace all grains. Soy sauce, sesame oil, ginger, miso (as a flavoring, not a soup base), and fish sauce are fine.
-- Thai keto: coconut milk curries over cauliflower rice. No jasmine rice, no rice noodles.
-- Sides MUST come exclusively from the base list above. No exceptions.\n` : ''}${carnivoreMode ? `CARNIVORE DINNER RULES — the assigned cuisine does NOT change these:
+- The PROTEIN and its preparation are the star of every keto dinner. The vegetable side is a supporting component — pick a DIFFERENT one each dinner and rotate through the full base list.
+- Do NOT default to zucchini noodles or cauliflower rice every dinner. These are occasional options, not defaults. Most keto dinners are protein + roasted/sautéed vegetables.
+- Asian cuisine: the protein + sauce IS the dish. Soy sauce, sesame oil, ginger, miso (as a flavoring), and fish sauce are all keto-safe. Serve the protein over or alongside roasted broccoli, asparagus, sautéed bok choy, wilted spinach, or green beans — not automatically over cauliflower rice.
+- Sides MUST rotate through the full base list above — broccoli, asparagus, Brussels sprouts, cauliflower florets, green beans, mushrooms, bell peppers, spinach, kale, sliced zucchini, roasted cabbage.\n` : ''}${carnivoreMode ? `CARNIVORE DINNER RULES — the assigned cuisine does NOT change these:
 - ZERO vegetables, grains, or starches — not even a garnish. The protein IS the meal.
 - Cooking fat is butter, tallow, or ghee. Name the cut and the method specifically.\n` : ''}${lowFodmapMode ? `LOW-FODMAP DINNER RULES — the assigned cuisine does NOT change these:
 - NO garlic, NO onion, NO leeks, NO mushrooms, NO legumes (chickpeas, lentils, beans) in any dinner.
