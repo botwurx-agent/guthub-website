@@ -488,7 +488,7 @@ export default function OnboardingPage() {
           {step === 2 && <StepEating {...{ eatingStyle, setEatingStyle, eatingStyleFollowing, setEatingStyleFollowing, fodmapPhase, setFodmapPhase, cookingFreq, setCookingFreq, eatOutFreq, setEatOutFreq, typicalDay, setTypicalDay }} />}
           {step === 3 && <StepGoals {...{ goals, setGoals, specificConcerns, setSpecificConcerns, priorRd, setPriorRd, activityLevel, setActivityLevel, targetWeightLbs, setTargetWeightLbs }} />}
           {step === 4 && <StepLifestyle {...{ sleepQuality, setSleepQuality, sleepHours, setSleepHours, energyLevel, setEnergyLevel, stressLevel, setStressLevel, exerciseRoutine, setExerciseRoutine, additionalNotes, setAdditionalNotes }} />}
-          {step === 5 && <StepFinish {...{ isPending, edHistory, setEdHistory, isPregnant, setIsPregnant }} />}
+          {step === 5 && <StepFinish {...{ edHistory, setEdHistory, isPregnant, setIsPregnant }} />}
           {step === 6 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div
@@ -537,6 +537,35 @@ export default function OnboardingPage() {
               <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-400)', textAlign: 'center' }}>
                 Your files are encrypted and never shared with third parties.
               </p>
+              <div style={{
+                marginTop: 8, padding: '20px 24px',
+                background: 'var(--cream-100)', borderRadius: 16,
+                display: 'flex', alignItems: 'flex-start', gap: 16,
+              }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
+                  background: 'var(--terracotta-50)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {isPending
+                    ? <Loader2 size={24} color="var(--terracotta-400)" style={{ animation: 'spin 1s linear infinite' }} />
+                    : <Check size={24} color="var(--terracotta-400)" />
+                  }
+                </div>
+                <div>
+                  <h2 style={{
+                    fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 400,
+                    color: 'var(--ink-900)', margin: '0 0 8px',
+                  }}>
+                    {isPending ? 'Building your plan…' : "You're almost there."}
+                  </h2>
+                  <p style={{ fontSize: 14.5, color: 'var(--ink-500)', lineHeight: 1.6, margin: 0 }}>
+                    {isPending
+                      ? 'Calculating your TDEE, macro targets, and personalized plan. Takes about 10 seconds.'
+                      : "Hit the button and we'll calculate your personalized macro targets and starter plan using everything you shared."}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -962,8 +991,7 @@ function StepLifestyle({ sleepQuality, setSleepQuality, sleepHours, setSleepHour
 const ED_OPTIONS = ['Yes', 'No', 'Prefer not to say']
 const PREGNANT_OPTIONS = ['Yes', 'No', 'Not applicable']
 
-function StepFinish({ isPending, edHistory, setEdHistory, isPregnant, setIsPregnant }: {
-  isPending: boolean
+function StepFinish({ edHistory, setEdHistory, isPregnant, setIsPregnant }: {
   edHistory: string; setEdHistory: (v: string) => void
   isPregnant: string; setIsPregnant: (v: string) => void
 }) {
@@ -989,36 +1017,6 @@ function StepFinish({ isPending, edHistory, setEdHistory, isPregnant, setIsPregn
           multi={false}
         />
       </OField>
-
-      <div style={{
-        marginTop: 8, padding: '20px 24px',
-        background: 'var(--cream-100)', borderRadius: 16,
-        display: 'flex', alignItems: 'flex-start', gap: 16,
-      }}>
-        <div style={{
-          width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
-          background: 'var(--terracotta-50)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          {isPending
-            ? <Loader2 size={24} color="var(--terracotta-400)" style={{ animation: 'spin 1s linear infinite' }} />
-            : <Check size={24} color="var(--terracotta-400)" />
-          }
-        </div>
-        <div>
-          <h2 style={{
-            fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 400,
-            color: 'var(--ink-900)', margin: '0 0 8px',
-          }}>
-            {isPending ? 'Building your plan…' : "You're almost there."}
-          </h2>
-          <p style={{ fontSize: 14.5, color: 'var(--ink-500)', lineHeight: 1.6, margin: 0 }}>
-            {isPending
-              ? 'Calculating your TDEE, macro targets, and personalized plan. Takes about 10 seconds.'
-              : "Hit the button and we'll calculate your personalized macro targets and starter plan using everything you shared."}
-          </p>
-        </div>
-      </div>
     </div>
   )
 }
