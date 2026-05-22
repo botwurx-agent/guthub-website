@@ -544,6 +544,54 @@ export default function LogPageClient({
             {FORM_LABELS[activeForm]}
           </h2>
         </div>
+        {/* Date selector strip — mobile overlay */}
+        <div style={{ padding: '10px 16px 12px', borderBottom: '1px solid var(--cream-200)', background: 'var(--cream-50)' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {[{ label: 'Today', date: clientToday }, { label: 'Yesterday', date: clientYesterday }].map(opt => (
+              <button key={opt.date} onClick={() => setLogDate(opt.date)} style={{
+                padding: '5px 12px', borderRadius: 20, fontSize: 12.5, cursor: 'pointer',
+                fontFamily: 'var(--font-body)', transition: 'all 140ms',
+                fontWeight: logDate === opt.date ? 600 : 400,
+                border: `1.5px solid ${logDate === opt.date ? 'var(--forest-400)' : 'var(--cream-200)'}`,
+                background: logDate === opt.date ? 'rgba(63,106,74,0.08)' : '#fff',
+                color: logDate === opt.date ? 'var(--forest-500)' : 'var(--ink-500)',
+              }}>{opt.label}</button>
+            ))}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => { dateInputRef.current?.showPicker?.(); dateInputRef.current?.click() }}
+                style={{
+                  padding: '5px 12px', borderRadius: 20, fontSize: 12.5, cursor: 'pointer',
+                  fontFamily: 'var(--font-body)', transition: 'all 140ms',
+                  fontWeight: (!isLogToday && !isLogYesterday) ? 600 : 400,
+                  border: `1.5px solid ${(!isLogToday && !isLogYesterday) ? 'var(--forest-400)' : 'var(--cream-200)'}`,
+                  background: (!isLogToday && !isLogYesterday) ? 'rgba(63,106,74,0.08)' : '#fff',
+                  color: (!isLogToday && !isLogYesterday) ? 'var(--forest-500)' : 'var(--ink-500)',
+                }}
+              >{(!isLogToday && !isLogYesterday) ? formatLogDate(logDate) : 'Earlier…'}</button>
+              <input ref={dateInputRef} type="date" value={logDate} max={clientToday}
+                onChange={e => { if (e.target.value) setLogDate(e.target.value) }}
+                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 1, height: 1, top: 0, left: 0 }} />
+            </div>
+          </div>
+          {!isLogToday && (
+            <div style={{
+              marginTop: 8, display: 'flex', alignItems: 'center', gap: 7,
+              padding: '6px 10px', borderRadius: 8,
+              background: 'rgba(201,138,30,0.09)', border: '1px solid rgba(201,138,30,0.22)',
+              fontSize: 12, color: '#7A4E0A',
+            }}>
+              <Calendar size={12} style={{ flexShrink: 0 }} />
+              <span>Logging to <strong>{formatLogDate(logDate)}</strong></span>
+              <button onClick={() => setLogDate(clientToday)} style={{
+                marginLeft: 'auto', padding: '2px 7px', borderRadius: 6,
+                border: '1px solid rgba(201,138,30,0.3)', background: 'rgba(201,138,30,0.12)',
+                fontSize: 11, fontWeight: 600, color: '#7A4E0A',
+                cursor: 'pointer', fontFamily: 'var(--font-body)',
+              }}>Back to today</button>
+            </div>
+          )}
+        </div>
         <div style={{ padding: '20px 16px 120px' }}>
           {activeFormContent}
         </div>
@@ -697,8 +745,8 @@ export default function LogPageClient({
               {activeForm && activeFormContent}
             </div>
 
-            {/* Date selector */}
-            <div style={{ marginBottom: 14 }}>
+            {/* Date selector — hidden on mobile when overlay is open (shown in overlay instead) */}
+            <div className={activeForm ? 'log-date-selector log-date-hidden-mobile' : 'log-date-selector'} style={{ marginBottom: 14 }}>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {[
                   { label: 'Today', date: clientToday },
@@ -835,6 +883,7 @@ export default function LogPageClient({
         .log-form-desktop { display: none !important; }
         .log-back-desktop { display: none !important; }
         .log-tiles-hidden-desktop { display: grid !important; }
+        .log-date-hidden-mobile { display: none !important; }
       }
       /* Desktop: overlay hidden, inline form shown, tiles hidden when form open */
       @media (min-width: 768px) {
