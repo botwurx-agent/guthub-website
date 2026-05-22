@@ -89,6 +89,7 @@ const CONDITION_OPTIONS = [
   'Acid Reflux / GERD',
   'Constipation',
   'Diarrhea',
+  'Bloating',
   'Thyroid Condition',
   'Autoimmune Condition',
   'Diabetes / Blood Sugar Issues',
