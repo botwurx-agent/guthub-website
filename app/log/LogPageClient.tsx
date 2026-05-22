@@ -740,11 +740,6 @@ export default function LogPageClient({
               </h3>
             </div>
 
-            {/* Desktop inline form (hidden on mobile — overlay used instead) */}
-            <div className="log-form-desktop">
-              {activeForm && activeFormContent}
-            </div>
-
             {/* Date selector — hidden on mobile when overlay is open (shown in overlay instead) */}
             <div className={activeForm ? 'log-date-selector log-date-hidden-mobile' : 'log-date-selector'} style={{ marginBottom: 14 }}>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -805,6 +800,11 @@ export default function LogPageClient({
                   >Back to today</button>
                 </div>
               )}
+            </div>
+
+            {/* Desktop inline form (hidden on mobile — overlay used instead) */}
+            <div className="log-form-desktop">
+              {activeForm && activeFormContent}
             </div>
 
             {/* Tiles — always visible on mobile; hidden on desktop when a form is open */}
