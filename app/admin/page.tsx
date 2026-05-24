@@ -49,11 +49,14 @@ export default async function AdminOverviewPage() {
   const launchCount   = subs.filter(s => s.subscription_plan === 'launch').length
   const standardCount = subs.filter(s => s.subscription_plan === 'standard').length
 
-  // MRR from local data (active subs × plan price)
+  // MRR from local data — active subscriptions only
+  const activeFounding = subs.filter(s => s.subscription_status === 'active' && s.subscription_plan === 'founding').length
+  const activeLaunch   = subs.filter(s => s.subscription_status === 'active' && s.subscription_plan === 'launch').length
+  const activeStandard = subs.filter(s => s.subscription_status === 'active' && s.subscription_plan === 'standard').length
   const mrr = Math.round(
-    (foundingCount * PLANS.founding.amount +
-     launchCount   * PLANS.launch.amount +
-     standardCount * PLANS.standard.amount) / 100
+    (activeFounding * PLANS.founding.amount +
+     activeLaunch   * PLANS.launch.amount +
+     activeStandard * PLANS.standard.amount) / 100
   )
 
   // Recent signups from Stripe

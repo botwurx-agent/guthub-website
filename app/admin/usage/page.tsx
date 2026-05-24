@@ -45,6 +45,8 @@ export default async function AdminUsagePage() {
     { count: totalWeight },
     { count: totalCoachThreads },
     { count: totalMealPlanSlots },
+    { count: totalNotes },
+    { count: totalSupplements },
     { count: usersLoggedMeal },
     { count: usersLoggedSymptom },
     { count: usersUsedCoach },
@@ -67,6 +69,8 @@ export default async function AdminUsagePage() {
     supabase.from('weight_logs').select('*', { count: 'exact', head: true }),
     supabase.from('coach_threads').select('*', { count: 'exact', head: true }),
     supabase.from('meal_plan_slots').select('*', { count: 'exact', head: true }),
+    supabase.from('note_logs').select('*', { count: 'exact', head: true }),
+    supabase.from('supplement_logs').select('*', { count: 'exact', head: true }),
     supabase.from('meal_logs').select('user_id', { count: 'exact', head: true }).not('user_id', 'is', null),
     supabase.from('symptom_logs').select('user_id', { count: 'exact', head: true }).not('user_id', 'is', null),
     supabase.from('coach_threads').select('user_id', { count: 'exact', head: true }).not('user_id', 'is', null),
@@ -77,7 +81,7 @@ export default async function AdminUsagePage() {
     supabase.from('meal_logs').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
     supabase.from('symptom_logs').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
     supabase.from('meal_logs').select('meal_type').limit(200),
-    supabase.from('symptom_logs').select('symptom_name').limit(500),
+    supabase.from('symptom_logs').select('symptom_type').limit(500),
     supabase.from('profiles').select('id, name, created_at').order('created_at', { ascending: false }).limit(5),
   ])
 
@@ -91,10 +95,10 @@ export default async function AdminUsagePage() {
   }
   const topMealTypesSorted = Object.entries(mealTypeCounts).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
-  // Aggregate symptom names
+  // Aggregate symptom types
   const symptomCounts: Record<string, number> = {}
   for (const s of topSymptoms ?? []) {
-    const n = s.symptom_name ?? 'unknown'
+    const n = s.symptom_type ?? 'unknown'
     symptomCounts[n] = (symptomCounts[n] ?? 0) + 1
   }
   const topSymptomsSorted = Object.entries(symptomCounts).sort((a, b) => b[1] - a[1]).slice(0, 6)
@@ -141,10 +145,12 @@ export default async function AdminUsagePage() {
             {[
               { label: 'Meal logs',      total: totalMeals ?? 0,    recent: mealLogs30d ?? 0,    color: 'var(--forest-500)' },
               { label: 'Symptom logs',   total: totalSymptoms ?? 0, recent: symptomLogs30d ?? 0, color: 'var(--terracotta-400)' },
-              { label: 'BM logs',        total: totalBms ?? 0,      recent: null,                color: '#a78bfa' },
-              { label: 'Water logs',     total: totalWater ?? 0,    recent: null,                color: '#0891b2' },
-              { label: 'Weight logs',    total: totalWeight ?? 0,   recent: null,                color: '#059669' },
-              { label: 'Coach threads',  total: totalCoachThreads ?? 0, recent: coachThreads30d ?? 0, color: '#6366f1' },
+              { label: 'BM logs',         total: totalBms ?? 0,         recent: null, color: '#a78bfa' },
+              { label: 'Water logs',      total: totalWater ?? 0,       recent: null, color: '#0891b2' },
+              { label: 'Weight logs',     total: totalWeight ?? 0,      recent: null, color: '#059669' },
+              { label: 'Notes',           total: totalNotes ?? 0,       recent: null, color: '#f59e0b' },
+              { label: 'Supplements',     total: totalSupplements ?? 0, recent: null, color: '#ec4899' },
+              { label: 'Coach threads',   total: totalCoachThreads ?? 0, recent: coachThreads30d ?? 0, color: '#6366f1' },
             ].map(row => (
               <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: row.color, flexShrink: 0 }} />
