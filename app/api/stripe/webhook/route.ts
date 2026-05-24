@@ -137,10 +137,13 @@ export async function POST(request: Request) {
       if (!userId) break
 
       const status = mapStripeStatus(sub.status)
-      await supabase.from('profiles').update({
+      const plan = sub.metadata?.plan ?? null
+      const update: Record<string, string | null> = {
         subscription_status: status,
         stripe_subscription_id: sub.id,
-      }).eq('id', userId)
+      }
+      if (plan) update.subscription_plan = plan
+      await supabase.from('profiles').update(update).eq('id', userId)
       break
     }
 
