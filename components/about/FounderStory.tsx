@@ -34,16 +34,25 @@ export default function FounderStory() {
             The gap I couldn't stop hearing.
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
-            Born and raised in Los Angeles. A husband to an amazing wife and a father of 2 incredible boys. Sports has always played a huge role in my life. Competitive swimming in high school, water polo, basketball, twelve years on the Jiu Jitsu mats. Brown belt. Health, nutrition, and athletics have been wound together my whole life trying to figure out the right things to eat, especially as I got older.
+            Born and raised in Los Angeles. A husband to an amazing wife and a father of 2 incredible boys. Sports has always played a huge role in my life. Competitive swimming in high school, water polo, basketball, twelve years on the Jiu Jitsu mats. Brown belt. Health, nutrition, and athletics have been wound together my whole life, trying to figure out the right things to eat, especially as I got older.
+          </p>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
+            Then my gut started getting in the way.
+          </p>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
+            It crept up on me. Extreme bloating after meals. A kind of fatigue and drowsiness that went beyond tired, the kind that made the hours after eating feel wasted. I'd push through it for a while, then start cutting things out, trying different diets, looking for the pattern myself. Mostly spinning my wheels.
           </p>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
             My wife is a gut-health nutritionist. For years I'd hear her on calls with clients in the next room, people desperate for answers. Sometimes the question was simple. Sometimes complicated. But mostly, people just needed someone to talk to. Someone to ask. Someone to point them in the right direction.
           </p>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
-            I could relate. There have been plenty of times I felt lost, following a specific diet, trying to fix a particular issue, not knowing what to eat. And the help you need doesn't come on your schedule. It comes at 11pm when you're standing in front of the fridge.
+            She helped me find mine. Once I started looking at the full picture, what I was eating, when, what else was going on, things clicked. It wasn't one food. It was a pattern. And I needed someone who knew how to look for it.
           </p>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
-            Guthub is my answer to that gap: a helping hand for anyone, any time of the day.
+            That's when I realized most people don't have that. There's no nutritionist in the next room. No one to call when it's 11pm and you're standing in front of the fridge feeling off and you don't know why. The help people need doesn't come on their schedule.
+          </p>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ink-700)', margin: 0 }}>
+            Guthub is my answer to that gap: a helping hand for anyone, any time of the day. For the people who've never had access to expert guidance. And for the people who are working with someone but feel overwhelmed in between, needing a place to hold it all and actually understand it.
           </p>
           <blockquote style={{ margin: 0, padding: '16px 20px', borderLeft: '3px solid var(--terracotta-400)', background: 'var(--terracotta-50)', borderRadius: '0 10px 10px 0' }}>
             <p style={{ fontSize: 16, lineHeight: 1.65, color: 'var(--ink-800)', fontStyle: 'italic', margin: 0 }}>
