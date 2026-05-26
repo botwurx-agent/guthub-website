@@ -5,9 +5,9 @@ import { Eyebrow, Reveal } from '../ui';
 import IntakeFlowGraphic from '../IntakeFlowGraphic';
 
 const steps = [
-  { n: '01', t: 'Tell Guthub about you', b: 'A 6-minute intake captures your symptoms, sensitivities, diet, and goals. Nothing fancy. Just the kind of context a real practitioner would gather on day one.' },
-  { n: '02', t: 'Use any tool. It already knows you.', b: 'Snap a meal, chat with your coach, or open a meal plan. Every feature pulls from your intake automatically. No re-explaining yourself.' },
-  { n: '03', t: 'It learns as you go.', b: 'Every meal logged, every symptom flagged, every conversation makes the picture sharper. The longer you use Guthub, the more personalized it becomes.' },
+  { n: '01', t: 'Set your foundation', b: 'A 6-minute intake captures your symptoms, sensitivities, diet, and goals. It\'s the context Guthub needs to make everything that follows actually relevant to you.' },
+  { n: '02', t: 'Log what\'s happening', b: 'Every meal, symptom, supplement, and ketone reading you add becomes signal. Not a diary — a dataset. This is the engine that makes Guthub smarter about your body over time.' },
+  { n: '03', t: 'Guthub connects the dots', b: 'Bloating three times this week? Guthub cross-references your meals, stress notes, and supplements to surface the pattern — the kind of connection that would take a doctor weeks of diary entries to spot.' },
 ];
 
 export default function HowItWorks() {
@@ -17,10 +17,11 @@ export default function HowItWorks() {
         <Reveal style={{ textAlign: 'center', marginBottom: 56, maxWidth: 720, marginLeft: 'auto', marginRight: 'auto' }}>
           <Eyebrow>How it works</Eyebrow>
           <h2 className="h2-mobile" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.22, letterSpacing: '-0.015em', fontWeight: 400, marginTop: 20, marginBottom: 18, color: 'var(--ink-900)' }}>
-            One intake. <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>Every tool tuned to you.</em>
+            The more you log,{' '}
+            <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>the more it figures out.</em>
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--ink-700)' }}>
-            No generic advice. No starting from scratch every conversation. Every feature in Guthub reads from the same profile, so the moment you finish your intake, the whole system already knows you.
+            The intake gives Guthub your starting point. What you log every day — meals, symptoms, weight, supplements, ketones — is what turns it into an investigator. The more data you give it, the better it gets at connecting your triggers, patterns, and progress.
           </p>
         </Reveal>
 
