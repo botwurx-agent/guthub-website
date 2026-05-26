@@ -5,6 +5,7 @@ import Hero from '@/components/home/Hero';
 import ProblemSection from '@/components/home/ProblemSection';
 import FeaturesSection from '@/components/home/FeaturesSection';
 import HowItWorks from '@/components/home/HowItWorks';
+import LoggingEngineSection from '@/components/home/LoggingEngineSection';
 import Testimonials from '@/components/home/Testimonials';
 import Pricing from '@/components/home/Pricing';
 import FAQ from '@/components/home/FAQ';
@@ -19,6 +20,7 @@ export default function HomePage() {
         <ProblemSection />
         <FeaturesSection />
         <HowItWorks />
+        <LoggingEngineSection />
         <Testimonials />
         <Pricing />
         <FAQ />
