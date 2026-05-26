@@ -17,11 +17,11 @@ export default function FeaturesHero() {
           lineHeight: 1.15, letterSpacing: '-0.025em', fontWeight: 400,
           marginTop: 20, marginBottom: 24, color: 'var(--ink-900)',
         }}>
-          Everything you need,{' '}
-          <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>all connected.</em>
+          Every feature feeds{' '}
+          <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>the same engine.</em>
         </h1>
         <p style={{ fontSize: 20, lineHeight: 1.55, color: 'var(--ink-700)', maxWidth: 640, margin: '0 auto' }}>
-          Your intake is the seed. From there, every Guthub tool learns who you are and works together. No settings to tweak, no profiles to maintain.
+          Most health apps collect your data and leave the thinking to you. In Guthub, every meal you log, every symptom you track, every test you upload feeds the same AI — and it uses all of it to actively connect the dots. The longer you use it, the sharper the picture gets.
         </p>
         <div style={{ marginTop: 48, display: 'flex', justifyContent: 'center' }}>
           <svg width="120" height="100" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
