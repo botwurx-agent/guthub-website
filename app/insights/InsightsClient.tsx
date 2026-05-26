@@ -11,9 +11,9 @@ type WeightPoint   = { log_date: string; weight_kg: number }
 type SymptomLog    = { symptom_type: string; severity: number; log_date: string }
 type BmLog         = { log_date: string; bristol_type: number; urgency?: number | null; pain?: number | null }
 type Correlation   = { id: string; food_item: string; symptom_type: string; correlation_score: number; occurrence_count: number; llm_synthesis: string }
-type Insight       = { id: string; insight_type: string; title: string; body: string }
+type Insight       = { id: string; insight_type: string; title: string; body: string; created_at: string }
 type LabReport     = { id: string; filename: string; report_date: string | null; analysis_summary: string | null; storage_path: string }
-type MealStat      = { protein_g: number | null; calories: number | null }
+type MealStat      = { protein_g: number | null; calories: number | null; log_date: string }
 type MacroTarget   = { protein_g: number | null; total_calories: number | null }
 
 // ── Simple fill chart (no axis labels) ───────────────────────────────────────
@@ -89,6 +89,7 @@ export default function InsightsClient() {
   const [loading,   setLoading]     = useState(true)
   const [analyzing, setAnalyzing]   = useState(false)
   const [analysisMsg, setAnalysisMsg] = useState('')
+  const [logsSinceAnalysis, setLogsSinceAnalysis] = useState(0)
   const [uploading, setUploading]   = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
@@ -117,7 +118,7 @@ export default function InsightsClient() {
         user ? supabase.from('correlations').select('*').eq('user_id', user.id).order('correlation_score', { ascending: false }) : Promise.resolve({ data: [] }),
         user ? supabase.from('insights').select('*').eq('user_id', user.id).eq('dismissed', false).order('created_at', { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
         user ? supabase.from('lab_reports').select('id, filename, report_date, analysis_summary, storage_path').eq('user_id', user.id).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
-        supabase.from('meal_logs').select('protein_g, calories').gte('log_date', since),
+        supabase.from('meal_logs').select('protein_g, calories, log_date').gte('log_date', since),
         supabase.from('water_logs').select('amount_ml').gte('log_date', since),
         supabase.from('macro_targets').select('protein_g, total_calories').eq('user_id', user?.id ?? '').order('target_date', { ascending: false }).limit(1).single(),
       ])
@@ -140,6 +141,18 @@ export default function InsightsClient() {
       setBmLogs(bms ?? [])
       setCorrelations(corrs ?? [])
       setInsights(ins ?? [])
+
+      // Count logs since last analysis for staleness nudge
+      const latestInsightAt = (ins ?? [])[0]?.created_at
+      if (latestInsightAt) {
+        const analysisDate = latestInsightAt.split('T')[0]
+        const newMeals = (meals ?? []).filter(m => m.log_date > analysisDate).length
+        const newSymptoms = (syms ?? []).filter(s => s.log_date > analysisDate).length
+        setLogsSinceAnalysis(newMeals + newSymptoms)
+      } else {
+        setLogsSinceAnalysis(0)
+      }
+
       setLabReports((labs ?? []) as LabReport[])
       setMealStats(meals ?? [])
       setWaterTotal((water ?? []).reduce((sum, w) => sum + Number(w.amount_ml ?? 0), 0))
@@ -235,6 +248,11 @@ export default function InsightsClient() {
   const POSITIVE_TYPES = new Set(['positive', 'achievement', 'goal', 'goal_analysis'])
   const goodInsights = insights.filter(i => POSITIVE_TYPES.has(i.insight_type))
   const warnInsights = insights.filter(i => !POSITIVE_TYPES.has(i.insight_type))
+
+  const lastAnalyzedAt = insights[0]?.created_at ?? null
+  const lastAnalyzedLabel = lastAnalyzedAt
+    ? new Date(lastAnalyzedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : null
 
   if (loading) {
     return (
@@ -436,6 +454,31 @@ export default function InsightsClient() {
 
           {/* Right col */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+            {/* Analysis timestamp + staleness nudge */}
+            {lastAnalyzedLabel && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ fontSize: 12, color: 'var(--ink-400)' }}>
+                  Last analyzed: <span style={{ fontWeight: 600, color: 'var(--ink-600)' }}>{lastAnalyzedLabel}</span>
+                </div>
+                {logsSinceAnalysis >= 5 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--terracotta-50)', border: '1px solid var(--terracotta-100)', borderRadius: 8, padding: '8px 12px' }}>
+                    <Sparkles size={13} color="var(--terracotta-500)" style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, color: 'var(--terracotta-700)', flex: 1 }}>
+                      {logsSinceAnalysis} new logs since this analysis.
+                    </span>
+                    <button
+                      onClick={runAnalysis}
+                      disabled={analyzing}
+                      style={{ fontSize: 12, fontWeight: 600, color: 'var(--terracotta-600)', background: 'none', border: 'none', cursor: analyzing ? 'not-allowed' : 'pointer', padding: 0, flexShrink: 0 }}
+                    >
+                      Run again
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div style={{ background: '#fff', border: '1px solid var(--cream-200)', borderRadius: 16, padding: 20 }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-800)', marginBottom: 14 }}>What&apos;s working</div>
               {goodInsights.length === 0 && insights.length === 0 ? (
