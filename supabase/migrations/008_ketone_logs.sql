@@ -15,3 +15,6 @@ create index if not exists ketone_logs_user_date_idx on public.ketone_logs (user
 alter table public.ketone_logs enable row level security;
 
 create policy "ketone_logs_own" on public.ketone_logs for all using (auth.uid() = user_id);
+
+grant all on public.ketone_logs to authenticated;
+grant all on public.ketone_logs to service_role;
