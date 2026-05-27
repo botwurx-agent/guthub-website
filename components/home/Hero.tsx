@@ -3,7 +3,6 @@
 import { Button, Eyebrow, Reveal } from '../ui';
 import { openAuth } from '../AuthModal';
 import ChatAnimation from '../ChatAnimation';
-import { CheckCircle, XCircle, Stethoscope } from 'lucide-react';
 
 export default function Hero() {
   return (
@@ -53,13 +52,6 @@ export default function Hero() {
               </Button>
             </div>
           </Reveal>
-          <Reveal delay={500} y={10}>
-            <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', alignItems: 'center', fontSize: 14, color: 'var(--ink-600)' }}>
-              <TrustBullet Icon={CheckCircle}>Full access for 7 days</TrustBullet>
-              <TrustBullet Icon={XCircle}>Cancel anytime</TrustBullet>
-              <TrustBullet Icon={Stethoscope}>Complements professional care</TrustBullet>
-            </div>
-          </Reveal>
         </div>
         <div className="hero-mock-col" style={{ display: 'flex', justifyContent: 'center', position: 'relative', width: '100%' }}>
           <div aria-hidden className="hero-glow" style={{
@@ -78,14 +70,5 @@ export default function Hero() {
         }
       `}</style>
     </section>
-  );
-}
-
-function TrustBullet({ Icon, children }: { Icon: React.ComponentType<{ size?: number; color?: string }>; children: React.ReactNode }) {
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-      <Icon size={15} color="var(--forest-400)" />
-      {children}
-    </span>
   );
 }
