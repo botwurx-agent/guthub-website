@@ -1114,7 +1114,10 @@ ${dinnerSlots.map(s => `- ${s.date} dinner`).join('\n')}
 
       const saveMeal = async (meal: Record<string, unknown>) => {
         const key = `${meal.date}|${meal.meal_type}`
-        if (!targetKeys.has(key)) return  // reject any extra meals the AI hallucinated
+        if (!targetKeys.has(key)) {
+          console.log(`[meal-planner/generate] DROPPED meal — key "${key}" not in targetKeys ${JSON.stringify([...targetKeys])}`)
+          return  // reject any extra meals the AI hallucinated
+        }
         const row = {
           user_id:       user.id,
           plan_date:     meal.date as string,
@@ -1132,7 +1135,11 @@ ${dinnerSlots.map(s => `- ${s.date} dinner`).join('\n')}
         const { error } = await supabase
           .from('meal_plan_slots')
           .upsert(row, { onConflict: 'user_id,plan_date,meal_type' })
-        if (!error) send(JSON.stringify({ ...row, plan_date: meal.date }))
+        if (error) {
+          console.log(`[meal-planner/generate] UPSERT ERROR for ${key}: ${error.message}`)
+        } else {
+          send(JSON.stringify({ ...row, plan_date: meal.date }))
+        }
       }
 
       console.log('[meal-planner/generate] PROMPT:\n' + prompt)
@@ -1161,6 +1168,10 @@ ${dinnerSlots.map(s => `- ${s.date} dinner`).join('\n')}
               objStart = -1
               try {
                 const meal = JSON.parse(candidate)
+                // Normalize meal_type to lowercase — the AI sometimes capitalises
+                // it ("Dinner") when the section header === DINNER === is in caps,
+                // causing the targetKeys case-sensitive check to silently drop it.
+                if (meal.meal_type) meal.meal_type = String(meal.meal_type).toLowerCase()
                 if (meal.meal_name && meal.date && meal.meal_type) await saveMeal(meal)
               } catch { /* skip */ }
             }

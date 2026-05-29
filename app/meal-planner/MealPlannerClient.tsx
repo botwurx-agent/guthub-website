@@ -496,6 +496,12 @@ export default function MealPlannerClient() {
     for (let i = 0; i < planDays; i++) datesToClear.push(toDateStr(addDays(genStart, i)))
     setSlots(prev => prev.filter(s => !datesToClear.includes(s.plan_date)))
 
+    // Track which date|mealType combos were actually received from each stream.
+    // Any expected slot that comes up empty gets auto-healed via regenerateMeal
+    // after the parallel phase, which uses a more directive prompt structure
+    // (pre-assigned cuisine + method) that avoids the AI silently returning nothing.
+    const received = new Set<string>()
+
     // Fire 3 parallel requests — one per meal type (Option B)
     await Promise.all(['breakfast', 'lunch', 'dinner'].map(async mealType => {
       try {
@@ -513,6 +519,9 @@ export default function MealPlannerClient() {
         })
         if (res.ok && res.body) {
           await consumeStream(res.body, meal => {
+            if (meal.plan_date && meal.meal_type) {
+              received.add(`${meal.plan_date}|${meal.meal_type}`)
+            }
             setSlots(prev => {
               const filtered = prev.filter(s => !(s.plan_date === meal.plan_date && s.meal_type === meal.meal_type))
               return [...filtered, { ...meal, id: `tmp-${meal.plan_date}-${meal.meal_type}` } as Slot]
@@ -524,6 +533,22 @@ export default function MealPlannerClient() {
     }))
 
     await fetchSlots(true)
+
+    // Auto-heal any slots that the AI silently dropped (e.g. capitalised
+    // "Dinner" → server dropped it). Retry once via regenerateMeal which sends
+    // the regenerate flag, causing the server to pre-assign cuisine + method and
+    // avoiding the root cause. We only retry missing slots, not all 3.
+    const healPromises: Promise<void>[] = []
+    for (let i = 0; i < planDays; i++) {
+      const dateStr = toDateStr(addDays(genStart, i))
+      for (const mt of ['breakfast', 'lunch', 'dinner']) {
+        if (!received.has(`${dateStr}|${mt}`)) {
+          healPromises.push(regenerateMeal(dateStr, mt))
+        }
+      }
+    }
+    if (healPromises.length > 0) await Promise.all(healPromises)
+
     setGenerating(false)
     setGeneratingCount(0)
     setGeneratingTotal(0)
