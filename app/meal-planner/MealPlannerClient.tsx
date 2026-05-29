@@ -502,35 +502,55 @@ export default function MealPlannerClient() {
     // (pre-assigned cuisine + method) that avoids the AI silently returning nothing.
     const received = new Set<string>()
 
-    // Fire 3 parallel requests — one per meal type (Option B)
-    await Promise.all(['breakfast', 'lunch', 'dinner'].map(async mealType => {
+    const handleMeal = (meal: Record<string, unknown>) => {
+      if (meal.plan_date && meal.meal_type) {
+        received.add(`${meal.plan_date}|${meal.meal_type}`)
+      }
+      setSlots(prev => {
+        const filtered = prev.filter(s => !(s.plan_date === meal.plan_date && s.meal_type === meal.meal_type))
+        return [...filtered, { ...meal, id: `tmp-${meal.plan_date}-${meal.meal_type}` } as Slot]
+      })
+      setGeneratingCount(c => c + 1)
+    }
+
+    if (planDays === 1) {
+      // Single request for 1-day so the AI sees all 3 meals at once and can
+      // enforce protein variety across breakfast, lunch, and dinner.
       try {
         const res = await fetch('/api/meal-planner/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             weekStart: toDateStr(genStart),
-            days: planDays,
+            days: 1,
             dietOverride,
-            mealTypes: [mealType],
+            mealTypes: ['breakfast', 'lunch', 'dinner'],
             phase: 'quick',
             complexity,
           }),
         })
-        if (res.ok && res.body) {
-          await consumeStream(res.body, meal => {
-            if (meal.plan_date && meal.meal_type) {
-              received.add(`${meal.plan_date}|${meal.meal_type}`)
-            }
-            setSlots(prev => {
-              const filtered = prev.filter(s => !(s.plan_date === meal.plan_date && s.meal_type === meal.meal_type))
-              return [...filtered, { ...meal, id: `tmp-${meal.plan_date}-${meal.meal_type}` } as Slot]
-            })
-            setGeneratingCount(c => c + 1)
+        if (res.ok && res.body) await consumeStream(res.body, handleMeal)
+      } catch { /* leave slots empty */ }
+    } else {
+      // Multi-day: fire 3 parallel requests — one per meal type
+      await Promise.all(['breakfast', 'lunch', 'dinner'].map(async mealType => {
+        try {
+          const res = await fetch('/api/meal-planner/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              weekStart: toDateStr(genStart),
+              days: planDays,
+              dietOverride,
+              mealTypes: [mealType],
+              phase: 'quick',
+              complexity,
+            }),
           })
-        }
-      } catch { /* leave slot empty */ }
-    }))
+          if (res.ok && res.body) await consumeStream(res.body, handleMeal)
+        } catch { /* leave slot empty */ }
+      }))
+    }
 
     await fetchSlots(true)
 
