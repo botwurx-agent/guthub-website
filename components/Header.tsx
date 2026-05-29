@@ -8,7 +8,7 @@ import { Button } from './ui';
 import { openAuth } from './AuthModal';
 
 const navItems = [
-  { label: 'Product', href: '/features' },
+  { label: 'Features', href: '/features' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'FAQ', href: '/#faq' },
   { label: 'About', href: '/about' },
