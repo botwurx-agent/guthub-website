@@ -693,6 +693,56 @@ Return a single JSON object only — no markdown:
         ].join('\n')
       }
 
+      // ── Lunch format tracking (mirrors breakfast varietyContext) ─────────
+      // Detects which format categories keep appearing in this slot's swap
+      // history so the AI is explicitly told to pick a genuinely different one.
+      const LUNCH_FORMAT_TERMS: Record<string, string[]> = {
+        'protein-over-greens salad': ['over arugula', 'over mixed greens', 'over baby spinach', 'over romaine', 'over greens', 'salad over', 'over leafy', 'salad with arugula', 'salad with mixed greens', 'salad with baby spinach', 'salad with spinach'],
+        'Caesar salad': ['caesar'],
+        'lettuce wraps': ['lettuce wrap'],
+        'stuffed vegetable': ['stuffed bell pepper', 'stuffed mushroom', 'stuffed pepper', 'stuffed zucchini', 'stuffed avocado', 'zucchini boat'],
+        'soup/stew/chili': [' soup', ' stew', 'chowder', 'chili'],
+        'cold plate/charcuterie': ['cold plate', 'charcuterie'],
+        'bunless burger/meatball': ['bunless', 'meatball plate', 'burger patty', 'meatball'],
+        'protein bowl (roasted veg)': ['protein bowl', 'over roasted veg', 'over cauliflower', 'over roasted broccoli', 'veggie bowl'],
+        'grain/rice bowl': ['rice bowl', 'grain bowl', 'quinoa bowl', 'farro bowl', 'burrito bowl', 'taco bowl', 'poke bowl', 'bibimbap'],
+        'sandwich/wrap/pita': ['sandwich', ' wrap', ' pita', 'flatbread', 'shawarma', 'souvlaki'],
+        'pasta/noodles': ['pasta', ' noodle', 'soba', 'udon'],
+        'egg/tuna/chicken salad': ['egg salad', 'tuna salad in', 'chicken salad in'],
+        'stir-fry': ['stir-fry', 'stir fry'],
+        'hash/skillet': ['hash', 'skillet'],
+      }
+
+      // Include both current-slot swap history and other week lunches so the
+      // AI sees the full recent format landscape.
+      const allLunchNamesFmt = [
+        ...rawWeekMeals.filter(m => m.meal_type === 'lunch').map(m => m.meal_name.toLowerCase()),
+        ...currentSlotMeals.map((n: string) => n.toLowerCase()),
+      ]
+
+      const usedLunchFormats = Object.entries(LUNCH_FORMAT_TERMS)
+        .map(([fmt, terms]) => ({ fmt, count: allLunchNamesFmt.filter(n => terms.some(t => n.includes(t))).length }))
+        .filter(x => x.count > 0)
+      const unusedLunchFormats = Object.keys(LUNCH_FORMAT_TERMS).filter(f => !usedLunchFormats.some(u => u.fmt === f))
+
+      const lunchVarietyParts: string[] = []
+      // Even 1 prior use of a format warrants steering away from it on a swap.
+      if (usedLunchFormats.length > 0 && currentSlotMeals.length > 0) {
+        const used = usedLunchFormats.map(f => `${f.fmt} (${f.count}x)`).join(', ')
+        const alts = unusedLunchFormats.slice(0, 6).join(', ')
+        lunchVarietyParts.push(`Format${usedLunchFormats.length > 1 ? 's' : ''} already used: ${used}`)
+        if (alts) lunchVarietyParts.push(`Pick a DIFFERENT format from: ${alts}`)
+        // Escalate to hard ban after 2+ uses of the same format
+        const banned = usedLunchFormats.filter(f => f.count >= 2)
+        if (banned.length > 0) {
+          lunchVarietyParts.push(`BANNED (used too many times): ${banned.map(f => f.fmt).join(', ')}. Do NOT generate these again. You MUST use a format from the unused list.`)
+        }
+      }
+
+      const lunchVarietyContext = lunchVarietyParts.length > 0
+        ? `\nLUNCH VARIETY CONTEXT — recent swap history for this slot:\n${lunchVarietyParts.map(p => `- ${p}`).join('\n')}\nPick a format that has NOT been used yet. Do not vary the same format with different greens or dressing names — that is not variety.\n`
+        : ''
+
       // ── 30-day meal history (prevents long-term name repetition) ─────────
       const historyByType: Record<string, string[]> = { breakfast: [], lunch: [], dinner: [] }
       for (const m of mealHistory ?? []) {
@@ -1056,7 +1106,7 @@ HARD RULES:
 3. Each lunch must have a DIFFERENT protein AND a DIFFERENT format from every other lunch in this response.
 4. Do not reuse any protein already assigned at breakfast in this response.
 5. Plain, natural names — no flowery descriptions.
-
+${lunchVarietyContext}
 Format inspiration — use these OR invent your own:
 ${lunchExamples}
 
