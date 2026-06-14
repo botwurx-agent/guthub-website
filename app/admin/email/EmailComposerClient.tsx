@@ -8,6 +8,45 @@ function isValidEmail(v: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())
 }
 
+type EmailTemplate = {
+  id: string
+  label: string
+  subject: string
+  body: string
+  ctaLabel?: string
+  ctaUrl?: string
+}
+
+// Reusable email templates. Loading one fills the subject, body, and CTA —
+// you can edit anything before sending. Add new templates to this array.
+const TEMPLATES: EmailTemplate[] = [
+  {
+    id: 'beta-thank-you',
+    label: 'Beta thank-you + feedback',
+    subject: 'A heartfelt thank you from GutHub 💚',
+    // ⚠️ Replace the CTA URL below with your real feedback form link before sending.
+    ctaLabel: 'Share your feedback',
+    ctaUrl: 'https://tally.so/r/REPLACE_WITH_YOUR_FORM_ID',
+    body: `Hi there,
+
+Thank you for being one of the very first people to use GutHub.
+
+You joined us during our beta — before the polish, before all the kinks were ironed out — and you trusted us with something deeply personal: your gut health journey. That means more to us than we can put into words.
+
+Over the past week you logged meals, talked to your AI coach, and let us into your daily routine. Every interaction taught us something about how to make GutHub genuinely useful for people who are tired of guessing, googling, and feeling alone with their symptoms.
+
+Now we'd love to ask you for one small thing in return.
+
+Would you share 5 minutes of honest feedback? Tell us what worked, what frustrated you, and what would make GutHub something you'd actually keep using. Good or bad — we want all of it. Your answers directly shape what we build next.
+
+From the bottom of our hearts, thank you for being here at the very beginning.
+
+Warmly,
+Alina
+Founder, GutHub`,
+  },
+]
+
 function Chip({ email, onRemove }: { email: string; onRemove: () => void }) {
   const valid = isValidEmail(email)
   return (
@@ -55,6 +94,16 @@ export default function EmailComposerClient() {
     } else if (e.key === 'Backspace' && !inputVal && recipients.length > 0) {
       setRecipients(prev => prev.slice(0, -1))
     }
+  }
+
+  function applyTemplate(t: EmailTemplate) {
+    if ((subject.trim() || body.trim()) && !window.confirm('Replace the current subject and message with this template?')) return
+    setSubject(t.subject)
+    setBody(t.body)
+    setCtaLabel(t.ctaLabel ?? '')
+    setCtaUrl(t.ctaUrl ?? '')
+    setCtaOpen(Boolean(t.ctaLabel || t.ctaUrl))
+    setError(''); setResult(null); setTab('write')
   }
 
   async function handleSend() {
@@ -106,6 +155,27 @@ export default function EmailComposerClient() {
         <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--terracotta-500)' }}>Admin</span>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 400, margin: '4px 0 4px', color: 'var(--ink-900)' }}>Send email</h1>
         <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-400)' }}>Compose and send a branded email to any address. Uses the same design as your transactional emails.</p>
+      </div>
+
+      {/* Templates */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 18 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-400)' }}>Start from a template</span>
+        {TEMPLATES.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => applyTemplate(t)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '6px 14px', borderRadius: 999, cursor: 'pointer',
+              background: '#fff', border: '1px solid var(--cream-200)',
+              fontSize: 13, fontWeight: 600, color: 'var(--forest-600, #22432e)',
+              fontFamily: 'var(--font-body)', transition: 'all 120ms',
+            }}
+          >
+            <Pencil size={12} /> {t.label}
+          </button>
+        ))}
       </div>
 
       {/* Card */}
