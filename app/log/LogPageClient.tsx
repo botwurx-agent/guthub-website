@@ -4,10 +4,11 @@ import { useState, useTransition, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Utensils, Frown, Circle, Droplets, Scale, StickyNote,
-  Camera, Sparkles, TrendingDown, TrendingUp, Trash2, RotateCcw, Check, Pill, Heart, FlaskConical, Calendar,
+  Camera, Sparkles, TrendingDown, TrendingUp, Trash2, RotateCcw, Check, Pill, Heart, FlaskConical, Calendar, X, ArrowRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { deleteMeal, reLogMeal } from '@/app/actions/log'
+import type { CoachNudge } from '@/lib/log-feedback'
 import LogMeal from '@/components/app/log/LogMeal'
 import LogMealPhoto from '@/components/app/log/LogMealPhoto'
 import LogSymptom from '@/components/app/log/LogSymptom'
@@ -401,10 +402,19 @@ export default function LogPageClient({
     (initialType && initialType !== 'all') ? initialType as FormId : null
   )
   const [showAllDays, setShowAllDays] = useState(false)
+  const [nudge, setNudge] = useState<CoachNudge | null>(null)
 
-  function handleSuccess() {
+  // Auto-dismiss the coach nudge after a few seconds.
+  useEffect(() => {
+    if (!nudge) return
+    const t = setTimeout(() => setNudge(null), 11000)
+    return () => clearTimeout(t)
+  }, [nudge])
+
+  function handleSuccess(feedback?: CoachNudge) {
     router.refresh()
     setActiveForm(null)
+    if (feedback) setNudge(feedback)
   }
 
   async function handleDeleteMeal(id: string) {
@@ -470,8 +480,8 @@ export default function LogPageClient({
     fd.set('carbs', String(meal.carbs_g ?? ''))
     fd.set('fat', String(meal.fat_g ?? ''))
     const { logMeal } = await import('@/app/actions/log')
-    await logMeal(fd)
-    handleSuccess()
+    const res = await logMeal(fd)
+    handleSuccess(res?.feedback)
   }
 
   const activeFormContent = activeForm && (
@@ -522,6 +532,56 @@ export default function LogPageClient({
 
   return (
     <>
+    {/* Coach nudge — quick "from the sidelines" feedback after a log */}
+    {nudge && (
+      <div
+        role="status"
+        style={{
+          position: 'fixed', top: 78, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 60, width: 'calc(100% - 32px)', maxWidth: 440,
+          background: '#fff', borderRadius: 14,
+          border: '1px solid var(--terracotta-100)',
+          boxShadow: '0 18px 44px -14px rgba(31,45,42,0.32)',
+          padding: '14px 14px 14px 16px',
+          display: 'flex', gap: 12, alignItems: 'flex-start',
+          animation: 'popIn 280ms var(--ease-out)',
+        }}
+      >
+        <div style={{
+          width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+          background: 'var(--terracotta-400)', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Sparkles size={17} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--terracotta-500)', marginBottom: 3 }}>
+            Coach
+          </div>
+          <div style={{ fontSize: 13.5, lineHeight: 1.5, color: 'var(--ink-800)' }}>{nudge.text}</div>
+          {nudge.cta && (
+            <a
+              href={nudge.cta.href}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 9,
+                fontSize: 12.5, fontWeight: 600, color: 'var(--terracotta-600)',
+                textDecoration: 'none',
+              }}
+            >
+              {nudge.cta.label} <ArrowRight size={13} />
+            </a>
+          )}
+        </div>
+        <button
+          onClick={() => setNudge(null)}
+          aria-label="Dismiss"
+          style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: 'var(--ink-400)', flexShrink: 0 }}
+        >
+          <X size={15} />
+        </button>
+      </div>
+    )}
+
     {/* Form overlay — mobile only */}
     {activeForm && (
       <div className="log-overlay-mobile" style={{

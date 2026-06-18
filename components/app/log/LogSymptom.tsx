@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { Utensils, Moon, Wind, Dumbbell, HelpCircle, MoreHorizontal } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { logSymptom } from '@/app/actions/log'
+import type { CoachNudge } from '@/lib/log-feedback'
 import { SuccessBanner, ErrorBanner, Field, Textarea, SubmitBtn } from './shared'
 
 const SYMPTOMS = [
@@ -36,7 +37,7 @@ function formatMealTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 }
 
-export default function LogSymptom({ onSuccess, logDate }: { onSuccess: () => void; logDate?: string }) {
+export default function LogSymptom({ onSuccess, logDate }: { onSuccess: (feedback?: CoachNudge) => void; logDate?: string }) {
   const [selected, setSelected]           = useState<string | null>(null)
   const [severity, setSeverity]           = useState<number | null>(null)
   const [triggerKind, setTriggerKind]     = useState<TriggerKind | null>(null)
@@ -85,7 +86,7 @@ export default function LogSymptom({ onSuccess, logDate }: { onSuccess: () => vo
     startTransition(async () => {
       const res = await logSymptom(formData)
       if (res?.error) setError(res.error)
-      else { setDone(true); setTimeout(onSuccess, 1200) }
+      else { setDone(true); setTimeout(() => onSuccess(res?.feedback), 1200) }
     })
   }
 

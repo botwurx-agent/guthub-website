@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { computeGutScore } from '@/lib/gut-score'
+import { buildMealAck, buildSymptomSignal } from '@/lib/log-feedback'
 
 // ─── Water ────────────────────────────────────────────────────────────────
 export async function logWater({ userId, date, amountMl }: { userId: string; date: string; amountMl: number }) {
@@ -53,8 +54,9 @@ export async function logSymptom(formData: FormData) {
   if (!symptomType) return { error: 'Please select a symptom type.' }
   if (!severity || severity < 1 || severity > 10) return { error: 'Please select a severity.' }
 
+  const day = localDate(formData)
   const { error } = await supabase.from('symptom_logs').insert({
-    user_id: user.id, log_date: localDate(formData),
+    user_id: user.id, log_date: day,
     symptom_type: symptomType, severity, notes,
     suspected_trigger_meal_id: suspectedTriggerMealId,
     onset_minutes: onsetMinutes,
@@ -62,9 +64,36 @@ export async function logSymptom(formData: FormData) {
 
   if (error) return { error: error.message }
 
-  await upsertGutScore(supabase, user.id, localDate(formData))
+  await upsertGutScore(supabase, user.id, day)
   revalidatePath('/dashboard')
-  return { success: true }
+
+  // ── Coach early-signal ────────────────────────────────────────────────
+  // Surface a same-day hypothesis (never a conclusion) connecting recent
+  // meals to this symptom, so the user gets feedback before there's enough
+  // data for real correlations.
+  const { data: dayMeals } = await supabase
+    .from('meal_logs')
+    .select('id, meal_name, ingredients, logged_at')
+    .eq('user_id', user.id).eq('log_date', day)
+    .order('logged_at', { ascending: false })
+
+  const candidates = (dayMeals ?? []).map(m => ({
+    id: m.id as string,
+    meal_name: (m.meal_name as string) ?? '',
+    ingredients: parseIngredients(m.ingredients),
+  }))
+  // If the user flagged a specific meal, make it the primary candidate.
+  if (suspectedTriggerMealId) {
+    const idx = candidates.findIndex(c => c.id === suspectedTriggerMealId)
+    if (idx > 0) candidates.unshift(candidates.splice(idx, 1)[0])
+  }
+
+  const feedback = buildSymptomSignal({
+    symptomType,
+    candidateMeals: candidates.map(({ meal_name, ingredients }) => ({ meal_name, ingredients })),
+    onsetMinutes,
+  })
+  return { success: true, feedback }
 }
 
 // ─── Bowel movement ───────────────────────────────────────────────────────
@@ -140,6 +169,13 @@ export async function logMeal(formData: FormData) {
   })
   if (mealError) return { error: mealError.message }
 
+  // Count today's meals (including this one) for the coach acknowledgment.
+  const { count: mealsTodayCount } = await supabase
+    .from('meal_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id).eq('log_date', today)
+  const feedback = buildMealAck({ mealName, ingredients, mealsTodayCount: mealsTodayCount ?? 1 })
+
   // Update daily_record consumed totals
   const { data: existing } = await supabase
     .from('daily_records')
@@ -155,7 +191,7 @@ export async function logMeal(formData: FormData) {
   }, { onConflict: 'user_id,record_date' })
 
   revalidatePath('/dashboard')
-  return { success: true }
+  return { success: true, feedback }
 }
 
 // ─── Delete meal ──────────────────────────────────────────────────────────
@@ -319,4 +355,14 @@ function parseFloatOrNull(v: string | null): number | null {
   if (!v) return null
   const n = parseFloat(v)
   return isNaN(n) ? null : n
+}
+// meal_logs.ingredients is stored as a JSON-stringified array; tolerate
+// already-parsed arrays, plain strings, or null.
+function parseIngredients(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map(String)
+  if (typeof raw === 'string' && raw.trim()) {
+    try { const p = JSON.parse(raw); return Array.isArray(p) ? p.map(String) : [raw] }
+    catch { return [raw] }
+  }
+  return []
 }

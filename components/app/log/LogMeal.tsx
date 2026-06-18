@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from 'react'
 import { Sparkles, X } from 'lucide-react'
 import { logMeal } from '@/app/actions/log'
+import type { CoachNudge } from '@/lib/log-feedback'
 import { SuccessBanner, ErrorBanner, Field, Input, Textarea, SubmitBtn } from './shared'
 
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack', 'beverage']
@@ -121,7 +122,7 @@ function PortionGuide({ onClose }: { onClose: () => void }) {
   )
 }
 
-export default function LogMeal({ onSuccess, logDate }: { onSuccess: () => void; logDate?: string }) {
+export default function LogMeal({ onSuccess, logDate }: { onSuccess: (feedback?: CoachNudge) => void; logDate?: string }) {
   const [mealType, setMealType]   = useState('breakfast')
   const [mealName, setMealName]   = useState('')
   const [ingredients, setIngredients] = useState('')
@@ -176,7 +177,7 @@ export default function LogMeal({ onSuccess, logDate }: { onSuccess: () => void;
     startTransition(async () => {
       const res = await logMeal(formData)
       if (res?.error) setError(res.error)
-      else { setDone(true); setTimeout(onSuccess, 1200) }
+      else { setDone(true); setTimeout(() => onSuccess(res?.feedback), 1200) }
     })
   }
 
