@@ -106,6 +106,7 @@ const UNDIAGNOSED_SYMPTOM_OPTIONS = [
   'Frequent gas',
   'Reflux or heartburn',
   'Brain fog after meals',
+  'Anxiety or mood changes after eating',
   'Food sensitivities (not sure which)',
   'Unexplained weight changes',
   'Persistent nausea',
