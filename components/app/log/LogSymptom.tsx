@@ -10,7 +10,7 @@ import { SuccessBanner, ErrorBanner, Field, Textarea, SubmitBtn } from './shared
 const SYMPTOMS = [
   'Bloating', 'Gas', 'Cramping', 'Nausea', 'Reflux / Heartburn',
   'Constipation', 'Diarrhea', 'Stomach pain', 'Fatigue', 'Headache',
-  'Brain fog', 'Skin flare-up', 'Other',
+  'Brain fog', 'Anxiety', 'Skin flare-up', 'Other',
 ]
 
 const ONSET_OPTIONS = [
