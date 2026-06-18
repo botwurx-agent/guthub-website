@@ -31,15 +31,15 @@ export default function Hero() {
               lineHeight: 1.32, letterSpacing: '-0.025em',
               fontWeight: 400, color: 'var(--ink-900)',
             }}>
-              Nutrition guidance{' '}
+              Stop guessing{' '}
               <em style={{ fontStyle: 'italic', color: 'var(--terracotta-500)' }}>
-                you can actually talk to.
+                what&apos;s triggering your symptoms.
               </em>
             </h1>
           </Reveal>
           <Reveal delay={260} y={12}>
             <p style={{ fontSize: 19, lineHeight: 1.55, color: 'var(--ink-700)', maxWidth: 520, marginBottom: 36 }}>
-              Your personalized AI gut health assistant: ongoing support, clarity, and real-time feedback. So you're never stuck guessing, googling, or feeling alone.
+              Log your meals, symptoms, supplements, and daily habits, and let GutHub surface the patterns and potential triggers behind them. Finally make sense of what your body&apos;s trying to tell you.
             </p>
           </Reveal>
           <Reveal delay={380} y={12}>
