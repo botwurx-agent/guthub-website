@@ -12,7 +12,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 import {
   TrendingUp, Plus, Flame, FlaskConical,
   Clock, Leaf, RefreshCw, Frown, Meh, Smile,
-  MapPin, ArrowRight,
+  MapPin, ArrowRight, Sparkles,
 } from 'lucide-react'
 
 export default async function DashboardPage() {
@@ -44,7 +44,7 @@ export default async function DashboardPage() {
     supabase.from('gut_scores').select('score').eq('user_id', user.id).eq('score_date', today).single(),
     supabase.from('meal_logs').select('id, meal_name, meal_type, calories, protein_g, carbs_g, fat_g, logged_at').eq('user_id', user.id).eq('log_date', today).order('logged_at', { ascending: true }),
     supabase.from('gut_scores').select('score, score_date').eq('user_id', user.id).order('score_date', { ascending: false }).limit(8),
-    supabase.from('meal_logs').select('log_date').eq('user_id', user.id).order('log_date', { ascending: false }).limit(30),
+    supabase.from('meal_logs').select('log_date').eq('user_id', user.id).order('log_date', { ascending: false }).limit(120),
     supabase.from('meal_plan_slots').select('meal_name, calories, protein_g, carbs_g, fat_g, accepted').eq('user_id', user.id).eq('plan_date', today).eq('meal_type', 'dinner').maybeSingle(),
     supabase.from('water_logs').select('amount_ml').eq('user_id', user.id).eq('log_date', today),
   ])
@@ -106,6 +106,20 @@ export default async function DashboardPage() {
   const meals        = mealLogs ?? []
   const todaySymptoms = symptoms ?? []
   const streak       = calcStreak(recentLogDates ?? [])
+
+  // ── Insight readiness ───────────────────────────────────────────────────
+  // Patterns need ~1 week of logging before the AI can find correlations.
+  // This reframes that wait as visible progress toward an unlock. It retires
+  // itself once the user actually has insights.
+  const [{ count: correlationsCount }, { count: symptomsTotalCount }] = await Promise.all([
+    supabase.from('correlations').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+    supabase.from('symptom_logs').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+  ])
+  const INSIGHT_TARGET_DAYS = 7
+  const daysLogged = new Set((recentLogDates ?? []).map(r => r.log_date)).size
+  const hasInsights = (correlationsCount ?? 0) > 0
+  const hasSymptomsEver = (symptomsTotalCount ?? 0) > 0
+  const showInsightProgress = !hasInsights
 
   const mealTypeLabel: Record<string, string> = {
     breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snack: 'Snack',
@@ -221,6 +235,11 @@ export default async function DashboardPage() {
 
         {/* ──── LEFT COLUMN ──────────────────────────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* Insight readiness — onboarding-phase progress toward first patterns */}
+          {showInsightProgress && (
+            <InsightProgress daysLogged={daysLogged} target={INSIGHT_TARGET_DAYS} hasSymptomsEver={hasSymptomsEver} />
+          )}
 
           {/* AI Nudge */}
           <div style={{
@@ -502,6 +521,56 @@ function DCard({ children, style }: { children: React.ReactNode; style?: React.C
     }}>
       {children}
     </div>
+  )
+}
+
+function InsightProgress({ daysLogged, target, hasSymptomsEver }: {
+  daysLogged: number; target: number; hasSymptomsEver: boolean
+}) {
+  const ready = daysLogged >= target
+  const shown = Math.min(daysLogged, target)
+  const pct = Math.min(100, Math.round((daysLogged / target) * 100))
+  const remaining = Math.max(0, target - daysLogged)
+  const accent = ready ? 'var(--forest-500)' : 'var(--terracotta-400)'
+
+  const copy = ready
+    ? "You've logged enough to start spotting patterns. Let's see what your data is showing."
+    : hasSymptomsEver
+      ? `You're ${remaining} day${remaining === 1 ? '' : 's'} from your first pattern report. Keep logging, I'm already watching how your meals line up with how you feel.`
+      : `You're ${remaining} day${remaining === 1 ? '' : 's'} from your first pattern report. Keep logging meals, and add symptoms when they happen so I can connect the two.`
+
+  return (
+    <DCard>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+          background: ready ? 'rgba(63,106,74,0.12)' : 'var(--terracotta-50)',
+          color: accent, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Sparkles size={16} />
+        </div>
+        <h3 style={{ ...cardTitleStyle, flex: 1 }}>
+          {ready ? 'Your first insights are ready' : 'Working toward your first insights'}
+        </h3>
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-500)', fontVariantNumeric: 'tabular-nums' }}>
+          {shown} / {target} days
+        </span>
+      </div>
+
+      <div style={{ height: 8, borderRadius: 999, background: 'var(--cream-200)', overflow: 'hidden', marginBottom: 12 }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: accent, borderRadius: 999, transition: 'width 600ms ease' }} />
+      </div>
+
+      <p style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-600)', margin: ready ? '0 0 14px' : 0 }}>
+        {copy}
+      </p>
+
+      {ready && (
+        <Link href="/insights" style={{ ...primaryLinkStyle, padding: '8px 18px', fontSize: 13 }}>
+          View my insights <ArrowRight size={14} />
+        </Link>
+      )}
+    </DCard>
   )
 }
 
