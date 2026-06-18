@@ -75,6 +75,21 @@ export default async function AdminUsersPage({
 
   const users = (profiles ?? []).map(p => ({ ...p, email: emailMap[p.id] ?? '' }))
 
+  // Per-user engagement stats from the user_activity_stats view
+  type ActivityStat = {
+    user_id: string
+    meal_count: number; symptom_count: number; bm_count: number
+    water_count: number; weight_count: number; note_count: number
+    supplement_count: number; coach_msg_count: number; meal_plan_count: number
+    total_logs: number; last_active: string | null
+  }
+  const userIds = users.map(u => u.id)
+  const { data: statsRows } = userIds.length
+    ? await supabase.from('user_activity_stats').select('*').in('user_id', userIds)
+    : { data: [] as ActivityStat[] }
+  const statMap: Record<string, ActivityStat> = {}
+  for (const s of (statsRows ?? []) as ActivityStat[]) statMap[s.user_id] = s
+
   const totalPages = Math.ceil((count ?? 0) / pageSize)
 
   function buildHref(overrides: Record<string, string | number>) {
@@ -88,13 +103,13 @@ export default async function AdminUsersPage({
   }
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+    <div style={{ padding: '32px 36px', maxWidth: 1340 }}>
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--terracotta-500)' }}>Admin</span>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 400, margin: '4px 0 4px', color: 'var(--ink-900)' }}>Users</h1>
-        <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-400)' }}>{count ?? 0} total accounts</p>
+        <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-400)' }}>{count ?? 0} total accounts · activity counts span all-time. Hover “Logs” for the full breakdown.</p>
       </div>
 
       {/* Filters */}
@@ -150,7 +165,7 @@ export default async function AdminUsersPage({
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--cream-200)', background: 'var(--cream-50)' }}>
-              {['User', 'Joined', 'Plan', 'Status', 'Trial ends', 'Onboarded'].map(h => (
+              {['User', 'Joined', 'Plan', 'Status', 'Onboarded', 'Meals', 'Symptoms', 'Logs', 'Coach', 'Last active'].map(h => (
                 <th key={h} style={{
                   padding: '11px 16px', textAlign: 'left', fontSize: 11,
                   fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
@@ -162,7 +177,7 @@ export default async function AdminUsersPage({
           <tbody>
             {(users ?? []).length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ padding: '40px 16px', textAlign: 'center', fontSize: 14, color: 'var(--ink-400)' }}>
+                <td colSpan={10} style={{ padding: '40px 16px', textAlign: 'center', fontSize: 14, color: 'var(--ink-400)' }}>
                   No users found.
                 </td>
               </tr>
@@ -172,9 +187,29 @@ export default async function AdminUsersPage({
               const joined = u.created_at
                 ? new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                 : '—'
-              const trialEnds = u.trial_ends_at
-                ? new Date(u.trial_ends_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              const st = statMap[u.id]
+              const totalLogs = st?.total_logs ?? 0
+              const lastActive = st?.last_active ? new Date(st.last_active) : null
+              const lastActiveStr = lastActive
+                ? lastActive.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                 : '—'
+              const breakdown = st
+                ? [
+                    `Meals: ${st.meal_count}`,
+                    `Symptoms: ${st.symptom_count}`,
+                    `Bowel movements: ${st.bm_count}`,
+                    `Water: ${st.water_count}`,
+                    `Weight: ${st.weight_count}`,
+                    `Notes: ${st.note_count}`,
+                    `Supplements: ${st.supplement_count}`,
+                    `Coach messages: ${st.coach_msg_count}`,
+                    `Meal plans generated: ${st.meal_plan_count}`,
+                  ].join('\n')
+                : 'No activity yet'
+              const numCell = (val: number) => ({
+                padding: '12px 16px', fontSize: 13, fontWeight: 600,
+                color: val > 0 ? 'var(--ink-800)' : 'var(--ink-300)',
+              })
               return (
                 <tr key={u.id} style={{
                   borderBottom: i < (users?.length ?? 0) - 1 ? '1px solid var(--cream-100)' : 'none',
@@ -207,8 +242,6 @@ export default async function AdminUsersPage({
                   <td style={{ padding: '12px 16px' }}>
                     <StatusBadge status={u.subscription_status} />
                   </td>
-                  {/* Trial */}
-                  <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--ink-500)' }}>{trialEnds}</td>
                   {/* Onboarded */}
                   <td style={{ padding: '12px 16px' }}>
                     <span style={{
@@ -218,6 +251,18 @@ export default async function AdminUsersPage({
                       {u.onboarding_completed ? '✓ Yes' : '— No'}
                     </span>
                   </td>
+                  {/* Meals */}
+                  <td style={numCell(st?.meal_count ?? 0)}>{st?.meal_count ?? 0}</td>
+                  {/* Symptoms */}
+                  <td style={numCell(st?.symptom_count ?? 0)}>{st?.symptom_count ?? 0}</td>
+                  {/* Total logs — full breakdown on hover */}
+                  <td style={{ ...numCell(totalLogs), cursor: 'default' }} title={breakdown}>
+                    <span style={{ borderBottom: totalLogs > 0 ? '1px dotted var(--ink-300)' : 'none' }}>{totalLogs}</span>
+                  </td>
+                  {/* Coach messages */}
+                  <td style={numCell(st?.coach_msg_count ?? 0)}>{st?.coach_msg_count ?? 0}</td>
+                  {/* Last active */}
+                  <td style={{ padding: '12px 16px', fontSize: 13, color: lastActive ? 'var(--ink-600)' : 'var(--ink-300)' }} title={lastActive ? lastActive.toLocaleString() : ''}>{lastActiveStr}</td>
                 </tr>
               )
             })}
