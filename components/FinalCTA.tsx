@@ -22,7 +22,7 @@ export default function FinalCTA() {
           Take the guesswork out of your gut.
         </h2>
         <p style={{ fontSize: 19, color: 'rgba(253,250,243,.88)', marginBottom: 36, lineHeight: 1.55 }}>
-          Personalized guidance that actually knows you. Founding member pricing locked for life, while spots last.
+          Track your meals, symptoms, and daily habits, and let GutHub surface the patterns behind how you feel. Founding member pricing locked for life, while spots last.
         </p>
         <Button variant="inverse" size="lg" as="a" href="/pricing">
           Start your 7-day free trial

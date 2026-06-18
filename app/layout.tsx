@@ -18,8 +18,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "GutHub — Nutrition guidance you can actually talk to",
-  description: "Your personalized AI gut health assistant — ongoing support, clarity, and real-time feedback.",
+  title: "GutHub | Stop guessing what's triggering your symptoms",
+  description: "Track your meals, symptoms, supplements, and daily habits, and let GutHub surface the patterns and potential triggers behind how you feel.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
