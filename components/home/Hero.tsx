@@ -2,7 +2,7 @@
 
 import { Button, Eyebrow, Reveal } from '../ui';
 import { openAuth } from '../AuthModal';
-import ChatAnimation from '../ChatAnimation';
+import EnhancedChatAnimation from './EnhancedChatAnimation';
 
 export default function Hero() {
   return (
@@ -60,7 +60,7 @@ export default function Hero() {
             animation: 'heroGlow 6s ease-in-out infinite', pointerEvents: 'none', zIndex: 0,
           }} />
           <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 440 }}>
-            <ChatAnimation />
+            <EnhancedChatAnimation />
           </div>
         </div>
       </div>
